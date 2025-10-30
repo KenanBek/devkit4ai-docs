@@ -85,7 +85,7 @@
   },
   "logo": {
     "light": "/logo/devkit-light.png",
-    "dark": "/logo/dark.svg"
+    "dark": "/logo/devkit-dark.png"
   },
   "navbar": {
     "links": [
