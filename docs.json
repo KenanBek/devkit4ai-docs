@@ -71,13 +71,13 @@
     "global": {
       "anchors": [
         {
-          "anchor": "Documentation",
-          "href": "https://mintlify.com/docs",
+          "anchor": "Visit DevKit4ai",
+          "href": "https://devkit4ai.com/",
           "icon": "book-open-cover"
         },
         {
-          "anchor": "Blog",
-          "href": "https://mintlify.com/blog",
+          "anchor": "Visit VibeCoding.ad",
+          "href": "https://vibecoding.ad/",
           "icon": "newspaper"
         }
       ]
@@ -96,8 +96,8 @@
     ],
     "primary": {
       "type": "button",
-      "label": "Dashboard",
-      "href": "https://dashboard.mintlify.com"
+      "label": "Try DevKit",
+      "href": "https://devkit4ai.com/console"
     }
   },
   "contextual": {
