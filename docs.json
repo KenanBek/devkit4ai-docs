@@ -73,12 +73,12 @@
         {
           "anchor": "Visit DevKit4ai",
           "href": "https://devkit4ai.com/",
-          "icon": "book-open-cover"
+          "icon": "code"
         },
         {
           "anchor": "Visit VibeCoding.ad",
           "href": "https://vibecoding.ad/",
-          "icon": "newspaper"
+          "icon": "rocket"
         }
       ]
     }
