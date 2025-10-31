@@ -1,33 +1,68 @@
 ---
-title: 'Introduction'
-description: 'Example section for showcasing API endpoints'
+title: 'API Reference'
+description: 'Developer Toolkit for AI-Powered Web Applications'
 ---
 
-<Note>
-  If you're not looking to build API reference documentation, you can delete
-  this section by removing the api-reference folder.
-</Note>
+## Welcome to Dev Kit for AI API
 
-## Welcome
+The Dev Kit for AI API provides a comprehensive set of endpoints for building AI-powered web applications. Our API enables you to manage user authentication, projects, API keys, and AI-powered image generation.
 
-There are two ways to build API documentation: [OpenAPI](https://mintlify.com/docs/api-playground/openapi/setup) and [MDX components](https://mintlify.com/docs/api-playground/mdx/configuration). For the starter kit, we are using the following OpenAPI specification.
+## Base URLs
 
-<Card
-  title="Plant Store Endpoints"
-  icon="leaf"
-  href="https://github.com/mintlify/starter/blob/main/api-reference/openapi.json"
->
-  View the OpenAPI specification file
-</Card>
+The API is available on multiple servers. You can select your preferred server in the API playground:
+
+- **DevKit4AI**: `https://api.devkit4ai.com`
+- **VibeCoding**: `https://api.vibecoding.ad`
 
 ## Authentication
 
-All API endpoints are authenticated using Bearer tokens and picked up from the specification file.
+Most API endpoints require authentication using Bearer tokens. Include your access token in the Authorization header:
 
-```json
-"security": [
-  {
-    "bearerAuth": []
-  }
-]
+```bash
+Authorization: Bearer YOUR_ACCESS_TOKEN
 ```
+
+To obtain an access token, use the [Login](/api-reference/auth/login) endpoint with your credentials. The token must be included in subsequent API requests.
+
+For project-specific operations, you can also use API keys created through the [Project Management](/api-reference/projects/create-api-key) endpoints.
+
+## API Categories
+
+<CardGroup cols={2}>
+  <Card
+    title="Health Check"
+    icon="heart-pulse"
+    href="/api-reference/health/check"
+  >
+    Monitor system health and component status
+  </Card>
+  <Card
+    title="Authentication"
+    icon="lock"
+    href="/api-reference/auth/register"
+  >
+    User registration, login, and email verification
+  </Card>
+  <Card
+    title="Project Management"
+    icon="folder"
+    href="/api-reference/projects/list"
+  >
+    Manage projects and API keys
+  </Card>
+  <Card
+    title="AI Generation"
+    icon="wand-magic-sparkles"
+    href="/api-reference/generation/create"
+  >
+    Create and manage AI-powered image generations
+  </Card>
+</CardGroup>
+
+## Rate Limits
+
+API rate limits may apply depending on your subscription tier and authentication method. Anonymous generation requests may have additional restrictions compared to authenticated requests.
+
+## Support
+
+Need help? Reach out to our support team or visit our [documentation](/) for guides and tutorials.
