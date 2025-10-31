@@ -1,0 +1,29 @@
+---
+title: "Revoke API Key"
+api: "DELETE /api/v1/projects/{project_id}/api-keys/{api_key_id}"
+description: "Revoke an API key"
+---
+
+Revoke (delete) a specific API key. The key will no longer be valid for authentication.
+
+### Headers
+
+<ParamField header="Authorization" type="string" required>
+  Bearer token for authentication
+</ParamField>
+
+### Path Parameters
+
+<ParamField path="project_id" type="string" required>
+  Unique project identifier
+</ParamField>
+
+<ParamField path="api_key_id" type="string" required>
+  Unique API key identifier to revoke
+</ParamField>
+
+### Response
+
+<ResponseField name="message" type="string">
+  Confirmation message
+</ResponseField>

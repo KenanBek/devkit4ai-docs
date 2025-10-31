@@ -1,0 +1,25 @@
+---
+title: "Delete Generation"
+api: "DELETE /api/v1/generation/generations-v2/{generation_id}"
+description: "Delete a generation request"
+---
+
+Delete a specific generation request and its associated data.
+
+### Headers
+
+<ParamField header="Authorization" type="string" required>
+  Bearer token for authentication
+</ParamField>
+
+### Path Parameters
+
+<ParamField path="generation_id" type="string" required>
+  Unique generation identifier to delete
+</ParamField>
+
+### Response
+
+<ResponseField name="message" type="string">
+  Confirmation message
+</ResponseField>

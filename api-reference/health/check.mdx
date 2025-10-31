@@ -1,0 +1,29 @@
+---
+title: "Health Check"
+api: "GET /api/v1/health"
+description: "Comprehensive health check for all system components"
+---
+
+This endpoint provides a comprehensive health check for all system components including database, storage, and Redis.
+
+### Response
+
+<ResponseField name="status" type="string">
+  Overall health status of the system
+</ResponseField>
+
+<ResponseField name="database" type="object">
+  Database health status information
+</ResponseField>
+
+<ResponseField name="storage" type="object">
+  Storage system health status
+</ResponseField>
+
+<ResponseField name="redis" type="object">
+  Redis PubSub health status
+</ResponseField>
+
+<ResponseField name="timestamp" type="string">
+  Timestamp of the health check
+</ResponseField>

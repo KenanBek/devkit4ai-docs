@@ -1,0 +1,31 @@
+---
+title: "Create Anonymous Generation"
+api: "POST /api/v1/generation/generate-anonymous-v2"
+description: "Create an AI generation request without authentication"
+---
+
+Create a new AI generation request without requiring user authentication. Useful for public demos or試用.
+
+### Body
+
+<ParamField body="prompt" type="string" required>
+  The prompt for AI generation
+</ParamField>
+
+<ParamField body="files" type="array" required>
+  Array of files to process (multipart form data)
+</ParamField>
+
+### Response
+
+<ResponseField name="id" type="string">
+  Unique generation request identifier
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Current status of the generation request
+</ResponseField>
+
+<Note>
+  Anonymous generations may have rate limits or feature restrictions compared to authenticated requests.
+</Note>

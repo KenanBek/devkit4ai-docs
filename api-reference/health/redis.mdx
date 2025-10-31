@@ -1,0 +1,17 @@
+---
+title: "Redis Health Check"
+api: "GET /api/v1/health/redis"
+description: "Detailed health check for Redis PubSub system"
+---
+
+This endpoint performs a detailed health check specifically for the Redis PubSub system.
+
+### Response
+
+<ResponseField name="status" type="string">
+  Redis connection status
+</ResponseField>
+
+<ResponseField name="timestamp" type="string">
+  Timestamp of the health check
+</ResponseField>

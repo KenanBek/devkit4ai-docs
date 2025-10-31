@@ -1,0 +1,23 @@
+---
+title: "Verify Email"
+api: "POST /api/v1/auth/verify-email"
+description: "Verify user's email address with verification token"
+---
+
+Verify a user's email address using the verification token sent via email.
+
+### Body
+
+<ParamField body="token" type="string" required>
+  Email verification token
+</ParamField>
+
+### Response
+
+<ResponseField name="message" type="string">
+  Confirmation message
+</ResponseField>
+
+<ResponseField name="email" type="string">
+  Verified email address
+</ResponseField>

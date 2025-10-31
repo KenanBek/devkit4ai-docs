@@ -1,0 +1,39 @@
+---
+title: "Toggle Generation Public"
+api: "PATCH /api/v1/generation/generations-v2/{generation_id}/public"
+description: "Toggle the public visibility of a generation"
+---
+
+Change whether a generation is publicly visible or private.
+
+### Headers
+
+<ParamField header="Authorization" type="string" required>
+  Bearer token for authentication
+</ParamField>
+
+### Path Parameters
+
+<ParamField path="generation_id" type="string" required>
+  Unique generation identifier
+</ParamField>
+
+### Body
+
+<ParamField body="is_public" type="boolean" required>
+  Set to true to make public, false to make private
+</ParamField>
+
+### Response
+
+<ResponseField name="id" type="string">
+  Generation unique identifier
+</ResponseField>
+
+<ResponseField name="is_public" type="boolean">
+  Updated public visibility status
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Confirmation message
+</ResponseField>

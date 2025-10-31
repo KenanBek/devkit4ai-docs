@@ -1,0 +1,17 @@
+---
+title: "Database Health Check"
+api: "GET /api/v1/health/database"
+description: "Detailed health check for database connectivity"
+---
+
+This endpoint performs a detailed health check specifically for database connectivity.
+
+### Response
+
+<ResponseField name="status" type="string">
+  Database connection status
+</ResponseField>
+
+<ResponseField name="timestamp" type="string">
+  Timestamp of the health check
+</ResponseField>

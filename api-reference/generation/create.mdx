@@ -1,0 +1,33 @@
+---
+title: "Create Generation"
+api: "POST /api/v1/generation/generate-v2"
+description: "Create a new AI generation request"
+---
+
+Create a new AI generation request with files and prompt. Requires authentication.
+
+### Headers
+
+<ParamField header="Authorization" type="string" required>
+  Bearer token for authentication
+</ParamField>
+
+### Body
+
+<ParamField body="prompt" type="string" required>
+  The prompt for AI generation
+</ParamField>
+
+<ParamField body="files" type="array" required>
+  Array of files to process (multipart form data)
+</ParamField>
+
+### Response
+
+<ResponseField name="id" type="string">
+  Unique generation request identifier
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Current status of the generation request
+</ResponseField>

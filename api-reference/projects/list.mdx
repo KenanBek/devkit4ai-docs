@@ -1,0 +1,39 @@
+---
+title: "List Projects"
+api: "GET /api/v1/projects/"
+description: "List all projects for the current user"
+---
+
+Retrieve a list of all projects belonging to the authenticated user.
+
+### Headers
+
+<ParamField header="Authorization" type="string" required>
+  Bearer token for authentication
+</ParamField>
+
+### Response
+
+<ResponseField name="projects" type="array">
+  Array of project objects
+  <Expandable title="Project Object">
+    <ResponseField name="id" type="string">
+      Project unique identifier
+    </ResponseField>
+    <ResponseField name="name" type="string">
+      Project name
+    </ResponseField>
+    <ResponseField name="description" type="string">
+      Project description
+    </ResponseField>
+    <ResponseField name="user_id" type="string">
+      Owner's user ID
+    </ResponseField>
+    <ResponseField name="created_at" type="string">
+      Project creation timestamp
+    </ResponseField>
+    <ResponseField name="updated_at" type="string">
+      Last update timestamp
+    </ResponseField>
+  </Expandable>
+</ResponseField>

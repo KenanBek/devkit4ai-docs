@@ -1,0 +1,49 @@
+---
+title: "Create Project"
+api: "POST /api/v1/projects/"
+description: "Create a new project for the current user"
+---
+
+Create a new project for the authenticated user.
+
+### Headers
+
+<ParamField header="Authorization" type="string" required>
+  Bearer token for authentication
+</ParamField>
+
+### Body
+
+<ParamField body="name" type="string" required>
+  Project name
+</ParamField>
+
+<ParamField body="description" type="string">
+  Project description (optional)
+</ParamField>
+
+### Response
+
+<ResponseField name="id" type="string">
+  Newly created project's unique identifier
+</ResponseField>
+
+<ResponseField name="name" type="string">
+  Project name
+</ResponseField>
+
+<ResponseField name="description" type="string">
+  Project description
+</ResponseField>
+
+<ResponseField name="user_id" type="string">
+  Owner's user ID
+</ResponseField>
+
+<ResponseField name="created_at" type="string">
+  Project creation timestamp
+</ResponseField>
+
+<ResponseField name="updated_at" type="string">
+  Last update timestamp
+</ResponseField>

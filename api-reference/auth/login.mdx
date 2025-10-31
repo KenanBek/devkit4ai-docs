@@ -1,0 +1,31 @@
+---
+title: "Login"
+api: "POST /api/v1/auth/login"
+description: "Login with email and password"
+---
+
+Authenticate a user and receive access and refresh tokens.
+
+### Body
+
+<ParamField body="username" type="string" required>
+  User's email address (username)
+</ParamField>
+
+<ParamField body="password" type="string" required>
+  User's password
+</ParamField>
+
+### Response
+
+<ResponseField name="access_token" type="string">
+  JWT access token for API authentication
+</ResponseField>
+
+<ResponseField name="refresh_token" type="string">
+  Refresh token to obtain new access tokens
+</ResponseField>
+
+<ResponseField name="token_type" type="string">
+  Token type (typically "bearer")
+</ResponseField>

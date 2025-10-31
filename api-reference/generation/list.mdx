@@ -1,0 +1,41 @@
+---
+title: "List User Generations"
+api: "GET /api/v1/generation/generations-v2"
+description: "Get all generation requests for the current user"
+---
+
+Retrieve a paginated list of all generation requests created by the authenticated user.
+
+### Headers
+
+<ParamField header="Authorization" type="string" required>
+  Bearer token for authentication
+</ParamField>
+
+### Query Parameters
+
+<ParamField query="page" type="integer">
+  Page number (default: 1)
+</ParamField>
+
+<ParamField query="per_page" type="integer">
+  Items per page (default: 20)
+</ParamField>
+
+### Response
+
+<ResponseField name="generations" type="array">
+  Array of generation objects
+</ResponseField>
+
+<ResponseField name="total" type="integer">
+  Total number of generations
+</ResponseField>
+
+<ResponseField name="page" type="integer">
+  Current page number
+</ResponseField>
+
+<ResponseField name="per_page" type="integer">
+  Items per page
+</ResponseField>

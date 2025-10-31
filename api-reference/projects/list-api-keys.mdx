@@ -1,0 +1,43 @@
+---
+title: "List API Keys"
+api: "GET /api/v1/projects/{project_id}/api-keys"
+description: "List all API keys for a project"
+---
+
+Retrieve all API keys associated with a specific project.
+
+### Headers
+
+<ParamField header="Authorization" type="string" required>
+  Bearer token for authentication
+</ParamField>
+
+### Path Parameters
+
+<ParamField path="project_id" type="string" required>
+  Unique project identifier
+</ParamField>
+
+### Response
+
+<ResponseField name="api_keys" type="array">
+  Array of API key objects
+  <Expandable title="API Key Object">
+    <ResponseField name="id" type="string">
+      API key unique identifier
+    </ResponseField>
+    <ResponseField name="name" type="string">
+      API key name
+    </ResponseField>
+    <ResponseField name="project_id" type="string">
+      Associated project ID
+    </ResponseField>
+    <ResponseField name="created_at" type="string">
+      API key creation timestamp
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+  The actual API key values are not returned for security reasons. Only the metadata is shown.
+</Note>

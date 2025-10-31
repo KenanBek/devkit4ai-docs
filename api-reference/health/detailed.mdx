@@ -1,0 +1,29 @@
+---
+title: "Detailed Health Check"
+api: "GET /api/v1/health/detailed"
+description: "Detailed health check with additional system information"
+---
+
+This endpoint provides a comprehensive health check with additional system information beyond the basic health check.
+
+### Response
+
+<ResponseField name="status" type="string">
+  Overall health status
+</ResponseField>
+
+<ResponseField name="database" type="object">
+  Detailed database health information
+</ResponseField>
+
+<ResponseField name="storage" type="object">
+  Detailed storage system information
+</ResponseField>
+
+<ResponseField name="redis" type="object">
+  Detailed Redis system information
+</ResponseField>
+
+<ResponseField name="timestamp" type="string">
+  Timestamp of the health check
+</ResponseField>

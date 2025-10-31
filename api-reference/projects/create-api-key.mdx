@@ -1,0 +1,51 @@
+---
+title: "Create API Key"
+api: "POST /api/v1/projects/{project_id}/api-keys"
+description: "Create a new API key for a project"
+---
+
+Create a new API key for a specific project. Requires project ownership.
+
+### Headers
+
+<ParamField header="Authorization" type="string" required>
+  Bearer token for authentication
+</ParamField>
+
+### Path Parameters
+
+<ParamField path="project_id" type="string" required>
+  Unique project identifier
+</ParamField>
+
+### Body
+
+<ParamField body="name" type="string">
+  API key name/description (optional)
+</ParamField>
+
+### Response
+
+<ResponseField name="id" type="string">
+  API key unique identifier
+</ResponseField>
+
+<ResponseField name="key" type="string">
+  The actual API key (only shown once during creation)
+</ResponseField>
+
+<ResponseField name="name" type="string">
+  API key name
+</ResponseField>
+
+<ResponseField name="project_id" type="string">
+  Associated project ID
+</ResponseField>
+
+<ResponseField name="created_at" type="string">
+  API key creation timestamp
+</ResponseField>
+
+<Warning>
+  The API key is only displayed once during creation. Store it securely as you won't be able to retrieve it again.
+</Warning>

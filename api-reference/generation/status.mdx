@@ -1,0 +1,37 @@
+---
+title: "Get Generation Status"
+api: "GET /api/v1/generation/generations-v2/{generation_id}/status"
+description: "Get the status of a generation request"
+---
+
+Retrieve the current status and results of a specific generation request.
+
+### Headers
+
+<ParamField header="Authorization" type="string" required>
+  Bearer token for authentication
+</ParamField>
+
+### Path Parameters
+
+<ParamField path="generation_id" type="string" required>
+  Unique generation identifier
+</ParamField>
+
+### Response
+
+<ResponseField name="id" type="string">
+  Generation unique identifier
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Current status (pending, processing, completed, failed)
+</ResponseField>
+
+<ResponseField name="result" type="object">
+  Generation result (when completed)
+</ResponseField>
+
+<ResponseField name="error" type="string">
+  Error message (if failed)
+</ResponseField>

@@ -57,12 +57,49 @@
             ]
           },
           {
-            "group": "Endpoint examples",
+            "group": "Health Check",
             "pages": [
-              "api-reference/endpoint/get",
-              "api-reference/endpoint/create",
-              "api-reference/endpoint/delete",
-              "api-reference/endpoint/webhook"
+              "api-reference/health/check",
+              "api-reference/health/database",
+              "api-reference/health/storage",
+              "api-reference/health/redis",
+              "api-reference/health/detailed"
+            ]
+          },
+          {
+            "group": "Authentication",
+            "pages": [
+              "api-reference/auth/register",
+              "api-reference/auth/login",
+              "api-reference/auth/me",
+              "api-reference/auth/refresh",
+              "api-reference/auth/verify-email",
+              "api-reference/auth/request-verification"
+            ]
+          },
+          {
+            "group": "Project Management",
+            "pages": [
+              "api-reference/projects/list",
+              "api-reference/projects/create",
+              "api-reference/projects/get",
+              "api-reference/projects/delete",
+              "api-reference/projects/create-api-key",
+              "api-reference/projects/list-api-keys",
+              "api-reference/projects/revoke-api-key"
+            ]
+          },
+          {
+            "group": "AI Generation",
+            "pages": [
+              "api-reference/generation/create",
+              "api-reference/generation/status",
+              "api-reference/generation/list",
+              "api-reference/generation/toggle-public",
+              "api-reference/generation/delete",
+              "api-reference/generation/public-list",
+              "api-reference/generation/create-anonymous",
+              "api-reference/generation/anonymous-status"
             ]
           }
         ]

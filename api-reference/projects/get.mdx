@@ -1,0 +1,45 @@
+---
+title: "Get Project"
+api: "GET /api/v1/projects/{project_id}"
+description: "Get details of a specific project"
+---
+
+Retrieve detailed information about a specific project.
+
+### Headers
+
+<ParamField header="Authorization" type="string" required>
+  Bearer token for authentication
+</ParamField>
+
+### Path Parameters
+
+<ParamField path="project_id" type="string" required>
+  Unique project identifier
+</ParamField>
+
+### Response
+
+<ResponseField name="id" type="string">
+  Project unique identifier
+</ResponseField>
+
+<ResponseField name="name" type="string">
+  Project name
+</ResponseField>
+
+<ResponseField name="description" type="string">
+  Project description
+</ResponseField>
+
+<ResponseField name="user_id" type="string">
+  Owner's user ID
+</ResponseField>
+
+<ResponseField name="created_at" type="string">
+  Project creation timestamp
+</ResponseField>
+
+<ResponseField name="updated_at" type="string">
+  Last update timestamp
+</ResponseField>

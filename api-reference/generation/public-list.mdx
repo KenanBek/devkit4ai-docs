@@ -1,0 +1,35 @@
+---
+title: "List Public Generations"
+api: "GET /api/v1/generation/public-generations-v2"
+description: "Get all public generation requests"
+---
+
+Retrieve a paginated list of all publicly visible generation requests. No authentication required.
+
+### Query Parameters
+
+<ParamField query="page" type="integer">
+  Page number (default: 1)
+</ParamField>
+
+<ParamField query="per_page" type="integer">
+  Items per page (default: 20)
+</ParamField>
+
+### Response
+
+<ResponseField name="generations" type="array">
+  Array of public generation objects
+</ResponseField>
+
+<ResponseField name="total" type="integer">
+  Total number of public generations
+</ResponseField>
+
+<ResponseField name="page" type="integer">
+  Current page number
+</ResponseField>
+
+<ResponseField name="per_page" type="integer">
+  Items per page
+</ResponseField>
