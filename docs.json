@@ -48,59 +48,59 @@
         ]
       },
       {
-        "tab": "API reference",
-        "openapi": "api-reference/openapi.json",
+        "tab": "Cloud API",
+        "openapi": "cloud-api/openapi.json",
         "groups": [
           {
             "group": "API documentation",
             "pages": [
-              "api-reference/introduction"
+              "cloud-api/introduction"
             ]
           },
           {
             "group": "Health Check",
             "pages": [
-              "api-reference/health/check",
-              "api-reference/health/database",
-              "api-reference/health/storage",
-              "api-reference/health/redis",
-              "api-reference/health/detailed"
+              "cloud-api/health/check",
+              "cloud-api/health/database",
+              "cloud-api/health/storage",
+              "cloud-api/health/redis",
+              "cloud-api/health/detailed"
             ]
           },
           {
             "group": "Authentication",
             "pages": [
-              "api-reference/auth/register",
-              "api-reference/auth/login",
-              "api-reference/auth/me",
-              "api-reference/auth/refresh",
-              "api-reference/auth/verify-email",
-              "api-reference/auth/request-verification"
+              "cloud-api/auth/register",
+              "cloud-api/auth/login",
+              "cloud-api/auth/me",
+              "cloud-api/auth/refresh",
+              "cloud-api/auth/verify-email",
+              "cloud-api/auth/request-verification"
             ]
           },
           {
             "group": "Project Management",
             "pages": [
-              "api-reference/projects/list",
-              "api-reference/projects/create",
-              "api-reference/projects/get",
-              "api-reference/projects/delete",
-              "api-reference/projects/create-api-key",
-              "api-reference/projects/list-api-keys",
-              "api-reference/projects/revoke-api-key"
+              "cloud-api/projects/list",
+              "cloud-api/projects/create",
+              "cloud-api/projects/get",
+              "cloud-api/projects/delete",
+              "cloud-api/projects/create-api-key",
+              "cloud-api/projects/list-api-keys",
+              "cloud-api/projects/revoke-api-key"
             ]
           },
           {
             "group": "AI Generation",
             "pages": [
-              "api-reference/generation/create",
-              "api-reference/generation/status",
-              "api-reference/generation/list",
-              "api-reference/generation/toggle-public",
-              "api-reference/generation/delete",
-              "api-reference/generation/public-list",
-              "api-reference/generation/create-anonymous",
-              "api-reference/generation/anonymous-status"
+              "cloud-api/generation/create",
+              "cloud-api/generation/status",
+              "cloud-api/generation/list",
+              "cloud-api/generation/toggle-public",
+              "cloud-api/generation/delete",
+              "cloud-api/generation/public-list",
+              "cloud-api/generation/create-anonymous",
+              "cloud-api/generation/anonymous-status"
             ]
           }
         ]
