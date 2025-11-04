@@ -129,7 +129,7 @@ This is the main Mintlify configuration file. When editing:
 2. Run local preview: `mint dev` (uses port 3000 by default)
 3. Use custom port if needed: `mint dev --port 3333`
 4. Validate links: `mint broken-links`
-5. Update CLI when needed: `npm mint update`
+5. Update CLI when needed: `mint update`
 
 ## Best Practices
 
