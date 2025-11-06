@@ -41,7 +41,7 @@ When documenting or updating content, prioritize these components and their user
 - `/getting-started` - Platform overview and core concepts
 - `/tutorials` - Step-by-step tutorials and use cases
 - `/development-tools` - AI assistant integration guides (Cursor, Claude Code, Windsurf)
-- `/reference` - Architecture, configuration, components, and best practices
+- `/reference` - Architecture, configuration, and best practices
 - `/essentials` - Core documentation guides (settings, navigation, markdown, code, images, reusable-snippets)
 - `/snippets` - Reusable MDX snippets
 - `/images` - Image assets
@@ -97,7 +97,7 @@ Every MDX page must begin with YAML frontmatter:
 ---
 title: "Clear, specific, keyword-rich title"
 description: "Concise description explaining page purpose and value"
-icon: "icon-name" # Optional, for navigation
+icon: "icon-name"
 ---
 ```
 
@@ -187,10 +187,9 @@ This is the main Mintlify configuration file. When editing:
 ## Development Workflow
 
 1. Install Mintlify CLI: `npm i -g mint`
-2. Run local preview: `mint dev` (uses port 3000 by default)
-3. Use custom port if needed: `mint dev --port 3333`
-4. Validate links: `mint broken-links`
-5. Update CLI when needed: `mint update`
+2. Run local preview: `mint dev` (uses port 4001 by default)
+3. Validate links: `mint broken-links`
+4. Update CLI when needed: `mint update`
 
 ## Best Practices
 
@@ -216,8 +215,8 @@ This is the main Mintlify configuration file. When editing:
 
 ### Updating API documentation
 
-1. Update OpenAPI specification if needed (`api-reference/openapi.json`)
-2. Update or create MDX files in `/api-reference`
+1. Update OpenAPI specification if needed (`cloud-api/openapi.json`)
+2. Update or create MDX files in `/cloud-api` directory
 3. Use `<ParamField>` and `<ResponseField>` components
 4. Include `<RequestExample>` and `<ResponseExample>`
 5. Update navigation in `docs.json` if adding new endpoints

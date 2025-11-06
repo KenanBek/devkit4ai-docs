@@ -279,15 +279,6 @@
             ]
           },
           {
-            "group": "Components",
-            "pages": [
-              "reference/components/ui-components",
-              "reference/components/generic-components",
-              "reference/components/project-components",
-              "reference/components/starter-components"
-            ]
-          },
-          {
             "group": "Best Practices",
             "pages": [
               "reference/best-practices/security",
