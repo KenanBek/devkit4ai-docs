@@ -2,6 +2,16 @@
 
 This repository contains the documentation for Dev Kit for AI, built using Mintlify. The documentation provides guides, API references, and AI tool integration instructions for users of the Dev Kit platform.
 
+## Documentation Focus
+
+The documentation focuses on three core components of the Dev Kit platform (ordered by importance from the user's perspective):
+
+1. **Starter Kit** - A Next.js-based web application template that developers clone and customize to build AI-powered SaaS applications
+2. **Cloud Admin** - A web console where developers manage their projects, API keys, and view analytics
+3. **Cloud API** - Backend API services that power AI generation and project management features
+
+When documenting or updating content, prioritize these components and their user-facing features.
+
 ## Technology Stack
 
 - **Framework**: Mintlify documentation platform
@@ -12,13 +22,64 @@ This repository contains the documentation for Dev Kit for AI, built using Mintl
 ## Folder Structure
 
 - `/` - Root contains main documentation pages (index.mdx, quickstart.mdx, development.mdx)
+- `/starter-kit` - Complete guides for setting up and customizing the Starter Kit application
+  - `/auth` - Authentication and user management documentation
+  - `/features` - Core features and capabilities
+  - `/customization` - Branding, styling, and customization guides
+  - `/deployment` - Production deployment and hosting guides
+  - `/advanced` - Advanced topics like state management and API integration
+- `/cloud-admin` - Documentation for the Cloud Admin console
+  - `/projects` - Project creation and management
+  - `/api-keys` - API key management and security
+  - `/users` - User analytics and management
+  - `/console` - Console features and quick actions
+- `/cloud-api` - API reference documentation
+  - `/health` - Health check endpoints
+  - `/auth` - Authentication endpoints
+  - `/projects` - Project management endpoints
+  - `/generation` - AI generation endpoints
+- `/getting-started` - Platform overview and core concepts
+- `/tutorials` - Step-by-step tutorials and use cases
+- `/development-tools` - AI assistant integration guides (Cursor, Claude Code, Windsurf)
+- `/reference` - Architecture, configuration, components, and best practices
 - `/essentials` - Core documentation guides (settings, navigation, markdown, code, images, reusable-snippets)
-- `/ai-tools` - AI tool integration guides (cursor, claude-code, windsurf)
-- `/api-reference` - API documentation organized by feature (health, auth, projects, generation)
 - `/snippets` - Reusable MDX snippets
 - `/images` - Image assets
 - `/logo` - Logo assets
 - `docs.json` - Mintlify configuration file
+
+## Content Guidelines
+
+### Component Focus
+
+When creating or updating documentation:
+
+- **Starter Kit documentation** should focus on:
+  - Installation and setup procedures
+  - Feature implementation and customization
+  - Deployment to various hosting platforms
+  - Integration with Cloud API
+  - Best practices for building SaaS applications
+
+- **Cloud Admin documentation** should focus on:
+  - Console navigation and features
+  - Project and API key management workflows
+  - User analytics and monitoring
+  - Security best practices
+
+- **Cloud API documentation** should focus on:
+  - Endpoint functionality and parameters
+  - Authentication and authorization
+  - Request/response examples
+  - Integration patterns with Starter Kit
+
+### What to Avoid
+
+- Do not include internal implementation details or architecture
+- Do not document backend infrastructure or deployment processes
+- Do not reference internal codebases or private repositories
+- Keep focus on user-facing features and public APIs
+- Avoid technical details that are not relevant to end users building applications with the platform
 
 ## File Naming Conventions
 
