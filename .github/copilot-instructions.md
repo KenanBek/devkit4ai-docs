@@ -40,12 +40,18 @@ When documenting or updating content, prioritize these components and their user
   - `/generation` - AI generation endpoints
 - `/getting-started` - Platform overview and core concepts
 - `/tutorials` - Step-by-step tutorials and use cases
-- `/development-tools` - AI assistant integration guides (Cursor, Claude Code, Windsurf)
+  - `/first-app` - First app tutorials
+  - `/use-cases` - AI use case examples
+  - `/integrations` - Integration guides
+- `/development-tools` - AI assistant integration guides and local development
+  - `/ai-assistants` - Cursor, Claude Code, Windsurf guides
+  - `/local-dev` - Frontend, backend, testing, multi-mode setup
+  - `/vscode` - VS Code workspace configuration
 - `/reference` - Architecture, configuration, and best practices
-- `/essentials` - Core documentation guides (settings, navigation, markdown, code, images, reusable-snippets)
-- `/snippets` - Reusable MDX snippets
-- `/images` - Image assets
-- `/logo` - Logo assets
+  - `/architecture` - Event sourcing, CQRS, multi-mode design, database schema
+  - `/config` - Environment variables, deployment modes, security settings
+  - `/best-practices` - Security, performance, code organization, testing
+- `/logo` - Logo assets (devkit-light.png, devkit-dark.png)
 - `docs.json` - Mintlify configuration file
 
 ## Content Guidelines
@@ -223,11 +229,17 @@ This is the main Mintlify configuration file. When editing:
 
 ### Adding images
 
-1. Place images in `/images` directory
+1. Place images in root directory or appropriate subdirectory
 2. Use descriptive filenames
 3. Wrap in `<Frame>` component
 4. Include descriptive alt text
 5. Optimize images for web (reasonable file size)
+
+## Additional Information
+
+The documentation repository does not include `/essentials`, `/snippets`, or `/images` folders. Images are typically placed in the root directory or in the `/logo` folder for brand assets.
+
+The starter-kit is exported from the user-app in the private devkit4ai project. Developers clone the starter-kit repository to create their own projects. Direct changes are made to user-app in devkit4ai, then exported to starter-kit with only end-user relevant features.
 
 ## Ignore Patterns
 
