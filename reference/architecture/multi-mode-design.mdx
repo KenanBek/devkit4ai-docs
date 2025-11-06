@@ -1,0 +1,13 @@
+---
+title: "Multi-Mode Design"
+description: "See how operator, console, and project deployments share one codebase."
+icon: "layers-3"
+---
+
+Dev Kit for AI uses environment-driven mode selection handled by `lib/deployment-mode.ts` in the user app and Starter Kit:
+
+- `operator` mode powers Cloud Admin and requires the `DEVKIT4AI_OPERATOR_KEY` header, exposing platform-level tooling.
+- `console` mode targets developers and uses `DEVKIT4AI_DEVELOPER_KEY` to authorize project management routes.
+- `project` mode serves end users, scoping requests with developer, project, and API keys.
+
+The backend reads these headers to enforce RBAC, ensuring documentation and implementation stay in sync.

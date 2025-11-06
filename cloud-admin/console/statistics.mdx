@@ -1,0 +1,11 @@
+---
+title: "Console Statistics"
+description: "Interpret the metrics displayed on the Cloud Admin dashboard."
+icon: "pie-chart"
+---
+
+Stats cards on the console home page render counts for projects, API keys, and end users. They rely on the data returned by `fetchProjects()` and forthcoming endpoints that expose user totals.
+
+- Counts update in real time because the server actions execute on every request (no caching) until we add streaming updates.
+- Icons and labels align with the design system shared across the Starter Kit, keeping the UX consistent.
+- Documentation here will expand with additional metrics (generation usage, active users) as soon as those widgets ship.

@@ -1,0 +1,11 @@
+---
+title: "Integration: Stripe Payments"
+description: "Add billing flows on top of Dev Kit for AI projects."
+icon: "credit-card"
+---
+
+Stripe integration is a common request, and the event-sourced architecture makes it straightforward to track billing events:
+
+- Use webhooks to emit domain events when payments succeed or fail, keeping the event store the single source of truth.
+- Securely store Stripe keys alongside existing environment variables; the deployment tooling already expects secrets to be managed outside the repository.
+- We will publish a reference implementation here once the official integration ships.

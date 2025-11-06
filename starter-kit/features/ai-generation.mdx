@@ -1,0 +1,13 @@
+---
+title: "AI Generation"
+description: "Plan your image generation flows on top of the Cloud API endpoints."
+icon: "sparkles"
+---
+
+The Cloud API exposes the `/api/v1/generation/*` endpoints described in `cloud-api/generation/*.mdx`. The exported Starter Kit does not yet ship a first-party UI for queueing generations, but the codebase already includes the plumbing you need:
+
+- Authenticated requests automatically attach the `end_user` headers required by the event-sourced backend.
+- File storage configuration (S3 or local) follows the same feature flags outlined in `devkit4ai/backend-api/SPECS.md`.
+- Example integration patterns will land here as we document a reference implementation that stays faithful to the production backend.
+
+Until then, treat this page as the staging area for accurate, code-backed guidance rather than speculative UI walkthroughs.

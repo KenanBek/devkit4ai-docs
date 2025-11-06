@@ -1,0 +1,13 @@
+---
+title: "API Integration"
+description: "Call the Cloud API from server actions and Route Handlers with full RBAC headers."
+icon: "network"
+---
+
+Reuse the patterns already in the codebase when calling the Cloud API:
+
+- Server actions bundle the required headers (`X-User-Role`, `X-Developer-Key`, `X-Project-ID`, `X-API-Key`) via `useRegistrationHeaders`.
+- Timeouts and error handling follow the AbortController pattern (`10_000ms`) implemented across `app/actions.ts` and console actions.
+- Route Handlers can share the same helpers because they import from the shared `lib` directory.
+
+Future content will include end-to-end examples for projects that need to compose additional endpoints beyond what ships out of the box.

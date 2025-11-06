@@ -1,0 +1,13 @@
+---
+title: "Custom Pages"
+description: "Add new routes using the App Router structure exported with the Starter Kit."
+icon: "file-plus"
+---
+
+New pages can follow the patterns already present under `app/`:
+
+- Server Components by default; opt into `"use client"` only when you need browser APIs, matching the guidance in `starter-kit/SPECS.md`.
+- Reuse shared layouts (e.g., `(auth)/layout.tsx`) to pick up consistent headers, footers, and providers.
+- When wiring server actions, lean on the established `encodedRedirect` helpers and timeout handling showcased in `app/actions.ts`.
+
+We will add concrete tutorials here that stay synchronized with the codebase as new examples ship.

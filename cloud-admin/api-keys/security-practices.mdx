@@ -1,0 +1,13 @@
+---
+title: "API Key Security"
+description: "Follow the same safeguards the platform uses to protect developer and project keys."
+icon: "shield-check"
+---
+
+Security recommendations mirror the controls implemented in the backend:
+
+- Keys are hashed server-side; never store the plain text value after the initial reveal.
+- Rotate keys through the Cloud API or upcoming console forms so the event store tracks revocation events.
+- Limit who can access the operator console where developer keys are created, since those keys unlock privileged actions.
+
+We will document additional operational practices here as we formalize runbooks for the hosted service.

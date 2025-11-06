@@ -1,0 +1,9 @@
+---
+title: "Security Best Practices"
+description: "Align your customizations with the platform's security posture."
+icon: "shield-check"
+---
+
+- Keep secrets out of the repo; rely on environment managers as noted in the configuration reference.
+- Respect RBAC headers when calling the Cloud API so the backend can enforce permissions.
+- Hash any new credentials using the same utilities the backend uses (SHA-256 for keys, bcrypt for passwords) to stay consistent with existing tables.

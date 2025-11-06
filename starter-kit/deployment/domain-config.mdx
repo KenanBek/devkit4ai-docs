@@ -1,0 +1,13 @@
+---
+title: "Domain Configuration"
+description: "Point custom domains to your deployed Starter Kit instance."
+icon: "globe"
+---
+
+Domain setup depends on your hosting provider, but the requirements stay consistent:
+
+- Serve the app over HTTPS so the httpOnly authentication cookies remain secure, matching the expectations codified in `lib/auth-server.ts`.
+- Update any environment variables (such as `NEXT_PUBLIC_SITE_URL`, if you introduce one) in both the deployment platform and the App Router metadata for accurate links.
+- Coordinate DNS records (A, CNAME, or ALIAS) with the guidance from your platform—Vercel, for example, exposes automated certificate management that works well with the Starter Kit.
+
+We will expand this page with provider-specific instructions to keep it tightly coupled to real-world deployments.

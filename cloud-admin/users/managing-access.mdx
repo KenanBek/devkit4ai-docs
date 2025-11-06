@@ -1,0 +1,13 @@
+---
+title: "Managing Access"
+description: "Control which users can access projects and platform features."
+icon: "shield"
+---
+
+Access control is enforced by headers (`X-User-Role`, `X-Developer-Key`, `X-Project-ID`, `X-API-Key`) validated in `app/system/auth/rbac.py`. Cloud Admin will layer UI on top of these rules so developers can:
+
+- Activate or deactivate end-user accounts by issuing commands that update the read models.
+- Invite additional collaborators by granting project membership via forthcoming endpoints.
+- Revoke access by removing keys or toggling `is_active`, matching the underlying database schema.
+
+Operational guides will appear here as those actions become available in the console.

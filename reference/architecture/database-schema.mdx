@@ -1,0 +1,13 @@
+---
+title: "Database Schema"
+description: "Review the core tables that back the event-sourced read models."
+icon: "table"
+---
+
+While events drive all writes, read models persist in PostgreSQL tables managed by SQLAlchemy:
+
+- `users`, `developer_keys`, `projects`, `api_keys`, and `project_users` mirror the models described in `devkit4ai/backend-api/app/features/*/models.py`.
+- Event store tables (`event_store`, `event_streams`) capture immutable events with indices for fast lookups.
+- Additional tables (generations, uploads) follow the same pattern and will be documented here with ER diagrams derived from the live schema.
+
+This page will expand with diagrams and column-level references pulled straight from the repository.

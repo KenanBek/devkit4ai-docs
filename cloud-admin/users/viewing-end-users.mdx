@@ -1,0 +1,11 @@
+---
+title: "Viewing End Users"
+description: "Track the end users associated with each project."
+icon: "users"
+---
+
+End users register through project-mode apps, triggering the same `UserWasRegistered` and `UserWasActivated` events as developers. The read models already record project associations, so Cloud Admin will surface them once the console UI lands.
+
+- Upcoming views will query dedicated endpoints that expose project-scoped user lists. Those endpoints will rely on the RBAC helpers in `app/system/auth/project_access.py` to ensure developers see only their own data.
+- Until the UI ships, operators can inspect the backing tables directly or build internal monitors against the Cloud API.
+- We will update this page with concrete instructions as soon as the official experience is available.

@@ -1,0 +1,13 @@
+---
+title: "Registration and Login"
+description: "See how the Starter Kit delegates auth flows to the Cloud API."
+icon: "log-in"
+---
+
+The Starter Kit reuses the shared server actions defined in `starter-kit/app/actions.ts`:
+
+- `backendLoginAction` posts to `/api/v1/auth/login`, stores JWT cookies, and redirects based on the resolved role.
+- Registration actions remain available for compatibility but, in project mode, redirect users to Cloud Admin for developer sign-up.
+- Error handling and rate-limit messaging mirror the server action implementation, so UI messaging aligns with backend behavior.
+
+Upcoming sections document role handling, JWT lifetimes, and guarded routes that depend on these flows.

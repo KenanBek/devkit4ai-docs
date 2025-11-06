@@ -1,0 +1,13 @@
+---
+title: "Local Backend Development"
+description: "Work on the FastAPI service with event sourcing enabled."
+icon: "server-cog"
+---
+
+Backend setup follows the steps in `devkit4ai/backend-api/README.md`:
+
+- `make setup` creates a virtual environment and installs dependencies pinned in `pyproject.toml`.
+- `make start-services` boots PostgreSQL and Redis via Docker, matching the infrastructure the app expects.
+- `make run` launches Uvicorn with auto-reload so command handlers, projectors, and policies rebuild as you edit them.
+
+The documentation here will expand with debugging workflows and common migrations pulled directly from the main repo.

@@ -1,0 +1,11 @@
+---
+title: "Creating Project API Keys"
+description: "Generate project-scoped keys for Starter Kit deployments and end-user apps."
+icon: "key-round"
+---
+
+Project API keys are provisioned per project via `POST /api/v1/projects/create-api-key`, exactly as documented in the Cloud API reference.
+
+- Keys are hashed with SHA-256 and stored with a short prefix so they can be identified without revealing the secret, matching the implementation in `devkit4ai/backend-api`.
+- Cloud Admin will surface a UI that calls this endpoint and shows the full key once before persisting only the hash.
+- Newly generated keys become valid immediately and inherit the multi-tenant scoping enforced by the backend projectors.

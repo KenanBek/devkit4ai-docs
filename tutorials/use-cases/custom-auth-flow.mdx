@@ -1,0 +1,11 @@
+---
+title: "Use Case: Custom Auth Flow"
+description: "Tailor authentication while keeping parity with the Cloud API."
+icon: "lock-keyhole"
+---
+
+This scenario shows how to extend login and registration without breaking compatibility:
+
+- Start with the shared server actions (`backendLoginAction`, `backendRegisterAction`) so JWT handling stays consistent.
+- Add custom validation or multi-factor checks in wrappers that still call the Cloud API endpoints described in `cloud-api/auth/*`.
+- Update UI states using the existing form components (`components/form-message`, `components/submit-button`) to keep UX consistent.

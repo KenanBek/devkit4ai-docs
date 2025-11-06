@@ -1,0 +1,13 @@
+---
+title: "CQRS"
+description: "Separate write commands from read models within Dev Kit for AI."
+icon: "split"
+---
+
+The platform implements Command Query Responsibility Segregation on top of its event store:
+
+- **Commands** execute domain logic through aggregates and append events (e.g., `RegisterUserCommand`, `CreateProjectCommand`).
+- **Queries** consume projector-built tables (users, projects, API keys) so reads stay fast and isolated from write contention.
+- **Policies** react to events asynchronously, enabling side effects (emails, storage uploads) without blocking command execution.
+
+These concepts align with the code documented in `devkit4ai/backend-api/SPECS.md` and the usage patterns visible in the user-app and Starter Kit.

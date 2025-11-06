@@ -1,0 +1,11 @@
+---
+title: "Managing Multiple Projects"
+description: "Keep track of several project workspaces inside one developer account."
+icon: "layers"
+---
+
+Developers can own multiple projects because the backend associates each project with a developer ID through the event store:
+
+- The console's project list is powered by `fetchProjects()`, which pulls every project tied to the authenticated developer via `/api/v1/projects`.
+- API key listings are scoped per project, matching the Cloud API routes documented under `cloud-api/projects/*`.
+- As the UI grows, this page will show filters, status indicators, and lifecycle actions that remain faithful to the real implementation.

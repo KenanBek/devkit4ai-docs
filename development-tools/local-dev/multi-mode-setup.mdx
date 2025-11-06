@@ -1,0 +1,11 @@
+---
+title: "Local Multi-Mode Setup"
+description: "Run operator, console, and project apps together."
+icon: "layers"
+---
+
+Use the root `devkit4ai/Makefile` to boot the entire platform locally:
+
+- `make run-multi-mode` starts the backend API, operator console, developer console, two project apps, PostgreSQL, and Redis.
+- Ports (3000-3003 for frontends, 8000 for the API) match the defaults described in `AGENTS.md` and the top-level README.
+- This setup mirrors production headers and JWT flows, so it is the recommended way to test cross-service features before deployment.

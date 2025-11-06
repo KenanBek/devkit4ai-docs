@@ -1,0 +1,13 @@
+---
+title: "Connect to Cloud Admin and Cloud API"
+description: "Wire the Starter Kit to the hosted services using generated keys."
+icon: "plug"
+---
+
+To connect a cloned Starter Kit to your workspace:
+
+1. Sign in to Cloud Admin (operator-mode deployment) and locate your developer key, default project, and project API key.
+2. Copy the values into `.env.local` per the variables listed in the Environment Configuration page.
+3. Restart the dev server so `hydrateDeploymentMode()` re-reads the secrets and exposes the correct headers (`X-Developer-Key`, `X-Project-ID`, `X-API-Key`).
+
+All outbound requests from server actions and client fetch helpers will then authenticate against the Cloud API exactly as implemented in the shared `lib/deployment-mode.ts` utilities.

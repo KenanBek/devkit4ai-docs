@@ -1,0 +1,11 @@
+---
+title: "First App: Configure and Connect"
+description: "Add environment variables and verify API connectivity."
+icon: "link"
+---
+
+Reuse the guidance from `starter-kit/environment-config.mdx` to populate `.env.local` with your developer key, project ID, and project API key.
+
+- Restart the dev server so `hydrateDeploymentMode()` reads the values and attaches the correct headers.
+- Visit `/dashboard` to confirm authentication works end-to-end. The page should display your developer email and role pulled from `/api/v1/auth/me`.
+- Check the console banner for warnings about missing configuration; resolve them before proceeding to customization.

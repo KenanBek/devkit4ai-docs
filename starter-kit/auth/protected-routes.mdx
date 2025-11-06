@@ -1,0 +1,13 @@
+---
+title: "Protected Routes"
+description: "Implement server-side and client-side guards for authenticated experiences."
+icon: "lock"
+---
+
+Protected pages rely on the same utilities shipped with the Starter Kit:
+
+- Server components call `requireAuth()` (and optionally `requireRole`) from `lib/auth-server.ts` to redirect unauthenticated users to `/login` with a sanitized return URL.
+- Client components can reuse `useIsAuthenticated()` or `useRequireRole()` to conditionally render UI once the cached user is available.
+- Middleware in `middleware.ts` injects `x-pathname` headers for return URL support without performing auth logic, matching the production setup.
+
+Examples and recipes will be added here as we document common customizations.

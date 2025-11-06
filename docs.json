@@ -11,10 +11,10 @@
   "navigation": {
     "tabs": [
       {
-        "tab": "Guides",
+        "tab": "Getting Started",
         "groups": [
           {
-            "group": "Getting started",
+            "group": "Welcome",
             "pages": [
               "index",
               "quickstart",
@@ -22,27 +22,119 @@
             ]
           },
           {
+            "group": "Core Concepts",
+            "pages": [
+              "getting-started/platform-overview",
+              "getting-started/starter-kit-explained",
+              "getting-started/cloud-admin-explained",
+              "getting-started/cloud-api-explained"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Starter Kit",
+        "groups": [
+          {
+            "group": "Getting Started",
+            "pages": [
+              "starter-kit/installation",
+              "starter-kit/project-structure",
+              "starter-kit/environment-config",
+              "starter-kit/connecting-to-cloud"
+            ]
+          },
+          {
+            "group": "Authentication & Users",
+            "pages": [
+              "starter-kit/auth/registration-login",
+              "starter-kit/auth/role-based-access",
+              "starter-kit/auth/jwt-flow",
+              "starter-kit/auth/protected-routes"
+            ]
+          },
+          {
+            "group": "Features & Capabilities",
+            "pages": [
+              "starter-kit/features/ai-generation",
+              "starter-kit/features/user-dashboard",
+              "starter-kit/features/profile-management",
+              "starter-kit/features/project-settings"
+            ]
+          },
+          {
             "group": "Customization",
             "pages": [
-              "essentials/settings",
-              "essentials/navigation"
+              "starter-kit/customization/branding-styling",
+              "starter-kit/customization/custom-pages",
+              "starter-kit/customization/component-library",
+              "starter-kit/customization/theme-config",
+              "starter-kit/customization/deployment-modes"
             ]
           },
           {
-            "group": "Writing content",
+            "group": "Deployment",
             "pages": [
-              "essentials/markdown",
-              "essentials/code",
-              "essentials/images",
-              "essentials/reusable-snippets"
+              "starter-kit/deployment/production-build",
+              "starter-kit/deployment/hosting-options",
+              "starter-kit/deployment/environment-variables",
+              "starter-kit/deployment/domain-config"
             ]
           },
           {
-            "group": "AI tools",
+            "group": "Advanced Topics",
             "pages": [
-              "ai-tools/cursor",
-              "ai-tools/claude-code",
-              "ai-tools/windsurf"
+              "starter-kit/advanced/server-components",
+              "starter-kit/advanced/state-management",
+              "starter-kit/advanced/api-integration",
+              "starter-kit/advanced/multi-tenant"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Cloud Admin",
+        "groups": [
+          {
+            "group": "Getting Started",
+            "pages": [
+              "cloud-admin/getting-started",
+              "cloud-admin/first-login",
+              "cloud-admin/dashboard-overview"
+            ]
+          },
+          {
+            "group": "Project Management",
+            "pages": [
+              "cloud-admin/projects/creating-projects",
+              "cloud-admin/projects/project-settings",
+              "cloud-admin/projects/managing-multiple-projects",
+              "cloud-admin/projects/lifecycle"
+            ]
+          },
+          {
+            "group": "API Key Management",
+            "pages": [
+              "cloud-admin/api-keys/creating-developer-keys",
+              "cloud-admin/api-keys/creating-project-keys",
+              "cloud-admin/api-keys/security-practices",
+              "cloud-admin/api-keys/revoking-rotating"
+            ]
+          },
+          {
+            "group": "User Management",
+            "pages": [
+              "cloud-admin/users/viewing-end-users",
+              "cloud-admin/users/user-analytics",
+              "cloud-admin/users/managing-access"
+            ]
+          },
+          {
+            "group": "Console Features",
+            "pages": [
+              "cloud-admin/console/quick-actions",
+              "cloud-admin/console/statistics",
+              "cloud-admin/console/getting-started-guide"
             ]
           }
         ]
@@ -101,6 +193,107 @@
               "cloud-api/generation/public-list",
               "cloud-api/generation/create-anonymous",
               "cloud-api/generation/anonymous-status"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Tutorials",
+        "groups": [
+          {
+            "group": "First App",
+            "pages": [
+              "tutorials/first-app/setup",
+              "tutorials/first-app/clone-starter",
+              "tutorials/first-app/configure-connect",
+              "tutorials/first-app/customize-ui",
+              "tutorials/first-app/deploy"
+            ]
+          },
+          {
+            "group": "Use Cases",
+            "pages": [
+              "tutorials/use-cases/ai-image-saas",
+              "tutorials/use-cases/multi-user-platform",
+              "tutorials/use-cases/custom-auth-flow",
+              "tutorials/use-cases/api-first-app"
+            ]
+          },
+          {
+            "group": "Integrations",
+            "pages": [
+              "tutorials/integrations/stripe-payments",
+              "tutorials/integrations/email-notifications",
+              "tutorials/integrations/analytics",
+              "tutorials/integrations/custom-ai-models"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Development Tools",
+        "groups": [
+          {
+            "group": "AI Assistants",
+            "pages": [
+              "development-tools/ai-assistants/cursor",
+              "development-tools/ai-assistants/claude-code",
+              "development-tools/ai-assistants/windsurf"
+            ]
+          },
+          {
+            "group": "Local Development",
+            "pages": [
+              "development-tools/local-dev/frontend-dev",
+              "development-tools/local-dev/testing",
+              "development-tools/local-dev/backend-dev",
+              "development-tools/local-dev/multi-mode-setup"
+            ]
+          },
+          {
+            "group": "Workspace Configuration",
+            "pages": [
+              "development-tools/vscode/workspace-config"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Reference",
+        "groups": [
+          {
+            "group": "Architecture",
+            "pages": [
+              "reference/architecture/event-sourcing",
+              "reference/architecture/cqrs",
+              "reference/architecture/multi-mode-design",
+              "reference/architecture/database-schema"
+            ]
+          },
+          {
+            "group": "Configuration",
+            "pages": [
+              "reference/config/environment-variables",
+              "reference/config/deployment-modes",
+              "reference/config/security-settings"
+            ]
+          },
+          {
+            "group": "Components",
+            "pages": [
+              "reference/components/ui-components",
+              "reference/components/generic-components",
+              "reference/components/project-components",
+              "reference/components/starter-components"
+            ]
+          },
+          {
+            "group": "Best Practices",
+            "pages": [
+              "reference/best-practices/security",
+              "reference/best-practices/performance",
+              "reference/best-practices/code-organization",
+              "reference/best-practices/testing"
             ]
           }
         ]

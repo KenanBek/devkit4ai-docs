@@ -1,0 +1,11 @@
+---
+title: "Integration: Email Notifications"
+description: "Send transactional emails in response to platform events."
+icon: "mail"
+---
+
+Email notifications tie in naturally with the policy layer in the backend:
+
+- The placeholder `SendWelcomeEmailWhenUserActivated` policy already exists; replace the logger with calls to your email provider (SES, SendGrid, Resend).
+- Treat emails as side effects triggered by events so they remain idempotent and replay-safe.
+- This page will host detailed steps and code samples once we finalize the reference integration.

@@ -1,80 +1,84 @@
 ---
 title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+description: "Launch the Dev Kit for AI Starter Kit with the hosted Cloud API."
+icon: "rocket"
 ---
 
-## Get started in three steps
+<Info>
+You need a GitHub account, Node.js 19 or later, and access to the hosted Cloud Admin (`https://devkit4ai.com/console` or `https://vibecoding.ad/console`). Everything else is provided for you.
+</Info>
 
-Get your documentation site running locally and make your first customization.
+## Before you begin
 
-### Step 1: Set up your local environment
+- Make sure you can sign in to Cloud Admin. New developer accounts can be created at `/register/developer` on either domain.
+- Confirm that Docker is available if you plan to run the backend locally later. The quickstart uses the hosted Cloud API, so Docker is optional.
+- Install `make` (or be ready to use the equivalent npm scripts) to match the commands referenced in the Starter Kit repository.
 
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
-    
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
-    
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
+## Launch in Five Steps
 
-### Step 2: Deploy your changes
+<Steps>
+  <Step title="Create a developer workspace">
+    Visit `https://devkit4ai.com/register/developer` (or the `vibecoding.ad` equivalent) and complete the registration flow. The event-sourced backend automatically provisions your developer role, default project, and API credentials as soon as the confirmation succeeds.
+  </Step>
+  <Step title="Collect your credentials">
+    After signing in, open the Console dashboard. Copy the generated **developer key**, **project ID**, and **project API key**. These values are stored securely in the backend as hashed secrets and surface once in the UI, so save them to your password manager.
+  </Step>
+  <Step title="Clone and install the Starter Kit">
+    ```bash
+    git clone https://github.com/VibeCodingStarter/starter-kit.git
+    cd starter-kit
+    make install   # or npm install
+    ```
+    The repo mirrors the `user-app` project-mode build and expects Node.js 19+ with Turbopack.
+  </Step>
+  <Step title="Configure environment variables">
+    Create `.env.local` (or update the existing example) with the credentials you gathered:
 
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
-    
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
+    ```bash
+    DEVKIT4AI_MODE=project
+    NEXT_PUBLIC_API_URL=https://api.vibecoding.ad
+    DEVKIT4AI_DEVELOPER_KEY=dk_your_developer_key
+    DEVKIT4AI_PROJECT_ID=00000000-0000-0000-0000-000000000000
+    DEVKIT4AI_PROJECT_KEY=pk_your_project_key
+    ```
 
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
+    The `NEXT_PUBLIC_API_URL` should match the region of the hosted Cloud API you are targeting.
+  </Step>
+  <Step title="Run the project-mode app">
+    ```bash
+    make dev   # boots npm run dev with Turbopack on port 3004
+    ```
+    Sign in using the same credentials you created in Cloud Admin. You will land on `/dashboard`, which confirms the project-mode flow is using the hosted Cloud API successfully.
+  </Step>
+</Steps>
 
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
+## Verify the connection
 
-### Step 3: Go live
+Use the generated tokens to call the Cloud API directly. This confirms your headers and keys are valid.
 
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
+```bash
+curl https://api.vibecoding.ad/api/v1/health \
+  -H "X-User-Role: end_user" \
+  -H "X-Developer-Key: dk_your_developer_key" \
+  -H "X-Project-ID: 00000000-0000-0000-0000-000000000000" \
+  -H "X-API-Key: pk_your_project_key"
+```
 
-## Next steps
+You should receive a JSON payload indicating the service status. Any authentication errors mean an environment variable is missing or mis-typed.
 
-Now that you have your docs running, explore these key features:
+## Where to go next
 
 <CardGroup cols={2}>
-
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
-
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
-
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="API documentation" icon="code" href="/cloud-api/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
+  <Card title="Platform Overview" icon="layers" href="/getting-started/platform-overview">
+    Review how the three core services collaborate across modes.
+  </Card>
+  <Card title="Environment Configuration" icon="gear" href="/starter-kit/environment-config">
+    Learn how each variable is validated inside the Starter Kit.
+  </Card>
+  <Card title="Cloud Admin Guide" icon="building" href="/cloud-admin/dashboard-overview">
+    Explore the console features that manage projects and keys.
+  </Card>
+  <Card title="First App Tutorial" icon="lightbulb" href="/tutorials/first-app/clone-starter">
+    Follow an end-to-end walkthrough that expands on this quickstart.
+  </Card>
 </CardGroup>
-
-<Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
-</Note>

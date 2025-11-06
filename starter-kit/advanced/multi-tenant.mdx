@@ -1,0 +1,13 @@
+---
+title: "Multi-Tenant Patterns"
+description: "Keep project data isolated while sharing the event-sourced backend."
+icon: "layers-3"
+---
+
+The Starter Kit inherits multi-tenancy from the backend event store:
+
+- Every authenticated request includes the project ID and API key headers that the backend projectors expect.
+- Read models in the Cloud API scope responses by project, so your UI receives only the data associated with the keys in use.
+- When extending functionality, continue emitting events and projecting read models per the guidance in `devkit4ai/backend-api/SPECS.md` to preserve isolation.
+
+We will back this page with diagrams and database examples sourced directly from the production schema.

@@ -1,0 +1,11 @@
+---
+title: "Project Settings"
+description: "Coordinate Starter Kit customizations with Cloud Admin project data."
+icon: "sliders"
+---
+
+Project metadata—names, descriptions, API keys—is mastered inside Cloud Admin and synchronized through the Cloud API. The Starter Kit does not maintain a separate settings screen today, which keeps the docs consistent with shipped functionality.
+
+- If you need to surface project data in the UI, call the `/api/v1/projects/{project_id}` endpoint using the authenticated fetch helpers. The backend already exposes read models through the event-sourced projectors detailed in `CURRENT_FEATURES.md`.
+- Any write operations (renaming a project, rotating keys) should continue to happen in Cloud Admin so the platform maintains a single source of truth.
+- We will document supported extension points here once project-scoped configuration screens land in the public Starter Kit.

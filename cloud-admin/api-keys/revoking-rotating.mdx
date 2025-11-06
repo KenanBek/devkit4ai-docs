@@ -1,0 +1,11 @@
+---
+title: "Revoking and Rotating Keys"
+description: "Retire compromised keys and issue replacements without downtime."
+icon: "rotate-ccw"
+---
+
+Revocation flows map to backend commands that deactivate hashes and emit rotation events:
+
+- Use the forthcoming console UI (or call the REST endpoints directly) to disable keys via `DELETE /api/v1/auth/developer-keys/{key_id}` or `POST /api/v1/projects/revoke-api-key`.
+- The read models update immediately, so the console reflects the new status after a rotation.
+- Plan rotations alongside Starter Kit deployments by updating environment variables before removing access from the old key.

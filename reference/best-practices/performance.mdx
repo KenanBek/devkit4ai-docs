@@ -1,0 +1,9 @@
+---
+title: "Performance Best Practices"
+description: "Optimize frontend and backend changes without breaking the event-sourced architecture."
+icon: "gauge"
+---
+
+- Lean on Server Components and caching helpers (`cache()`) to avoid duplicate fetches.
+- Keep backend commands idempotent so retries do not emit duplicate events.
+- Use pagination and filtering endpoints when exposing large read models to the UI.

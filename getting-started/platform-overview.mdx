@@ -1,0 +1,19 @@
+---
+title: "Platform Overview"
+description: "See how the Starter Kit, Cloud Admin, and Cloud API work together inside Dev Kit for AI."
+icon: "layers"
+---
+
+<Note>
+Dev Kit for AI combines a FastAPI backend, a multi-mode Next.js frontend, and hosted cloud services so you can launch AI-powered products quickly.
+</Note>
+
+The platform ships with three production-ready building blocks:
+
+- **Starter Kit:** A project-mode Next.js app that end users interact with, exported from the private `user-app` codebase.
+- **Cloud Admin:** The operator-mode deployment that developers use to manage projects, API keys, and end users.
+- **Cloud API:** A hosted FastAPI service that delivers authentication, project management, and AI generation endpoints.
+
+All components share the same multi-tenant event-sourced backend model described in `devkit4ai/backend-api/SPECS.md`, ensuring the documentation here matches the live implementation.
+
+Further guidance on each component appears in the linked pages across this section.

@@ -1,0 +1,13 @@
+---
+title: "Environment Configuration"
+description: "Set the required environment variables for project-mode deployments."
+icon: "settings"
+---
+
+Project mode expects the same variables defined in `starter-kit/SPECS.md` and enforced by `lib/deployment-mode.ts`:
+
+- `DEVKIT4AI_MODE` → must be `project` to unlock the end-user flows.
+- `NEXT_PUBLIC_API_URL` → base URL of the hosted Cloud API (default `https://api.vibecoding.ad`).
+- `DEVKIT4AI_DEVELOPER_KEY`, `DEVKIT4AI_PROJECT_ID`, `DEVKIT4AI_PROJECT_KEY` → issued by Cloud Admin and validated as part of the hydration routine.
+
+The deployment mode helper will surface warning or error banners if any values are missing or improperly formatted, matching the runtime checks inside the shipped codebase.

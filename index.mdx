@@ -1,56 +1,55 @@
 ---
 title: "Introduction"
-description: "Welcome to the developer documentation for Dev Kit for AI"
+description: "Orientation for builders using Dev Kit for AI."
+icon: "compass"
 ---
 
-## Getting Started
+<Note>
+Dev Kit for AI helps developers launch SaaS-ready AI products by combining a hosted event-sourced backend, a multi-mode Next.js frontend, and a production-ready Starter Kit.
+</Note>
 
-Get your project application up and running in minutes.
+## Build Faster With Three Pillars
 
-<Card title="Start here" icon="rocket" horizontal href="/quickstart">
-  Follow our three-step quickstart guide.
-</Card>
+Dev Kit for AI ships the same stack we use internally:
 
-## Make it yours
+- **Starter Kit** — Project-mode Next.js application that end users interact with. It is exported from the private `user-app` service and already wired to the hosted Cloud API.
+- **Cloud Admin** — Operator-mode deployment that developers use to register, manage projects, and issue API keys. It runs the same codebase with different configuration and RBAC.
+- **Cloud API** — FastAPI backend that persists events, enforces RBAC, and exposes generation, project, and auth endpoints.
 
-Design a docs site that looks great and empowers your users.
+Each guide in this documentation maps directly to features implemented in `devkit4ai/` so you can trust what you read matches what you deploy.
+
+## Choose Your Starting Point
 
 <Columns cols={2}>
-  <Card title="Edit locally" icon="pen-to-square" href="/development">
-    Edit your docs locally and preview them in real time.
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Launch the Starter Kit against the hosted Cloud API in under an hour.
   </Card>
-  <Card title="Customize your site" icon="palette" href="/essentials/settings">
-    Customize the design and colors of your site to match your brand.
+  <Card title="Platform Overview" icon="layers" href="/getting-started/platform-overview">
+    Understand how the Starter Kit, Cloud Admin, and Cloud API fit together.
   </Card>
-  <Card title="Set up navigation" icon="map" href="/essentials/navigation">
-    Organize your docs to help users find what they need and succeed with your product.
+  <Card title="Install the Starter Kit" icon="download" href="/starter-kit/installation">
+    Clone the project-mode repo and run the Next.js dev server locally.
   </Card>
-  <Card title="API documentation" icon="terminal" href="/cloud-api/introduction">
-    Auto-generate API documentation from OpenAPI specifications.
+  <Card title="Cloud Admin Access" icon="building" href="/cloud-admin/getting-started">
+    Register as a developer and issue the credentials the Starter Kit needs.
   </Card>
 </Columns>
 
-## Create beautiful pages
+## Go Deeper
 
-Everything you need to create world-class documentation.
+<CardGroup cols={2}>
+  <Card title="Starter Kit Guides" icon="layout" href="/starter-kit/project-structure">
+    Explore the app structure, authentication flows, and customization patterns.
+  </Card>
+  <Card title="Tutorials" icon="lightbulb" href="/tutorials/first-app/setup">
+    Follow end-to-end walkthroughs that build on the core quickstart.
+  </Card>
+  <Card title="Development Tools" icon="wrench" href="/development-tools/local-dev/frontend-dev">
+    Configure your local workspace and IDE for multi-mode development.
+  </Card>
+  <Card title="Reference" icon="book" href="/reference/architecture/event-sourcing">
+    Dive into architecture, configuration, and component catalogues.
+  </Card>
+</CardGroup>
 
-<Columns cols={2}>
-  <Card title="Write with MDX" icon="pen-fancy" href="/essentials/markdown">
-    Use MDX to style your docs pages.
-  </Card>
-  <Card title="Code samples" icon="code" href="/essentials/code">
-    Add sample code to demonstrate how to use your product.
-  </Card>
-  <Card title="Images" icon="image" href="/essentials/images">
-    Display images and other media.
-  </Card>
-  <Card title="Reusable snippets" icon="recycle" href="/essentials/reusable-snippets">
-    Write once and reuse across your docs.
-  </Card>
-</Columns>
-
-## Need inspiration?
-
-<Card title="See complete examples" icon="stars" href="https://mintlify.com/customers">
-  Browse our showcase of exceptional documentation sites.
-</Card>
+Need help deciding what to read next? Start with the quickstart to get something running, then branch into the sections that align with your role and use case.

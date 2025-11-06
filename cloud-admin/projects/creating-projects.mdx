@@ -1,0 +1,11 @@
+---
+title: "Creating Projects"
+description: "Use Cloud Admin and the Cloud API to add new projects for your workspace."
+icon: "folder-plus"
+---
+
+The Cloud API already supports project creation via `POST /api/v1/projects`, emitting `ProjectWasCreated` events that feed the read models described in `CURRENT_FEATURES.md`.
+
+- The Cloud Admin console currently exposes placeholder buttons while the full UI is being finalized. Until that ships, you can call the API directly or script against the backend using the same headers the console would send.
+- When the UI lands, it will reuse the server action patterns in `app/console/actions.ts`, keeping this documentation aligned with the shipped implementation.
+- Newly created projects automatically scope API keys and end users, matching the multi-tenant design described elsewhere in these docs.

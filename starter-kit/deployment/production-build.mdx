@@ -1,0 +1,13 @@
+---
+title: "Production Build"
+description: "Create optimized builds with the provided scripts and Makefile targets."
+icon: "hard-drive"
+---
+
+Production builds use the same commands documented in the repository:
+
+- Run `npm run build` (or `make verify`) to compile the Next.js app with the configuration exported from `next.config.ts`.
+- Start the server with `npm run start`, which honors the project-mode environment variables already covered in this docs section.
+- The build output relies on Turbopack during development but falls back to the stable Next.js compiler for production, matching the upstream configuration.
+
+Additional guidance on CI/CD pipelines will land here as we share the exact workflows used for the hosted offering.

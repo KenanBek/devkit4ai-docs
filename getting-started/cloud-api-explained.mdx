@@ -1,0 +1,13 @@
+---
+title: "Cloud API Explained"
+description: "Review the FastAPI service that powers authentication, projects, and AI generation for Dev Kit for AI."
+icon: "server"
+---
+
+The hosted Cloud API is the production deployment of the FastAPI service documented in `devkit4ai/backend-api/SPECS.md`.
+
+- Every write flows through the event-sourced command → aggregate → event pipeline, so the behavior here mirrors the `RegisterUserCommand`, `CreateProjectCommand`, and related handlers in the codebase.
+- Authentication uses JWT access tokens with 30-minute lifetimes and refresh tokens with 7-day lifetimes, matching the cookie strategy used by the Starter Kit and Cloud Admin.
+- RBAC is enforced with the same header matrix (`X-User-Role`, `X-Operator-Key`, `X-Developer-Key`, `X-Project-ID`, `X-API-Key`) surfaced throughout this documentation to keep parity with production endpoints.
+
+The Cloud API tab contains endpoint-level references sourced from the live OpenAPI document so you can rely on it for integration work.

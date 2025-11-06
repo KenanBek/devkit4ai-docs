@@ -1,0 +1,13 @@
+---
+title: "Theme Configuration"
+description: "Control light and dark themes with next-themes and shared Tailwind tokens."
+icon: "sun-moon"
+---
+
+Theme handling matches the upstream implementation:
+
+- `ThemeProvider` from `next-themes` is initialized in `app/layout.tsx` with `attribute="class"` so Tailwind's `dark:` modifiers behave reliably.
+- The header includes a `ThemeSwitcher` component that persists the selection across sessions using the same storage logic as the private repo.
+- System defaults and transitions are configured exactly as described in `starter-kit/SPECS.md` to minimize divergence between documentation and code.
+
+Future updates will add recipes for introducing additional palettes without breaking these defaults.

@@ -1,0 +1,13 @@
+---
+title: "Cloud Admin Explained"
+description: "Learn how the operator-mode deployment powers developer onboarding and workspace management."
+icon: "shield-check"
+---
+
+Cloud Admin is the operator-mode deployment of the shared Next.js codebase described in `devkit4ai/user-app/SPECS.md`.
+
+- It enforces the **developer** role and requires the `DEVKIT4AI_OPERATOR_KEY` header so actions resolve through the RBAC policies in `devkit4ai/backend-api/app/system/auth`.
+- Developers sign up here, and the backend emits the `UserWasRegistered` and `ProjectWasCreated` events to provision an initial project, API key, and developer key exactly as implemented in the event-sourced workflow.
+- Console features—projects, API keys, usage dashboards—are the same capabilities surfaced in the `/console` routes documented in `CURRENT_FEATURES.md`.
+
+The forthcoming Cloud Admin section provides setup guidance, feature tours, and operational checklists aligned with the production service.

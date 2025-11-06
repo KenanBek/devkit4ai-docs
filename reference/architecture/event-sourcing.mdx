@@ -1,0 +1,11 @@
+---
+title: "Event Sourcing"
+description: "Understand how Dev Kit for AI stores every change as an immutable event."
+icon: "database"
+---
+
+The backend API persists all state transitions as events (see `devkit4ai/backend-api/app/system/events`). Key points:
+
+- Commands append events via aggregates (e.g., `UserActions`, `ProjectActions`), raising facts such as `UserWasRegistered` and `ProjectWasCreated`.
+- Events live in PostgreSQL tables (`event_store`, `event_streams`) with optimistic concurrency to prevent conflicting writes.
+- Projectors build read models for fast queries without mutating the original events, keeping the system audit-friendly.

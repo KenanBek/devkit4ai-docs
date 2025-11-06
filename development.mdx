@@ -1,94 +1,105 @@
 ---
-title: 'Development'
-description: 'Preview changes locally to update your docs'
+title: "Development"
+description: "Run Dev Kit for AI services locally and match the production configuration."
+icon: "wrench"
 ---
 
 <Info>
   **Prerequisites**:
-  - Node.js version 19 or higher
-  - A docs repository with a `docs.json` file
+  - Node.js 19 or later
+  - Python 3.13 with virtualenv support
+  - Docker Desktop (for PostgreSQL and Redis test containers)
+  - Make (or the ability to run the equivalent npm/pip commands)
 </Info>
 
-Follow these steps to install and run Mintlify on your operating system.
+Dev Kit for AI is a multi-repo platform. The primary services live in `devkit4ai/` (backend API and user app), while the open-source Starter Kit is exported to its own repository. This page explains how to run everything locally so the documentation tracks with reality.
+
+## Local environment overview
+
+- **Hosted-first flow:** The quickest way to build is to pair the Starter Kit with the hosted Cloud API. No local services are required beyond Node.js.
+- **Full-stack flow:** Run the backend API, user app, and Starter Kit locally to develop new features before exporting updates.
+- **Docs flow:** The Mintlify docs you are reading live in this repository; use them to keep instructions aligned with the code.
+
+## Run the backend API (FastAPI + event store)
 
 <Steps>
-<Step title="Install the Mintlify CLI">
-
-```bash
-npm i -g mint
-```
-</Step>
-
-<Step title="Preview locally">
-
-Navigate to your docs directory where your `docs.json` file is located, and run the following command:
-
-```bash
-mint dev
-```
-
-A local preview of your documentation will be available at `http://localhost:3000`.
-
-</Step>
+  <Step title="Install dependencies">
+    ```bash
+    cd devkit4ai/backend-api
+    make setup
+    ```
+    `make setup` creates a virtual environment, installs requirements, and copies the default `.env` file.
+  </Step>
+  <Step title="Start PostgreSQL and Redis">
+    ```bash
+    make start-services
+    ```
+    This spins up Docker containers that match the production database and PubSub expectations.
+  </Step>
+  <Step title="Run the API server">
+    ```bash
+    make run
+    ```
+    Uvicorn starts on port 8000 with auto-reload. Use `make run-with-workers/4` when you need a multi-worker process without reloads.
+  </Step>
 </Steps>
 
-## Custom ports
+The backend loads configuration from `backend-api/app/system/settings.py`. Update `.env` if you want to mirror Cloud API secrets or toggle storage providers.
 
-By default, Mintlify uses port 3000. You can customize the port Mintlify runs on by using the `--port` flag. For example, to run Mintlify on port 3333, use this command:
+## Run the user app in multi-mode
 
-```bash
-mint dev --port 3333
-```
-
-If you attempt to run Mintlify on a port that's already in use, it will use the next available port:
-
-```md
-Port 3000 is already in use. Trying 3001 instead.
-```
-
-## Mintlify versions
-
-Please note that each CLI release is associated with a specific version of Mintlify. If your local preview does not align with the production version, please update the CLI:
+From the `devkit4ai/` root you can boot every mode that the documentation references:
 
 ```bash
-npm mint update
+cd devkit4ai
+make run-multi-mode
 ```
 
-## Validating links
+This command starts:
 
-The CLI can assist with validating links in your documentation. To identify any broken links, use the following command:
+- Operator mode at `http://localhost:3000`
+- Console (developer) mode at `http://localhost:3001`
+- Two project-mode instances at `http://localhost:3002` and `3003`
+
+Each mode uses the same Next.js codebase with different `DEVKIT4AI_MODE` values. The readiness banner in the UI comes from `lib/deployment-mode.ts`; if it reports errors, double-check your environment variables.
+
+To work on a single mode, run the make target inside `devkit4ai/user-app`:
 
 ```bash
-mint broken-links
+cd devkit4ai/user-app
+make run-project   # or run-operator / run-console
 ```
 
-## Deployment
+## Iterate on the Starter Kit export
 
-If the deployment is successful, you should see the following:
+The Starter Kit repository is what customers clone. After making changes under `devkit4ai/user-app`, export or cherry-pick the relevant updates and then:
 
-<Frame>
-  <img src="/images/checks-passed.png" alt="Screenshot of a deployment confirmation message that says All checks have passed." style={{ borderRadius: '0.5rem' }} />
-</Frame>
+```bash
+cd starter-kit
+make install
+make dev     # starts Turbopack on port 3004
+```
 
-## Code formatting
+Use the same environment variables as project mode so the Starter Kit points to either the hosted Cloud API or your local backend.
 
-We suggest using extensions on your IDE to recognize and format MDX. If you're a VSCode user, consider the [MDX VSCode extension](https://marketplace.visualstudio.com/items?itemName=unifiedjs.vscode-mdx) for syntax highlighting, and [Prettier](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode) for code formatting.
+## Testing and quality checks
+
+- **Backend API:** `cd devkit4ai/backend-api && make test` runs unit and integration suites. Use `make test-integration` to execute the Testcontainers workflows.
+- **User app:** `cd devkit4ai/user-app && npm run test` for Vitest, `npm run test:e2e` for Playwright.
+- **Starter Kit:** The repository mirrors the user app scripts (`npm run test`, `npm run lint`) so instructions stay consistent across distributions.
 
 ## Troubleshooting
 
 <AccordionGroup>
-  <Accordion title='Error: Could not load the "sharp" module using the darwin-arm64 runtime'>
-
-    This may be due to an outdated version of node. Try the following:
-    1. Remove the currently-installed version of the CLI: `npm remove -g mint`
-    2. Upgrade to Node v19 or higher.
-    3. Reinstall the CLI: `npm i -g mint`
+  <Accordion title="Port already in use">
+    Stop any existing multi-mode processes (`make stop` from the repo root) before re-running the stack, or adjust the ports in the `.env` files if you need concurrent instances.
   </Accordion>
-
-  <Accordion title="Issue: Encountering an unknown error">
-  
-    Solution: Go to the root of your device and delete the `~/.mintlify` folder. Then run `mint dev` again.
+  <Accordion title="Backend cannot connect to PostgreSQL or Redis">
+    Ensure Docker Desktop is running and the containers from `make start-services` are healthy. Check logs with `docker compose logs -f` inside `backend-api/` if needed.
+  </Accordion>
+  <Accordion title="Starter Kit shows configuration errors">
+    The banner reflects issues detected by `lib/deployment-mode.ts`. Verify all `DEVKIT4AI_*` variables are set and that `DEVKIT4AI_PROJECT_ID` is a valid UUID.
   </Accordion>
 </AccordionGroup>
 
-Curious about what changed in the latest CLI version? Check out the [CLI changelog](https://www.npmjs.com/package/mintlify?activeTab=versions).
+Keep this page updated whenever the Makefiles or environment flows change so the quickstart and deeper guides stay trustworthy.

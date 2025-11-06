@@ -1,0 +1,11 @@
+---
+title: "Role-Based Access"
+description: "Understand how the Starter Kit enforces the end_user role in project mode."
+icon: "badge-check"
+---
+
+Project deployments always hydrate with the `end_user` role, which is returned by `hydrateDeploymentMode()` and echoed in outbound headers as `X-User-Role: end_user`.
+
+- Server-side guards such as `requireAuth()` and `requireRole()` mirror the logic documented in `starter-kit/lib/auth-server.ts`.
+- Client hooks (`useHasRole`, `useRequireRole`) rely on the cached user response from `/api/v1/auth/me`, ensuring role checks remain in sync with Cloud API permissions.
+- Because end users cannot escalate roles, Cloud Admin-only routes automatically redirect back to `/dashboard`, matching the project-mode behavior baked into the App Router.

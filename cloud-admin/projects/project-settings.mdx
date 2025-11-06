@@ -1,0 +1,11 @@
+---
+title: "Project Settings"
+description: "Manage project metadata and activation status through Cloud Admin."
+icon: "settings-2"
+---
+
+Project settings are stored in the event-sourced read models maintained by the backend projectors. Cloud Admin will soon expose edit forms that call the relevant command handlers; today, you can adjust data using the Cloud API endpoints (`PATCH /api/v1/projects/{project_id}` once released).
+
+- The console already fetches project lists via `fetchProjects()`, so any updates you apply through the API appear instantly in the UI.
+- Activation flags (`is_active`) flow directly from the database schema defined in `devkit4ai/backend-api/app/features/projects`.
+- This page will expand with UI instructions as soon as the management forms land in the console.

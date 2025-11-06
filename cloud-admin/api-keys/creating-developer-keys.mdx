@@ -1,0 +1,11 @@
+---
+title: "Creating Developer Keys"
+description: "Issue new developer keys for workspace automation."
+icon: "key"
+---
+
+Developer keys authenticate console actions and Starter Kit deployments that need elevated access:
+
+- Keys are hashed with SHA-256 in the database, matching the implementation in `devkit4ai/backend-api/app/features/projects`.
+- Cloud Admin will expose creation flows that call the existing command handlers; until then, you can create keys via the `/api/v1/auth/developer-keys` endpoint, which already returns the full key once.
+- Each key is prefixed with `dk_`—the same format used throughout the platform and referenced in onboarding screens.

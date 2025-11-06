@@ -1,0 +1,15 @@
+---
+title: "Environment Variables"
+description: "Manage secrets across staging and production deployments."
+icon: "shield"
+---
+
+Deployment environments must define the same keys validated by `hydrateDeploymentMode()`:
+
+- `DEVKIT4AI_MODE=project`
+- `NEXT_PUBLIC_API_URL`
+- `DEVKIT4AI_DEVELOPER_KEY`
+- `DEVKIT4AI_PROJECT_ID`
+- `DEVKIT4AI_PROJECT_KEY`
+
+For hosted platforms, inject these values through the provider's secrets manager so they are not committed to the repository. The runtime checks in `lib/deployment-mode.ts` will surface clear error banners if anything is missing, making it easy to verify that production matches local development.

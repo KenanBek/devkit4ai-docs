@@ -1,0 +1,9 @@
+---
+title: "Testing Best Practices"
+description: "Validate features with the same rigor used in the core repositories."
+icon: "flask-round"
+---
+
+- Use Testcontainers for integration tests so databases and Redis match production, as mandated in project `AGENTS.md` files.
+- Prefer end-to-end flows (Vitest + Playwright) when touching authentication or multi-mode features.
+- Keep fixtures aligned with real Cloud API responses to avoid drift between tests and live services.

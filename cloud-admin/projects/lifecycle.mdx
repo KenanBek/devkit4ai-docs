@@ -1,0 +1,11 @@
+---
+title: "Project Lifecycle"
+description: "Follow projects from creation through deactivation using the event-sourced backend."
+icon: "refresh-cw"
+---
+
+Project state transitions are captured by events such as `ProjectWasCreated`, `ProjectWasUpdated`, and `ProjectWasDeactivated` (see `devkit4ai/backend-api/app/features/projects`).
+
+- Cloud Admin surfaces these lifecycle changes through read models so developers see accurate statuses in the console.
+- API routes exist for toggling activity and revoking keys; the UI will expose them as forms once the console updates land.
+- Documentation here will expand with timelines and best practices drawn directly from the production workflow.

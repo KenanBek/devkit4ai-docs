@@ -4,10 +4,6 @@ description: "Configure Cursor for your documentation workflow"
 icon: "arrow-pointer"
 ---
 
-<Info>
-This guide moved to `development-tools/ai-assistants/cursor`. The content below will be removed once downstream links update.
-</Info>
-
 Use Cursor to help write and maintain your documentation. This guide shows how to configure Cursor for better results on technical writing tasks and using Mintlify components.
 
 ## Prerequisites
@@ -125,7 +121,7 @@ const response = await fetch('/api/endpoint', {
 ```python Python
 import requests
 response = requests.get('/api/endpoint', 
-  headers={'Authorization': f'Bearer {api_key}'})
+  headers={'Authorization': f'Bearer {api_key}'} )
 ```
 
 ```curl cURL
@@ -421,4 +417,3 @@ description: "Concise description explaining page purpose and value"
 - Use **RequestExample/ResponseExample** specifically for API endpoint documentation
 - Use **ParamField** for API parameters, **ResponseField** for API responses
 - Use **Expandable** for nested object properties or hierarchical information
-````

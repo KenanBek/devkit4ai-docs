@@ -1,0 +1,15 @@
+---
+title: "Project Structure"
+description: "Understand the exported Next.js folders and how they map to the private user app."
+icon: "layout-dashboard"
+---
+
+The Starter Kit mirrors the layout described in `starter-kit/SPECS.md` and matches the `user-app` directories in the private repo:
+
+- `app/`: App Router routes including `/dashboard`, `/login`, `/start`, and the example galleries.
+- `components/`: UI primitives (Radix-based), project chrome, and marketing sections identical to their counterparts in `devkit4ai/user-app`.
+- `lib/`: Deployment mode hydration, authentication helpers, provisioning store, and utility functions.
+- `config/`: Mode-aware app metadata surfaced in the header and footer.
+- `tests/`: Vitest integration specs and Playwright E2E scaffolding that reflect the actual project-mode behavior.
+
+This structure is intentionally aligned with the source repository so documentation can point to concrete implementations.

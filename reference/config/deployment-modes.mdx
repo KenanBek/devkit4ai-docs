@@ -1,0 +1,13 @@
+---
+title: "Deployment Modes"
+description: "Map environment settings to operator, console, and project experiences."
+icon: "toggle-right"
+---
+
+Mode selection depends on `DEVKIT4AI_MODE`:
+
+- **operator**: Cloud Admin. Requires `DEVKIT4AI_OPERATOR_KEY`. Surfaces developer onboarding tools.
+- **console**: Developer workspace. Requires `DEVKIT4AI_DEVELOPER_KEY` and unlocks project and API key management.
+- **project**: End-user apps (Starter Kit). Requires developer key, project ID, and project API key.
+
+All modes rely on `NEXT_PUBLIC_API_URL` to communicate with the Cloud API, and each sends the appropriate headers enforced by `app/system/auth/rbac.py`.

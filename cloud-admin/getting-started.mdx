@@ -1,0 +1,13 @@
+---
+title: "Cloud Admin Overview"
+description: "Sign in to the operator-mode deployment that powers developer onboarding."
+icon: "building"
+---
+
+Cloud Admin runs the same Next.js codebase as the Starter Kit but in **operator** mode (`DEVKIT4AI_MODE=operator`). It is available at `https://devkit4ai.com/console` and `https://vibecoding.ad/console`.
+
+- Access requires the `DEVKIT4AI_OPERATOR_KEY`, which is validated against the backend RBAC helpers in `devkit4ai/backend-api/app/system/auth`.
+- New developer accounts are provisioned through the `/register/developer` flow, triggering the event sourcing pipeline that creates default projects and keys.
+- Once authenticated, developers land in the console experience documented throughout this section.
+
+The remaining pages break down each workflow so the docs stay aligned with what the live service delivers today.

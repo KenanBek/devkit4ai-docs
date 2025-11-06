@@ -1,0 +1,13 @@
+---
+title: "Server Components"
+description: "Leverage React Server Components the same way the upstream user app does."
+icon: "cpu"
+---
+
+The Starter Kit inherits the server-first philosophy from `devkit4ai/user-app`:
+
+- Routes in `app/` render as Server Components by default—`"use client"` appears only where interactive state is required.
+- Server Actions handle authentication, redirects, and API calls so you avoid duplicating logic in the browser.
+- React's `cache()` utility wraps expensive fetches (`hydrateDeploymentMode`, `getCurrentUser`) exactly as seen in the private repo.
+
+This page will showcase deeper patterns once we publish battle-tested examples from production projects.

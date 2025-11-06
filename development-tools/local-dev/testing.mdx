@@ -1,0 +1,13 @@
+---
+title: "Testing"
+description: "Run backend, frontend, and starter kit tests locally."
+icon: "beaker"
+---
+
+Testing commands mirror the ones in each repository:
+
+- Backend API: `cd devkit4ai/backend-api && make test` (or `make test-fast` / `make test-integration`). Tests rely on real services via Testcontainers, as outlined in `AGENTS.md`.
+- User App: `cd devkit4ai/user-app && npm run test` for Vitest, `npm run test:e2e` for Playwright.
+- Starter Kit: identical npm scripts live in the exported project so downstream developers can reuse them.
+
+Future sections will collect troubleshooting notes for common setup issues that have surfaced in the main repo.

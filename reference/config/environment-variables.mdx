@@ -1,0 +1,13 @@
+---
+title: "Environment Variables"
+description: "Centralize configuration values used across services."
+icon: "settings"
+---
+
+Key variables sourced from the repositories:
+
+- Backend API: `DATABASE_URL`, `SECRET_KEY`, `DEVKIT4AI_OPERATOR_KEY`, `REPLICATE_API_TOKEN`, storage and Redis settings (see `backend-api/SPECS.md`).
+- User App & Starter Kit: `DEVKIT4AI_MODE`, `NEXT_PUBLIC_API_URL`, plus mode-specific secrets validated by `hydrateDeploymentMode()`.
+- Starter Kit deployments reuse the same values to stay compatible with Cloud Admin.
+
+Use provider-level secret managers for production so values never live in version control.

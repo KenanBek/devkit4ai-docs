@@ -1,0 +1,11 @@
+---
+title: "Use Case: AI Image SaaS"
+description: "Pair the Starter Kit with Cloud API generation endpoints to sell image outputs."
+icon: "image"
+---
+
+This tutorial will document how to wire the `/api/v1/generation/*` endpoints into a custom UI. The backend already supports uploads, asynchronous processing, and visibility toggles; the Starter Kit will provide a reference interface here.
+
+- Ensure end users authenticate through the project-mode app so requests include the correct headers.
+- Store generation assets using the same storage abstraction (`S3` or local) described in `backend-api/SPECS.md`.
+- Track status updates via the event store so dashboards stay accurate.

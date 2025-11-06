@@ -1,0 +1,11 @@
+---
+title: "Integration: Custom AI Models"
+description: "Swap or extend the default Replicate integration for other providers."
+icon: "brain"
+---
+
+The Cloud API currently integrates with Replicate for image generation (see `devkit4ai/backend-api/app/integrations/replicate_ai.py`). To plug in other providers:
+
+- Implement new policies or services that emit the same events so projectors stay unchanged.
+- Keep configuration in environment variables (`REPLICATE_API_TOKEN`, etc.) so deployments remain configurable.
+- We will publish end-to-end instructions here once additional providers are supported in production.

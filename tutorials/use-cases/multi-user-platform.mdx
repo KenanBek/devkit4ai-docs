@@ -1,0 +1,11 @@
+---
+title: "Use Case: Multi-User Platform"
+description: "Build collaborative features on top of Dev Kit for AI's RBAC system."
+icon: "users-round"
+---
+
+The event-sourced backend already distinguishes between platform operators, developers, and end users through headers and aggregates.
+
+- Use Cloud Admin to provision developer accounts and keys.
+- Extend project-mode UIs with invite flows that call upcoming endpoints for project memberships.
+- Leverage the role-aware dashboard components to surface features conditionally, just as the Starter Kit already does on `/dashboard`.

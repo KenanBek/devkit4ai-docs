@@ -1,0 +1,13 @@
+---
+title: "Profile Management"
+description: "Extend the placeholder profile actions on the dashboard into a full experience."
+icon: "user-round"
+---
+
+The Starter Kit currently surfaces profile-related buttons on the `/dashboard` page, but they are intentionally disabled placeholders. This mirrors the status of the upstream `user-app`, where profile editing is slated for a future milestone.
+
+- You can hook these actions into custom routes by reusing the JWT-backed fetch utilities already present in `lib/auth-server.ts`.
+- Any new endpoints should follow the event-sourced command pattern in the backend so changes flow through aggregates and projectors.
+- Documentation here will expand with concrete recipes as soon as the corresponding backend capabilities ship.
+
+Until then, use this page as a staging note that keeps the docs aligned with the actual codebase.

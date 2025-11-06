@@ -1,0 +1,13 @@
+---
+title: "Branding and Styling"
+description: "Update Tailwind tokens and UI chrome to match your product."
+icon: "palette"
+---
+
+Branding updates follow the same conventions as the private `user-app`:
+
+- Tailwind configuration lives in `tailwind.config.ts`, matching the utilities referenced throughout the exported components.
+- Global theming is controlled by `components/project/header.tsx`, `components/project/footer.tsx`, and `config/app.config.ts`, so color and copy changes stay centralized.
+- Dark mode behavior continues to rely on `next-themes` and the `ThemeProvider` defined in `app/layout.tsx`.
+
+This page will grow with copy-and-paste snippets that respect the code structure already in the repository.

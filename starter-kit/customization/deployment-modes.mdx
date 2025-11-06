@@ -1,0 +1,11 @@
+---
+title: "Deployment Modes"
+description: "Understand why the Starter Kit ships in project mode and how it relates to other modes."
+icon: "toggle-left"
+---
+
+The exported Starter Kit locks `DEVKIT4AI_MODE` to `project`, aligning with the guardrails in `lib/deployment-mode.ts`:
+
+- Attempting to use `operator` or `console` values will surface error banners because the open-source template does not bundle the Cloud Admin features.
+- Headers sent to the Cloud API always identify the caller as an `end_user`, matching the expectations of the backend RBAC system.
+- If you need multi-mode behavior, contribute changes upstream in the private `user-app` and export them downstream—this workflow keeps the documentation synchronized with the actual release process.

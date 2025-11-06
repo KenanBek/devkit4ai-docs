@@ -1,0 +1,13 @@
+---
+title: "JWT Flow"
+description: "Review the access and refresh token lifecycle the Starter Kit inherits from the Cloud API."
+icon: "key-round"
+---
+
+Authentication mirrors the backend specification in `devkit4ai/backend-api/SPECS.md`:
+
+- Login returns an access token (30-minute expiry) and optional refresh token (7-day expiry).
+- Tokens are stored in httpOnly cookies (`devkit4ai-token`, `devkit4ai-refresh-token`) via `storeTokensInCookies` inside the shared server actions.
+- Automatic refresh is handled by the `/api/v1/auth/refresh` endpoint and the `refreshAccessToken` helper invoked by the Cloud Admin and Starter Kit flows.
+
+The documentation here will expand with diagrams and troubleshooting guidance that stay aligned with the production services.

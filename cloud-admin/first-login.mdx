@@ -1,0 +1,11 @@
+---
+title: "First Login"
+description: "Complete the developer onboarding flow inside Cloud Admin."
+icon: "log-in"
+---
+
+After a developer registers, the backend emits the `UserWasRegistered` event and returns provisioning data (developer key, project ID, project API key) exactly as described in `CURRENT_FEATURES.md`.
+
+- On first sign-in, `backendLoginAction` stores JWT cookies and redirects to `/console`, matching the shared server action implementation.
+- The console banner surfaces configuration issues (if any) based on the deployment mode checks in `lib/deployment-mode.ts`.
+- Developers can immediately copy their keys for use in the Starter Kit, keeping the documentation aligned with the real onboarding journey.

@@ -1,0 +1,13 @@
+---
+title: "State Management"
+description: "Work with React context and server caches already bundled with the Starter Kit."
+icon: "database"
+---
+
+The template keeps client-side state light:
+
+- Authentication and deployment data flow through `AuthProvider` and `DeploymentModeProvider`, which match the contexts documented in `starter-kit/lib/auth-context.tsx`.
+- Persistent UI state (theme selection, provisioning bundle) uses cookies instead of third-party stores, mirroring the upstream implementation.
+- When you need additional client state, reuse the existing providers or introduce scoped contexts so you stay aligned with the architecture described in `CURRENT_FEATURES.md`.
+
+We will expand this page with examples that demonstrate integrating external stores without breaking the default patterns.

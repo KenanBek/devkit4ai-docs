@@ -1,0 +1,13 @@
+---
+title: "Security Settings"
+description: "Review authentication, hashing, and storage controls built into the platform."
+icon: "shield"
+---
+
+Security practices are consistent across services:
+
+- JWT access tokens (30 minutes) and refresh tokens (7 days) are stored in httpOnly cookies with secure flags in production.
+- Developer and project keys are hashed with SHA-256 and only revealed once, matching the backend implementation.
+- Optional S3 storage and Redis credentials are loaded from environment variables so secrets never live in the repository.
+
+We will extend this page with hardening guides as new security features roll out.

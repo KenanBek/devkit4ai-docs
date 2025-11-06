@@ -1,0 +1,13 @@
+---
+title: "User Dashboard"
+description: "Walk through the `/dashboard` experience bundled with the Starter Kit."
+icon: "layout-list"
+---
+
+The `/dashboard` route in `starter-kit/app/dashboard/page.tsx` renders a role-aware landing page that matches the private `user-app` implementation:
+
+- `requireAuth()` enforces login before rendering, guaranteeing parity with production deployments.
+- Section visibility adapts to the authenticated user role, surfacing Cloud Admin links for developers while keeping operator tools behind disabled actions.
+- Call-to-action buttons route to `/console` or sign-out flows that reuse the shared server actions.
+
+Upcoming revisions will document recommended ways to extend the dashboard for project-specific metrics while staying aligned with the core components.
