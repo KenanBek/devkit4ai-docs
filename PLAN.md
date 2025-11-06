@@ -22,7 +22,7 @@ Based on the suggested structure, here's a concise implementation plan:
 ### Phase 2: Getting Started Tab (Enhanced)
 
 **2.1 Update Core Concepts Section**
-- Create `getting-started/platform-overview.mdx` (user personas, multi-mode architecture, component relationships)
+- Create `getting-started/platform-overview.mdx` (overview, key components, key onboarding steps)
 - Create `getting-started/starter-kit-explained.mdx`
 - Create `getting-started/cloud-admin-explained.mdx`
 - Create `getting-started/cloud-api-explained.mdx`
