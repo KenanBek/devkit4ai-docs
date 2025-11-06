@@ -9,7 +9,7 @@ The usual user journey looks like this:
 - Developers visit one of the public resources related to Dev Kit for AI
     - Official Website: https://devkit4ai.com
     - Vibe Coding Platform: https://vibecoding.ad
-    - GitHub Repository: https://github.com/VibeCodingStarter/starter-kit
+    - GitHub Repository for Starter Kit: https://github.com/VibeCodingStarter/starter-kit
 
 - They learn more about the platform and its capabilities, and decide to to one or more of the following actions:
     - Sign up for an account via Console (available at vibecoding.ad/console and devkit4ai.com/console)
