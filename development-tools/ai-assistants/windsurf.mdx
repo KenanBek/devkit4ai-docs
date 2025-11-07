@@ -4,93 +4,260 @@ description: "Configure Windsurf for your documentation workflow"
 icon: "water"
 ---
 
-Configure Windsurf's Cascade AI assistant to help you write and maintain documentation. This guide shows how to set up Windsurf specifically for your Mintlify documentation workflow.
+Configure Windsurf's Cascade AI assistant to help you build AI-powered applications with the Starter Kit. This guide shows how to set up Windsurf for Next.js development with the Dev Kit for AI platform.
 
 ## Prerequisites
 
 - Windsurf editor installed
-- Access to your documentation repository
+- Starter Kit cloned from [GitHub](https://github.com/VibeCodingStarter/starter-kit)
+- Cloud Admin account with developer credentials
 
 ## Workspace rules
 
-Create workspace rules that provide Windsurf with context about your documentation project and standards.
+Create workspace rules that provide Windsurf with context about the Starter Kit architecture and development patterns.
 
-Create `.windsurf/rules.md` in your project root:
+Create `.windsurf/rules.md` in your Starter Kit project root:
 
 ````markdown
-# Mintlify technical writing rule
+# Starter Kit Development Rules
 
-## Project context
+You are building an AI-powered SaaS application using the Dev Kit for AI Starter Kit - a Next.js 15 template with React 19 Server Components, TypeScript, and Cloud API integration.
 
-- This is a documentation project on the Mintlify platform
-- We use MDX files with YAML frontmatter  
-- Navigation is configured in `docs.json`
-- We follow technical writing best practices
+## Technology Stack
 
-## Writing standards
+- **Framework**: Next.js 15.5.6 with App Router and Turbopack
+- **UI**: React 19, TypeScript 5, Tailwind CSS 3.4.18, Radix UI
+- **Authentication**: JWT-based via Cloud API (https://api.vibecoding.ad)
+- **State**: React Server Components, Server Actions, Context API
+- **Testing**: Vitest (integration), Playwright (E2E)
 
-- Use second person ("you") for instructions
-- Write in active voice and present tense
-- Start procedures with prerequisites
-- Include expected outcomes for major steps
-- Use descriptive, keyword-rich headings
-- Keep sentences concise but informative
+## Core Principles
 
-## Required page structure
+- Server Components by default, "use client" only when needed
+- TypeScript strict mode - explicit types for all functions
+- User-friendly error messages, not technical jargon
+- Security first - never expose keys, validate inputs
+- Follow existing patterns in the codebase
 
-Every page must start with frontmatter:
+## Project Structure
 
-```yaml
----
-title: "Clear, specific title"
-description: "Concise description for SEO and navigation"
----
+```
+app/              # Next.js App Router pages
+  actions.ts      # Server actions (auth, mutations)
+  layout.tsx      # Root layout with providers
+  (auth)/         # Auth pages (login, register)
+  dashboard/      # Protected dashboard
+  
+components/
+  ui/             # Radix UI primitives
+  generic/        # Reusable components
+  project/        # App-specific (header, footer)
+  
+lib/
+  deployment-mode.ts   # Environment validation
+  auth-server.ts       # Server-side auth
+  auth-context.tsx     # Client-side context
+  
+config/
+  app.config.ts        # App configuration
 ```
 
-## Mintlify components
+## Server Components Pattern
 
-### Callouts
+Default to Server Components:
 
-- `<Note>` for helpful supplementary information
-- `<Warning>` for important cautions and breaking changes
-- `<Tip>` for best practices and expert advice  
-- `<Info>` for neutral contextual information
-- `<Check>` for success confirmations
+```tsx
+// app/dashboard/page.tsx
+import { requireAuth } from '@/lib/auth-server'
 
-### Code examples
+export default async function DashboardPage() {
+  const user = await requireAuth()
+  return <div>Welcome, {user.email}</div>
+}
+```
 
-- When appropriate, include complete, runnable examples
-- Use `<CodeGroup>` for multiple language examples
-- Specify language tags on all code blocks
-- Include realistic data, not placeholders
-- Use `<RequestExample>` and `<ResponseExample>` for API docs
+Use "use client" only for interactivity:
 
-### Procedures
+```tsx
+// components/theme-switcher.tsx
+'use client'
+import { useTheme } from 'next-themes'
 
-- Use `<Steps>` component for sequential instructions
-- Include verification steps with `<Check>` components when relevant
-- Break complex procedures into smaller steps
+export function ThemeSwitcher() {
+  const { setTheme } = useTheme()
+  // Interactive component
+}
+```
 
-### Content organization
+## Authentication
 
-- Use `<Tabs>` for platform-specific content
-- Use `<Accordion>` for progressive disclosure
-- Use `<Card>` and `<CardGroup>` for highlighting content
-- Wrap images in `<Frame>` components with descriptive alt text
+Protected pages use requireAuth():
 
-## API documentation requirements
+```tsx
+import { requireAuth } from '@/lib/auth-server'
 
-- Document all parameters with `<ParamField>` 
-- Show response structure with `<ResponseField>`
-- Include both success and error examples
-- Use `<Expandable>` for nested object properties
-- Always include authentication examples
+export default async function ProtectedPage() {
+  await requireAuth() // Redirects if not authenticated
+  return <div>Protected content</div>
+}
+```
 
-## Quality standards
+Client components use hooks:
 
-- Test all code examples before publishing
-- Use relative paths for internal links
-- Include alt text for all images
-- Ensure proper heading hierarchy (start with h2)
-- Check existing patterns for consistency
+```tsx
+'use client'
+import { useCurrentUser } from '@/lib/auth-context'
+
+export function UserProfile() {
+  const user = useCurrentUser()
+  if (!user) return null
+  return <div>{user.email}</div>
+}
+```
+
+## Server Actions
+
+All mutations use Server Actions:
+
+```tsx
+'use server'
+
+import { redirect } from 'next/navigation'
+
+export async function updateProfile(formData: FormData) {
+  const name = formData.get('name') as string
+  
+  // Call Cloud API
+  const response = await fetch(`${apiUrl}/api/v1/user/profile`, {
+    method: 'PUT',
+    body: JSON.stringify({ name })
+  })
+  
+  if (!response.ok) {
+    return { error: 'Failed to update profile' }
+  }
+  
+  redirect('/dashboard')
+}
+```
+
+## Styling with Tailwind
+
+Use utility classes with cn() helper:
+
+```tsx
+import { cn } from '@/lib/utils'
+
+export function Card({ className, ...props }) {
+  return (
+    <div
+      className={cn(
+        'rounded-lg border bg-card p-6',
+        className
+      )}
+      {...props}
+    />
+  )
+}
+```
+
+Support dark mode:
+
+```tsx
+<div className="bg-white dark:bg-gray-900 text-black dark:text-white">
+  Content adapts to theme
+</div>
+```
+
+## Environment Variables
+
+Required in .env.local:
+
+```bash
+DEVKIT4AI_MODE=project
+NEXT_PUBLIC_API_URL=https://api.vibecoding.ad
+DEVKIT4AI_DEVELOPER_KEY=dk_your_key
+DEVKIT4AI_PROJECT_ID=your-uuid
+DEVKIT4AI_PROJECT_KEY=pk_your_key
+```
+
+## File Naming
+
+- Components: PascalCase (UserProfile.tsx)
+- Pages: lowercase (page.tsx, layout.tsx)
+- Utilities: kebab-case (auth-server.ts)
+- Config: kebab-case with .config.ts
+
+## TypeScript
+
+Always explicit types:
+
+```tsx
+// Good
+async function fetchUser(id: string): Promise<User | null> {
+  // implementation
+}
+
+// Bad - avoid
+async function fetchUser(id) {
+  // implementation
+}
+```
+
+## Testing
+
+Integration tests:
+
+```tsx
+import { describe, it, expect } from 'vitest'
+
+describe('sanitizeReturnUrl', () => {
+  it('allows valid paths', () => {
+    expect(sanitizeReturnUrl('/dashboard')).toBe('/dashboard')
+  })
+})
+```
+
+E2E tests:
+
+```tsx
+import { test, expect } from '@playwright/test'
+
+test('user can log in', async ({ page }) => {
+  await page.goto('/login')
+  await page.fill('[name="email"]', 'test@example.com')
+  await page.click('button[type="submit"]')
+  await expect(page).toHaveURL('/dashboard')
+})
+```
+
+## Best Practices
+
+✅ Server Components by default
+✅ Explicit TypeScript types
+✅ User-friendly error messages
+✅ httpOnly cookies for tokens
+✅ Validate all user inputs
+✅ Mobile-first responsive design
+
+❌ Client Components when unnecessary
+❌ Inline styles instead of Tailwind
+❌ Storing tokens in localStorage
+❌ Generic "Something went wrong" errors
+❌ Missing TypeScript types or `any`
+
+## Quick Commands
+
+```bash
+npm run dev      # Development server (port 3004)
+npm run build    # Production build
+npm run test     # Run all tests
+npm run lint     # Lint code
+```
+
+## Resources
+
+- [Starter Kit Docs](https://docs.devkit4ai.com/starter-kit/installation)
+- [Cloud API Reference](https://docs.devkit4ai.com/cloud-api/introduction)
+- [GitHub Repository](https://github.com/VibeCodingStarter/starter-kit)
 ````

@@ -19,401 +19,497 @@ Create project rules that all team members can use. In your documentation reposi
 mkdir -p .cursor
 ```
 
-Create `.cursor/rules.md`:
+Create `.cursor/rules.md` for the **Starter Kit project**:
 
 ````markdown
-# Mintlify technical writing rule
+# Starter Kit Development Rule
 
-You are an AI writing assistant specialized in creating exceptional technical documentation using Mintlify components and following industry-leading technical writing practices.
+You are an AI coding assistant specialized in building AI-powered SaaS applications using the Dev Kit for AI Starter Kit. You excel at Next.js 15, React 19 Server Components, TypeScript, and Tailwind CSS.
 
-## Core writing principles
+## Project Context
 
-### Language and style requirements
+The Starter Kit is a production-ready Next.js template for building AI-powered applications that connect to the Dev Kit for AI Cloud API. It includes:
 
-- Use clear, direct language appropriate for technical audiences
-- Write in second person ("you") for instructions and procedures
-- Use active voice over passive voice
-- Employ present tense for current states, future tense for outcomes
-- Avoid jargon unless necessary and define terms when first used
-- Maintain consistent terminology throughout all documentation
-- Keep sentences concise while providing necessary context
-- Use parallel structure in lists, headings, and procedures
+- **Framework**: Next.js 15.5.6 with App Router and Turbopack
+- **UI**: React 19, TypeScript 5, Tailwind CSS 3.4.18, Radix UI
+- **Authentication**: JWT-based via Cloud API with httpOnly cookies
+- **Deployment**: Connects to hosted Cloud API at https://api.vibecoding.ad
+- **Testing**: Vitest for integration, Playwright for E2E
 
-### Content organization standards
+## Core Development Principles
 
-- Lead with the most important information (inverted pyramid structure)
-- Use progressive disclosure: basic concepts before advanced ones
-- Break complex procedures into numbered steps
-- Include prerequisites and context before instructions
-- Provide expected outcomes for each major step
-- Use descriptive, keyword-rich headings for navigation and SEO
-- Group related information logically with clear section breaks
+- Optimize for clarity: write explicit, well-structured code
+- Use Server Components by default, "use client" only when necessary
+- Follow TypeScript strict mode - explicit types for all functions
+- Maintain consistent patterns with existing codebase
+- Write user-friendly error messages
+- Keep components focused and reusable
 
-### User-centered approach
+## Architecture Patterns
 
-- Focus on user goals and outcomes rather than system features
-- Anticipate common questions and address them proactively
-- Include troubleshooting for likely failure points
-- Write for scannability with clear headings, lists, and white space
-- Include verification steps to confirm success
+### Server Components First
 
-## Mintlify component reference
+Default to Server Components for better performance:
 
-### Callout components
+```tsx app/dashboard/page.tsx
+// Server Component (default)
+import { requireAuth } from '@/lib/auth-server'
 
-#### Note - Additional helpful information
-
-<Note>
-Supplementary information that supports the main content without interrupting flow
-</Note>
-
-#### Tip - Best practices and pro tips
-
-<Tip>
-Expert advice, shortcuts, or best practices that enhance user success
-</Tip>
-
-#### Warning - Important cautions
-
-<Warning>
-Critical information about potential issues, breaking changes, or destructive actions
-</Warning>
-
-#### Info - Neutral contextual information
-
-<Info>
-Background information, context, or neutral announcements
-</Info>
-
-#### Check - Success confirmations
-
-<Check>
-Positive confirmations, successful completions, or achievement indicators
-</Check>
-
-### Code components
-
-#### Single code block
-
-Example of a single code block:
-
-```javascript config.js
-const apiConfig = {
-  baseURL: 'https://api.example.com',
-  timeout: 5000,
-  headers: {
-    'Authorization': `Bearer ${process.env.API_TOKEN}`
-  }
-};
-```
-
-#### Code group with multiple languages
-
-Example of a code group:
-
-<CodeGroup>
-```javascript Node.js
-const response = await fetch('/api/endpoint', {
-  headers: { Authorization: `Bearer ${apiKey}` }
-});
-```
-
-```python Python
-import requests
-response = requests.get('/api/endpoint', 
-  headers={'Authorization': f'Bearer {api_key}'} )
-```
-
-```curl cURL
-curl -X GET '/api/endpoint' \
-  -H 'Authorization: Bearer YOUR_API_KEY'
-```
-</CodeGroup>
-
-#### Request/response examples
-
-Example of request/response documentation:
-
-<RequestExample>
-```bash cURL
-curl -X POST 'https://api.example.com/users' \
-  -H 'Content-Type: application/json' \
-  -d '{"name": "John Doe", "email": "john@example.com"}'
-```
-</RequestExample>
-
-<ResponseExample>
-```json Success
-{
-  "id": "user_123",
-  "name": "John Doe", 
-  "email": "john@example.com",
-  "created_at": "2024-01-15T10:30:00Z"
+export default async function DashboardPage() {
+  const user = await requireAuth()
+  
+  return (
+    <div>
+      <h1>Welcome, {user.email}</h1>
+    </div>
+  )
 }
 ```
-</ResponseExample>
 
-### Structural components
+Use "use client" only for interactivity:
 
-#### Steps for procedures
+```tsx components/theme-switcher.tsx
+'use client'
 
-Example of step-by-step instructions:
+import { useTheme } from 'next-themes'
 
-<Steps>
-<Step title="Install dependencies">
-  Run `npm install` to install required packages.
-  
-  <Check>
-  Verify installation by running `npm list`.
-  </Check>
-</Step>
-
-<Step title="Configure environment">
-  Create a `.env` file with your API credentials.
-  
-  ```bash
-  API_KEY=your_api_key_here
-  ```
-  
-  <Warning>
-  Never commit API keys to version control.
-  </Warning>
-</Step>
-</Steps>
-
-#### Tabs for alternative content
-
-Example of tabbed content:
-
-<Tabs>
-<Tab title="macOS">
-  ```bash
-  brew install node
-  npm install -g package-name
-  ```
-</Tab>
-
-<Tab title="Windows">
-  ```powershell
-  choco install nodejs
-  npm install -g package-name
-  ```
-</Tab>
-
-<Tab title="Linux">
-  ```bash
-  sudo apt install nodejs npm
-  npm install -g package-name
-  ```
-</Tab>
-</Tabs>
-
-#### Accordions for collapsible content
-
-Example of accordion groups:
-
-<AccordionGroup>
-<Accordion title="Troubleshooting connection issues">
-  - **Firewall blocking**: Ensure ports 80 and 443 are open
-  - **Proxy configuration**: Set HTTP_PROXY environment variable
-  - **DNS resolution**: Try using 8.8.8.8 as DNS server
-</Accordion>
-
-<Accordion title="Advanced configuration">
-  ```javascript
-  const config = {
-    performance: { cache: true, timeout: 30000 },
-    security: { encryption: 'AES-256' }
-  };
-  ```
-</Accordion>
-</AccordionGroup>
-
-### Cards and columns for emphasizing information
-
-Example of cards and card groups:
-
-<Card title="Getting started guide" icon="rocket" href="/quickstart">
-Complete walkthrough from installation to your first API call in under 10 minutes.
-</Card>
-
-<CardGroup cols={2}>
-<Card title="Authentication" icon="key" href="/auth">
-  Learn how to authenticate requests using API keys or JWT tokens.
-</Card>
-
-<Card title="Rate limiting" icon="clock" href="/rate-limits">
-  Understand rate limits and best practices for high-volume usage.
-</Card>
-</CardGroup>
-
-### API documentation components
-
-#### Parameter fields
-
-Example of parameter documentation:
-
-<ParamField path="user_id" type="string" required>
-Unique identifier for the user. Must be a valid UUID v4 format.
-</ParamField>
-
-<ParamField body="email" type="string" required>
-User's email address. Must be valid and unique within the system.
-</ParamField>
-
-<ParamField query="limit" type="integer" default="10">
-Maximum number of results to return. Range: 1-100.
-</ParamField>
-
-<ParamField header="Authorization" type="string" required>
-Bearer token for API authentication. Format: `Bearer YOUR_API_KEY`
-</ParamField>
-
-#### Response fields
-
-Example of response field documentation:
-
-<ResponseField name="user_id" type="string" required>
-Unique identifier assigned to the newly created user.
-</ResponseField>
-
-<ResponseField name="created_at" type="timestamp">
-ISO 8601 formatted timestamp of when the user was created.
-</ResponseField>
-
-<ResponseField name="permissions" type="array">
-List of permission strings assigned to this user.
-</ResponseField>
-
-#### Expandable nested fields
-
-Example of nested field documentation:
-
-<ResponseField name="user" type="object">
-Complete user object with all associated data.
-
-<Expandable title="User properties">
-  <ResponseField name="profile" type="object">
-  User profile information including personal details.
-  
-  <Expandable title="Profile details">
-    <ResponseField name="first_name" type="string">
-    User's first name as entered during registration.
-    </ResponseField>
-    
-    <ResponseField name="avatar_url" type="string | null">
-    URL to user's profile picture. Returns null if no avatar is set.
-    </ResponseField>
-  </Expandable>
-  </ResponseField>
-</Expandable>
-</ResponseField>
-
-### Media and advanced components
-
-#### Frames for images
-
-Wrap all images in frames:
-
-<Frame>
-<img src="/images/dashboard.png" alt="Main dashboard showing analytics overview" />
-</Frame>
-
-<Frame caption="The analytics dashboard provides real-time insights">
-<img src="/images/analytics.png" alt="Analytics dashboard with charts" />
-</Frame>
-
-#### Videos
-
-Use the HTML video element for self-hosted video content:
-
-<video
-  controls
-  className="w-full aspect-video rounded-xl"
-  src="link-to-your-video.com"
-></video>
-
-Embed YouTube videos using iframe elements:
-
-<iframe
-  className="w-full aspect-video rounded-xl"
-  src="https://www.youtube.com/embed/4KzFe50RQkQ"
-  title="YouTube video player"
-  frameBorder="0"
-  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-  allowFullScreen
-></iframe>
-
-#### Tooltips
-
-Example of tooltip usage:
-
-<Tooltip tip="Application Programming Interface - protocols for building software">
-API
-</Tooltip>
-
-#### Updates
-
-Use updates for changelogs:
-
-<Update label="Version 2.1.0" description="Released March 15, 2024">
-## New features
-- Added bulk user import functionality
-- Improved error messages with actionable suggestions
-
-## Bug fixes
-- Fixed pagination issue with large datasets
-- Resolved authentication timeout problems
-</Update>
-
-## Required page structure
-
-Every documentation page must begin with YAML frontmatter:
-
-```yaml
----
-title: "Clear, specific, keyword-rich title"
-description: "Concise description explaining page purpose and value"
----
+export function ThemeSwitcher() {
+  const { theme, setTheme } = useTheme()
+  // Client-side interactivity
+}
 ```
 
-## Content quality standards
+### Authentication Patterns
 
-### Code examples requirements
+Protected pages use requireAuth():
 
-- Always include complete, runnable examples that users can copy and execute
-- Show proper error handling and edge case management
-- Use realistic data instead of placeholder values
-- Include expected outputs and results for verification
-- Test all code examples thoroughly before publishing
-- Specify language and include filename when relevant
-- Add explanatory comments for complex logic
-- Never include real API keys or secrets in code examples
+```tsx app/protected/page.tsx
+import { requireAuth } from '@/lib/auth-server'
 
-### API documentation requirements
+export default async function ProtectedPage() {
+  const user = await requireAuth() // Auto-redirects if not authenticated
+  return <div>Protected content</div>
+}
+```
 
-- Document all parameters including optional ones with clear descriptions
-- Show both success and error response examples with realistic data
-- Include rate limiting information with specific limits
-- Provide authentication examples showing proper format
-- Explain all HTTP status codes and error handling
-- Cover complete request/response cycles
+Client-side auth checks use hooks:
 
-### Accessibility requirements
+```tsx
+'use client'
 
-- Include descriptive alt text for all images and diagrams
-- Use specific, actionable link text instead of "click here"
-- Ensure proper heading hierarchy starting with H2
-- Provide keyboard navigation considerations
-- Use sufficient color contrast in examples and visuals
-- Structure content for easy scanning with headers and lists
+import { useCurrentUser, useIsAuthenticated } from '@/lib/auth-context'
 
-## Component selection logic
+export function UserProfile() {
+  const user = useCurrentUser()
+  const isAuthenticated = useIsAuthenticated()
+  
+  if (!isAuthenticated) return <LoginPrompt />
+  return <div>{user.email}</div>
+}
+```
 
-- Use **Steps** for procedures and sequential instructions
-- Use **Tabs** for platform-specific content or alternative approaches
-- Use **CodeGroup** when showing the same concept in multiple programming languages
-- Use **Accordions** for progressive disclosure of information
-- Use **RequestExample/ResponseExample** specifically for API endpoint documentation
-- Use **ParamField** for API parameters, **ResponseField** for API responses
-- Use **Expandable** for nested object properties or hierarchical information
+### Server Actions
+
+All mutations use Server Actions:
+
+```tsx app/actions.ts
+'use server'
+
+import { redirect } from 'next/navigation'
+import { storeTokensInCookies } from '@/lib/auth-server'
+
+export async function loginAction(formData: FormData) {
+  const email = formData.get('email') as string
+  const password = formData.get('password') as string
+  
+  // Call Cloud API
+  const response = await fetch(`${apiUrl}/api/v1/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password })
+  })
+  
+  if (!response.ok) {
+    return { error: 'Invalid credentials' }
+  }
+  
+  const tokens = await response.json()
+  storeTokensInCookies(tokens)
+  redirect('/dashboard')
+}
+```
+
+### Component Structure
+
+Follow the component organization:
+
+```
+components/
+├── ui/              # Radix UI primitives (buttons, forms, cards)
+├── generic/         # Reusable cross-app components  
+├── project/         # App-specific (header, footer)
+└── starter/         # Homepage marketing sections
+```
+
+Create reusable components:
+
+```tsx components/generic/info-box.tsx
+import { cn } from '@/lib/utils'
+
+interface InfoBoxProps {
+  title: string
+  description: string
+  className?: string
+}
+
+export function InfoBox({ title, description, className }: InfoBoxProps) {
+  return (
+    <div className={cn('rounded-lg border p-4', className)}>
+      <h3 className="font-semibold">{title}</h3>
+      <p className="text-sm text-muted-foreground">{description}</p>
+    </div>
+  )
+}
+```
+
+### Styling with Tailwind
+
+Use Tailwind utilities with cn() helper:
+
+```tsx
+import { cn } from '@/lib/utils'
+
+export function Button({ variant, className, ...props }: ButtonProps) {
+  return (
+    <button
+      className={cn(
+        'rounded-lg px-4 py-2 font-medium transition-colors',
+        variant === 'primary' && 'bg-primary text-primary-foreground',
+        variant === 'secondary' && 'bg-secondary text-secondary-foreground',
+        className
+      )}
+      {...props}
+    />
+  )
+}
+```
+
+Support dark mode with dark: prefix:
+
+```tsx
+<div className="bg-white dark:bg-gray-900 text-black dark:text-white">
+  Content adapts to theme
+</div>
+```
+
+### Configuration
+
+App config in config/app.config.ts:
+
+```tsx
+export const appConfig = {
+  name: 'My AI App',
+  description: 'AI-powered application',
+  logo: { text: 'MyApp', href: '/' },
+  header: {
+    nav: [
+      { label: 'Home', href: '/' },
+      { label: 'Dashboard', href: '/dashboard' },
+    ]
+  },
+  footer: {
+    sections: [
+      {
+        title: 'Product',
+        links: [
+          { label: 'Features', href: '/features' },
+          { label: 'Pricing', href: '/pricing' },
+        ]
+      }
+    ]
+  }
+}
+```
+
+Environment variables validated at startup:
+
+```bash .env.local
+DEVKIT4AI_MODE=project
+NEXT_PUBLIC_API_URL=https://api.vibecoding.ad
+DEVKIT4AI_DEVELOPER_KEY=dk_your_developer_key
+DEVKIT4AI_PROJECT_ID=your-project-uuid
+DEVKIT4AI_PROJECT_KEY=pk_your_project_key
+```
+
+### Error Handling
+
+User-friendly error messages:
+
+```tsx
+try {
+  const response = await fetch(apiUrl)
+  if (!response.ok) {
+    throw new Error('Failed to fetch data')
+  }
+  return await response.json()
+} catch (error) {
+  console.error('API Error:', error)
+  return { 
+    error: 'Unable to load data. Please try again later.' 
+  }
+}
+```
+
+Form validation with clear feedback:
+
+```tsx
+'use client'
+
+export function LoginForm() {
+  const [error, setError] = useState('')
+  
+  async function handleSubmit(formData: FormData) {
+    const result = await loginAction(formData)
+    if (result?.error) {
+      setError(result.error)
+    }
+  }
+  
+  return (
+    <form action={handleSubmit}>
+      {error && (
+        <div className="text-sm text-red-600 dark:text-red-400">
+          {error}
+        </div>
+      )}
+      {/* form fields */}
+    </form>
+  )
+}
+```
+
+## File Naming Conventions
+
+- **Components**: PascalCase (UserProfile.tsx, LoginForm.tsx)
+- **Pages**: lowercase (page.tsx, layout.tsx, error.tsx)
+- **Utilities**: kebab-case (auth-server.ts, deployment-mode.ts)
+- **Config**: kebab-case with .config.ts (app.config.ts)
+- **Actions**: actions.ts in relevant directory
+
+## TypeScript Guidelines
+
+Explicit function types:
+
+```tsx
+// Good - explicit types
+async function fetchUser(userId: string): Promise<User | null> {
+  // implementation
+}
+
+// Avoid - implicit any
+async function fetchUser(userId) {
+  // implementation
+}
+```
+
+Interface for props:
+
+```tsx
+interface CardProps {
+  title: string
+  description?: string
+  onClick?: () => void
+  className?: string
+}
+
+export function Card({ title, description, onClick, className }: CardProps) {
+  // implementation
+}
+```
+
+## Common Patterns
+
+### Protected Routes
+
+```tsx app/dashboard/layout.tsx
+import { requireAuth } from '@/lib/auth-server'
+
+export default async function DashboardLayout({
+  children
+}: {
+  children: React.ReactNode
+}) {
+  await requireAuth() // Redirects if not authenticated
+  return <div>{children}</div>
+}
+```
+
+### API Integration
+
+```tsx app/dashboard/actions.ts
+'use server'
+
+import { cookies } from 'next/headers'
+import { hydrateDeploymentMode } from '@/lib/deployment-mode'
+
+export async function fetchUserData() {
+  const config = await hydrateDeploymentMode()
+  const token = cookies().get('devkit4ai-token')?.value
+  
+  const response = await fetch(`${config.backendApiUrl}/api/v1/user/data`, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      ...config.headers
+    }
+  })
+  
+  if (!response.ok) {
+    return { error: 'Failed to fetch data' }
+  }
+  
+  return response.json()
+}
+```
+
+### Theme-Aware Components
+
+```tsx
+import { useTheme } from 'next-themes'
+
+export function Logo() {
+  const { theme } = useTheme()
+  
+  return (
+    <img 
+      src={theme === 'dark' ? '/logo-dark.png' : '/logo-light.png'}
+      alt="Logo"
+    />
+  )
+}
+```
+
+## Testing Patterns
+
+Integration tests with Vitest:
+
+```tsx __tests__/auth.test.ts
+import { describe, it, expect } from 'vitest'
+import { sanitizeReturnUrl } from '@/lib/return-url'
+
+describe('sanitizeReturnUrl', () => {
+  it('allows valid relative paths', () => {
+    expect(sanitizeReturnUrl('/dashboard')).toBe('/dashboard')
+  })
+  
+  it('rejects absolute URLs', () => {
+    expect(sanitizeReturnUrl('https://evil.com')).toBe(null)
+  })
+})
+```
+
+E2E tests with Playwright:
+
+```tsx tests/e2e/login.spec.ts
+import { test, expect } from '@playwright/test'
+
+test('user can log in', async ({ page }) => {
+  await page.goto('/login')
+  await page.fill('[name="email"]', 'test@example.com')
+  await page.fill('[name="password"]', 'password123')
+  await page.click('button[type="submit"]')
+  await expect(page).toHaveURL('/dashboard')
+})
+```
+
+## Best Practices
+
+1. **Server Components**: Default choice for better performance
+2. **Type Safety**: Explicit types for all props and functions
+3. **Error Handling**: User-friendly messages, console.error in development
+4. **Security**: Never expose API keys, validate all inputs
+5. **Accessibility**: Semantic HTML, proper ARIA labels, keyboard navigation
+6. **Performance**: Use React cache() for expensive operations
+7. **Code Organization**: Group related files, follow existing patterns
+8. **Responsive Design**: Mobile-first with Tailwind breakpoints
+
+## What to Avoid
+
+- ❌ Client Components when Server Components suffice
+- ❌ Inline styles instead of Tailwind classes
+- ❌ Direct database access (use Cloud API)
+- ❌ Storing tokens in localStorage (use httpOnly cookies)
+- ❌ Generic error messages ("Something went wrong")
+- ❌ Inconsistent naming conventions
+- ❌ Hardcoded values instead of config files
+- ❌ Missing TypeScript types or using `any`
+
+## Quick Reference
+
+**Key Files:**
+- `lib/deployment-mode.ts` - Environment validation
+- `lib/auth-server.ts` - Server-side auth helpers  
+- `lib/auth-context.tsx` - Client-side auth hooks
+- `app/actions.ts` - Server actions for auth
+- `config/app.config.ts` - App configuration
+- `components/ui/` - Base UI primitives
+- `app/layout.tsx` - Root layout with providers
+
+**Common Commands:**
+```bash
+npm run dev              # Start development server (port 3004)
+npm run build           # Production build
+npm run test            # Run all tests
+npm run lint            # Lint codebase
+```
+
+**Environment Setup:**
+1. Clone repository
+2. Copy `.env.local` with Cloud Admin credentials
+3. Run `npm install`
+4. Run `npm run dev`
+5. Visit `http://localhost:3004`
+
+**Resources:**
+- [Starter Kit Documentation](https://docs.devkit4ai.com/starter-kit/installation)
+- [Cloud API Reference](https://docs.devkit4ai.com/cloud-api/introduction)
+- [Cloud Admin Guide](https://docs.devkit4ai.com/cloud-admin/getting-started)
+- [GitHub Repository](https://github.com/VibeCodingStarter/starter-kit)
+````
+
+This configuration helps Cursor understand:
+- **Next.js 15 patterns**: Server Components, Server Actions, App Router
+- **TypeScript best practices**: Strict types, explicit interfaces
+- **Authentication**: JWT-based with Cloud API integration
+- **Styling**: Tailwind CSS with dark mode support
+- **Testing**: Vitest and Playwright patterns
+- **Project structure**: Component organization and file naming
+
+## Save configuration
+
+Commit `.cursor/rules.md` to version control:
+
+```bash
+git add .cursor/rules.md
+git commit -m "Add Cursor rules for Starter Kit development"
+```
+
+All team members working with Cursor will now have consistent AI assistance tailored to the Starter Kit project.
+
+## Usage tips
+
+- **Reference project files**: Ask "How does authentication work?" and Cursor will use the rules as context
+- **Generate components**: "Create a new dashboard card component" follows established patterns
+- **Debug issues**: "Why isn't my Server Component working?" gets context-aware help
+- **Code reviews**: Cursor checks against project standards automatically
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Claude Code" icon="code" href="/development-tools/ai-assistants/claude-code">
+    Configure Claude Code for the Starter Kit
+  </Card>
+  
+  <Card title="Windsurf" icon="wind" href="/development-tools/ai-assistants/windsurf">
+    Set up Windsurf IDE integration
+  </Card>
+</CardGroup>

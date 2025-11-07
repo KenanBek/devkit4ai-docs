@@ -4,11 +4,13 @@ description: "Configure Claude Code for your documentation workflow"
 icon: "asterisk"
 ---
 
-Claude Code is Anthropic's official CLI tool. This guide will help you set up Claude Code to help you write and maintain your documentation.
+Claude Code is Anthropic's official CLI tool. This guide will help you set up Claude Code to build AI-powered applications with the Starter Kit.
 
 ## Prerequisites
 
 - Active Claude subscription (Pro, Max, or API access)
+- Starter Kit cloned from [GitHub](https://github.com/VibeCodingStarter/starter-kit)
+- Cloud Admin account with developer credentials
 
 ## Setup
 
@@ -18,59 +20,112 @@ Claude Code is Anthropic's official CLI tool. This guide will help you set up Cl
   npm install -g @anthropic-ai/claude-code
 ```
 
-2. Navigate to your docs directory.
+2. Navigate to your Starter Kit project directory.
 3. (Optional) Add the `CLAUDE.md` file below to your project.
 4. Run `claude` to start.
 
 ## Create `CLAUDE.md`
 
-Create a `CLAUDE.md` file at the root of your documentation repository to train Claude Code on your specific documentation standards:
+Create a `CLAUDE.md` file at the root of your Starter Kit project to train Claude Code on your development standards:
 
 ````markdown
-# Mintlify documentation
+# Dev Kit for AI - Starter Kit Development
 
 ## Working relationship
-- You can push back on ideas-this can lead to better documentation. Cite sources and explain your reasoning when you do so
-- ALWAYS ask for clarification rather than making assumptions
-- NEVER lie, guess, or make up information
+- Push back on ideas when you have better suggestions - cite technical reasons
+- ALWAYS ask for clarification rather than making assumptions about requirements
+- NEVER make up API endpoints, environment variables, or configuration values
+- Reference actual files in the codebase when explaining patterns
 
 ## Project context
-- Format: MDX files with YAML frontmatter
-- Config: docs.json for navigation, theme, settings
-- Components: Mintlify components
+- **Type**: Next.js 15.5.6 application with React 19 Server Components
+- **Language**: TypeScript 5 (strict mode)
+- **Styling**: Tailwind CSS 3.4.18 with dark mode
+- **Auth**: JWT via Cloud API (https://api.vibecoding.ad)
+- **Components**: Radix UI primitives, custom UI library
 
-## Content strategy
-- Document just enough for user success - not too much, not too little
-- Prioritize accuracy and usability of information
-- Make content evergreen when possible
-- Search for existing information before adding new content. Avoid duplication unless it is done for a strategic reason
-- Check existing patterns for consistency
-- Start by making the smallest reasonable changes
+## Architecture principles
+- Server Components by default - use "use client" only when necessary
+- Server Actions for all mutations and data fetching
+- TypeScript strict mode - explicit types for everything
+- Cloud API integration - never direct database access
+- httpOnly cookies for authentication - never localStorage
+- Mobile-first responsive design with Tailwind
 
-## Frontmatter requirements for pages
-- title: Clear, descriptive page title
-- description: Concise summary for SEO/navigation
+## Code standards
+- Check existing patterns before creating new ones
+- Follow component organization: ui/, generic/, project/, starter/
+- Use cn() helper for conditional Tailwind classes
+- Implement proper error handling with user-friendly messages
+- Write explicit TypeScript types - avoid `any`
+- Support dark mode with dark: prefix on colors
 
-## Writing standards
-- Second-person voice ("you")
-- Prerequisites at start of procedural content
-- Test all code examples before publishing
-- Match style and formatting of existing pages
-- Include both basic and advanced use cases
-- Language tags on all code blocks
-- Alt text on all images
-- Relative paths for internal links
+## File structure
+```
+app/              # App Router pages and layouts
+  actions.ts      # Server actions
+  layout.tsx      # Root layout with providers
+components/       # React components by category
+lib/              # Core libraries and utilities
+config/           # App configuration
+```
+
+## File naming
+- Components: PascalCase (UserProfile.tsx, LoginForm.tsx)
+- Pages: lowercase (page.tsx, layout.tsx, error.tsx)
+- Utilities: kebab-case (auth-server.ts, deployment-mode.ts)
+- Config: kebab-case with .config.ts suffix
+
+## Authentication patterns
+- Server-side: Use getCurrentUser() or requireAuth() from lib/auth-server.ts
+- Client-side: Use useCurrentUser() or useIsAuthenticated() hooks
+- Protected pages: Call requireAuth() in Server Components
+- Server Actions: Get user from getCurrentUser() before mutations
+
+## Component patterns
+- Default to Server Components for better performance
+- Use "use client" for hooks, event handlers, browser APIs
+- Pass user data as props from Server to Client Components
+- Use React.cache() for expensive server-side operations
+- Implement loading and error states
+
+## Environment variables
+Required in .env.local:
+```bash
+DEVKIT4AI_MODE=project
+NEXT_PUBLIC_API_URL=https://api.vibecoding.ad
+DEVKIT4AI_DEVELOPER_KEY=dk_...
+DEVKIT4AI_PROJECT_ID=uuid
+DEVKIT4AI_PROJECT_KEY=pk_...
+```
+
+## Testing requirements
+- Write Vitest tests for utilities and helpers
+- Write Playwright tests for critical user flows
+- Test all auth flows (login, register, protected routes)
+- Verify error handling and edge cases
+- Run tests before committing: `npm run test`
 
 ## Git workflow
 - NEVER use --no-verify when committing
-- Ask how to handle uncommitted changes before starting
-- Create a new branch when no clear branch exists for changes
-- Commit frequently throughout development
+- Ask about uncommitted changes before starting new work
+- Create feature branches for new functionality
+- Commit frequently with descriptive messages
 - NEVER skip or disable pre-commit hooks
+- Run linting and type checking before commits
 
 ## Do not
-- Skip frontmatter on any MDX file
-- Use absolute URLs for internal links
-- Include untested code examples
-- Make assumptions - always ask for clarification
+- Use Client Components when Server Components suffice
+- Store authentication tokens in localStorage
+- Make assumptions about API responses - check the docs
+- Use inline styles instead of Tailwind classes
+- Skip TypeScript types or use `any`
+- Hardcode values that should be in config
+- Create components without checking existing patterns
+- Make breaking changes without discussing first
+
+## Resources
+- Starter Kit Docs: https://docs.devkit4ai.com/starter-kit/installation
+- Cloud API Reference: https://docs.devkit4ai.com/cloud-api/introduction
+- GitHub Repository: https://github.com/VibeCodingStarter/starter-kit
 ````
