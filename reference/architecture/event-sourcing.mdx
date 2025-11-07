@@ -1,11 +1,143 @@
 ---
-title: "Event Sourcing"
-description: "Understand how Dev Kit for AI stores every change as an immutable event."
-icon: "database"
+title: "Cloud API Architecture"
+sidebarTitle: "Cloud API"
+description: "Understand how the Cloud API powers your Starter Kit application."
+icon: "cloud"
 ---
 
-The backend API persists all state transitions as events (see `devkit4ai/backend-api/app/system/events`). Key points:
+The Dev Kit for AI Cloud API is a fully managed backend service that handles authentication, data storage, and AI features for your application.
 
-- Commands append events via aggregates (e.g., `UserActions`, `ProjectActions`), raising facts such as `UserWasRegistered` and `ProjectWasCreated`.
-- Events live in PostgreSQL tables (`event_store`, `event_streams`) with optimistic concurrency to prevent conflicting writes.
-- Projectors build read models for fast queries without mutating the original events, keeping the system audit-friendly.
+## Core capabilities
+
+The Cloud API provides:
+
+**Authentication & Authorization:**
+- User registration and login
+- JWT token generation and refresh
+- Role-based access control
+- Project-scoped permissions
+
+**Data Management:**
+- Project and user data storage
+- API key generation and management
+- User membership tracking
+- Secure credential storage
+
+**AI Features:**
+- Image generation via Replicate AI
+- File upload and storage
+- Generation history tracking
+- Content processing
+
+## Request/Response pattern
+
+All API interactions follow a consistent pattern:
+
+1. **Client sends request** with authentication headers
+2. **API validates** credentials and permissions
+3. **API processes** the request (creates, reads, updates, deletes data)
+4. **API returns** structured JSON response
+5. **Client handles** success or error state
+
+```tsx
+// Example API interaction
+const response = await fetch(`${apiUrl}/api/v1/projects`, {
+  headers: {
+    'Authorization': `Bearer ${token}`,
+    'X-Developer-Key': developerKey,
+    'X-Project-ID': projectId,
+    'Content-Type': 'application/json'
+  }
+})
+
+if (response.ok) {
+  const data = await response.json()
+  // Handle success
+} else {
+  const error = await response.json()
+  // Handle error
+}
+```
+
+## Data consistency
+
+The Cloud API ensures:
+
+**Atomicity:** Operations complete fully or not at all
+
+**Consistency:** Data remains valid across all operations
+
+**Isolation:** Concurrent requests don't interfere with each other
+
+**Durability:** Committed data persists permanently
+
+## Security model
+
+Multiple layers protect your data:
+
+**Transport security:**
+- HTTPS encryption for all requests
+- TLS 1.3 for secure connections
+
+**Authentication:**
+- JWT tokens with short expiry (30 minutes)
+- Refresh tokens for extended sessions (7 days)
+- Secure token storage in httpOnly cookies
+
+**Authorization:**
+- Project-scoped access control
+- API key validation
+- Role-based permissions
+
+**Data protection:**
+- Password hashing with bcrypt
+- API key hashing with SHA-256
+- Encrypted storage at rest
+
+## Scalability
+
+The Cloud API is designed to scale:
+
+**Horizontal scaling:** Add more servers to handle increased load
+
+**Caching:** Frequently accessed data cached for fast retrieval
+
+**Rate limiting:** Prevents abuse and ensures fair resource allocation
+
+**Async processing:** Long-running tasks (AI generation) processed in background
+
+## Reliability
+
+**High availability:** Multiple redundant servers ensure uptime
+
+**Automatic backups:** Data backed up regularly
+
+**Monitoring:** Real-time health checks and alerting
+
+**Error recovery:** Automatic retry logic for transient failures
+
+## API versioning
+
+The API uses version prefixes:
+
+**Current version:** `/api/v1/*`
+
+**Stability:** v1 endpoints are stable and backward-compatible
+
+**Deprecation:** Deprecated endpoints receive 6-month notice before removal
+
+<Info>
+See the [Cloud API Reference](/cloud-api/introduction) for complete endpoint documentation.
+</Info>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="API Reference" icon="book" href="/cloud-api/introduction">
+    Explore all available endpoints
+  </Card>
+  
+  <Card title="Authentication" icon="key" href="/cloud-api/auth/login">
+    Understand auth workflows
+  </Card>
+</CardGroup>

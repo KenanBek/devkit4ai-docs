@@ -1,9 +1,450 @@
 ---
 title: "Security Best Practices"
-description: "Align your customizations with the platform's security posture."
+sidebarTitle: "Security"
+description: "Implement security best practices in your Starter Kit application."
 icon: "shield-check"
 ---
 
-- Keep secrets out of the repo; rely on environment managers as noted in the configuration reference.
-- Respect RBAC headers when calling the Cloud API so the backend can enforce permissions.
-- Hash any new credentials using the same utilities the backend uses (SHA-256 for keys, bcrypt for passwords) to stay consistent with existing tables.
+Follow these security practices to protect your application and user data.
+
+## Authentication best practices
+
+### Always use Server Components for auth
+
+```tsx app/dashboard/page.tsx
+import { requireAuth } from '@/lib/auth-server'
+
+// ✅ Good - Server Component with server-side auth
+export default async function DashboardPage() {
+  const user = await requireAuth() // Redirects if not authenticated
+  return <UserDashboard user={user} />
+}
+
+// ❌ Bad - Client Component trying to check auth
+'use client'
+export function DashboardPage() {
+  const user = useCurrentUser() // Can be bypassed
+  if (!user) return <LoginPrompt />
+  return <UserDashboard user={user} />
+}
+```
+
+### Implement proper logout
+
+```tsx app/actions.ts
+'use server'
+
+import { cookies } from 'next/headers'
+import { redirect } from 'next/navigation'
+
+export async function signOutAction() {
+  // Clear all auth cookies
+  cookies().delete('devkit4ai-token')
+  cookies().delete('devkit4ai-refresh-token')
+  
+  // Redirect to login
+  redirect('/login')
+}
+```
+
+### Validate return URLs
+
+```tsx lib/return-url.ts
+export function sanitizeReturnUrl(url: string | null): string | null {
+  if (!url) return null
+  
+  // Only allow same-origin relative paths
+  if (!url.startsWith('/')) return null
+  if (url.startsWith('//')) return null
+  
+  // Prevent control characters
+  if (/[\x00-\x1f]/.test(url)) return null
+  
+  // Prevent excessively long URLs
+  if (url.length > 2048) return null
+  
+  return url
+}
+```
+
+## API key management
+
+### Never expose keys client-side
+
+```tsx
+// ✅ Good - Server Action
+'use server'
+export async function fetchData() {
+  const key = process.env.DEVKIT4AI_DEVELOPER_KEY
+  // Key stays on server
+}
+
+// ❌ Bad - Client Component
+'use client'
+export function MyComponent() {
+  const key = process.env.DEVKIT4AI_DEVELOPER_KEY // Undefined!
+}
+```
+
+### Rotate keys regularly
+
+<Steps>
+  <Step title="Generate new keys">
+    Create new keys in Cloud Admin every 90 days or immediately if compromised.
+  </Step>
+  
+  <Step title="Update production first">
+    Set new keys in production environment variables and deploy.
+  </Step>
+  
+  <Step title="Verify functionality">
+    Test critical flows (login, API calls, AI features).
+  </Step>
+  
+  <Step title="Revoke old keys">
+    Only after confirming new keys work everywhere.
+  </Step>
+</Steps>
+
+### Monitor key usage
+
+Regularly check Cloud Admin for:
+- Unexpected API key usage patterns
+- Failed authentication attempts
+- Rate limit violations
+
+## Input validation
+
+### Validate on client AND server
+
+```tsx app/actions.ts
+'use server'
+
+export async function updateProfile(formData: FormData) {
+  const email = formData.get('email') as string
+  
+  // Validate even though client did
+  if (!isValidEmail(email)) {
+    return { error: 'Invalid email address' }
+  }
+  
+  // Proceed with update
+}
+
+function isValidEmail(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+}
+```
+
+### Sanitize user-generated content
+
+```tsx components/user-content.tsx
+import DOMPurify from 'isomorphic-dompurify'
+
+interface Props {
+  content: string
+}
+
+export function UserContent({ content }: Props) {
+  // Sanitize before rendering
+  const clean = DOMPurify.sanitize(content, {
+    ALLOWED_TAGS: ['p', 'br', 'strong', 'em'],
+    ALLOWED_ATTR: []
+  })
+  
+  return (
+    <div dangerouslySetInnerHTML={{ __html: clean }} />
+  )
+}
+```
+
+### Prevent SQL injection
+
+<Info>
+Your Starter Kit doesn't directly access databases. The Cloud API handles all data operations securely.
+</Info>
+
+If you add custom backend logic, use parameterized queries.
+
+## HTTPS and transport security
+
+### Enforce HTTPS in production
+
+```tsx middleware.ts
+import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
+
+export function middleware(request: NextRequest) {
+  // Redirect HTTP to HTTPS
+  if (
+    process.env.NODE_ENV === 'production' &&
+    request.headers.get('x-forwarded-proto') !== 'https'
+  ) {
+    return NextResponse.redirect(
+      `https://${request.headers.get('host')}${request.nextUrl.pathname}`,
+      301
+    )
+  }
+}
+```
+
+### Configure secure headers
+
+```tsx next.config.ts
+const securityHeaders = [
+  {
+    key: 'X-DNS-Prefetch-Control',
+    value: 'on'
+  },
+  {
+    key: 'Strict-Transport-Security',
+    value: 'max-age=63072000; includeSubDomains; preload'
+  },
+  {
+    key: 'X-Frame-Options',
+    value: 'SAMEORIGIN'
+  },
+  {
+    key: 'X-Content-Type-Options',
+    value: 'nosniff'
+  },
+  {
+    key: 'X-XSS-Protection',
+    value: '1; mode=block'
+  },
+  {
+    key: 'Referrer-Policy',
+    value: 'strict-origin-when-cross-origin'
+  },
+  {
+    key: 'Permissions-Policy',
+    value: 'camera=(), microphone=(), geolocation=()'
+  }
+]
+
+const nextConfig = {
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: securityHeaders
+      }
+    ]
+  }
+}
+
+export default nextConfig
+```
+
+## Error handling
+
+### Never expose sensitive info in errors
+
+```tsx
+// ❌ Bad
+catch (error) {
+  return { error: error.message } // Might leak stack traces
+}
+
+// ✅ Good
+catch (error) {
+  console.error('API error:', error) // Log for debugging
+  return { error: 'Unable to process request' } // Generic message
+}
+```
+
+### Log errors without sensitive data
+
+```tsx
+function logError(error: Error, context: Record<string, any>) {
+  const safeContext = { ...context }
+  
+  // Remove sensitive fields
+  delete safeContext.password
+  delete safeContext.apiKey
+  delete safeContext.token
+  
+  console.error('Error:', error.message, safeContext)
+}
+```
+
+## Dependency security
+
+### Regular updates
+
+```bash
+# Check for vulnerabilities
+npm audit
+
+# Fix automatically
+npm audit fix
+
+# Update all dependencies
+npm update
+
+# Update Next.js
+npm install next@latest react@latest react-dom@latest
+```
+
+### Monitor dependencies
+
+Enable GitHub Dependabot:
+1. Repository Settings → Security & Analysis
+2. Enable Dependabot alerts
+3. Enable Dependabot security updates
+
+### Review before installing
+
+Before adding new packages:
+- Check npm/GitHub stats (downloads, stars, last update)
+- Review open issues and security advisories
+- Check license compatibility
+- Consider bundle size impact
+
+## Session security
+
+### Set appropriate timeouts
+
+Access tokens expire after 30 minutes. Implement refresh logic:
+
+```tsx lib/auth-server.ts
+export async function refreshAccessToken() {
+  const refreshToken = cookies().get('devkit4ai-refresh-token')?.value
+  
+  if (!refreshToken) {
+    redirect('/login')
+  }
+  
+  const response = await fetch(`${apiUrl}/api/v1/auth/refresh`, {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${refreshToken}` }
+  })
+  
+  if (!response.ok) {
+    redirect('/login?error=session_expired')
+  }
+  
+  const tokens = await response.json()
+  storeTokensInCookies(tokens)
+}
+```
+
+### Handle concurrent sessions
+
+Decide your policy:
+- Allow multiple sessions (default)
+- Invalidate previous sessions on new login
+- Limit to N concurrent sessions
+
+Implement in your login flow:
+
+```tsx app/actions.ts
+'use server'
+
+export async function loginAction(formData: FormData) {
+  // Login succeeds
+  const tokens = await apiLogin(email, password)
+  
+  // Optional: invalidate other sessions
+  if (SINGLE_SESSION_MODE) {
+    await revokeOtherSessions(tokens.user_id)
+  }
+  
+  storeTokensInCookies(tokens)
+}
+```
+
+## Rate limiting
+
+### Respect API rate limits
+
+```tsx
+async function callApiWithBackoff(
+  url: string,
+  options: RequestInit,
+  maxRetries = 3
+) {
+  for (let i = 0; i < maxRetries; i++) {
+    const response = await fetch(url, options)
+    
+    if (response.status !== 429) {
+      return response
+    }
+    
+    // Exponential backoff: 1s, 2s, 4s
+    const delay = Math.pow(2, i) * 1000
+    await new Promise(resolve => setTimeout(resolve, delay))
+  }
+  
+  throw new Error('Rate limit exceeded')
+}
+```
+
+### Implement client-side throttling
+
+```tsx
+import { useState, useCallback } from 'react'
+
+function useThrottle(callback: Function, delay: number) {
+  const [lastCall, setLastCall] = useState(0)
+  
+  return useCallback((...args: any[]) => {
+    const now = Date.now()
+    
+    if (now - lastCall >= delay) {
+      setLastCall(now)
+      return callback(...args)
+    }
+  }, [callback, delay, lastCall])
+}
+
+// Usage
+const throttledSearch = useThrottle(search, 1000) // Max 1 call/second
+```
+
+## Security checklist
+
+<AccordionGroup>
+  <Accordion title="Authentication">
+    - [ ] Server-side auth checks on protected pages
+    - [ ] httpOnly cookies for tokens
+    - [ ] Proper logout implementation
+    - [ ] Return URL sanitization
+    - [ ] Session timeout handling
+  </Accordion>
+  
+  <Accordion title="API Security">
+    - [ ] Keys stored in environment variables
+    - [ ] Server-side API calls only
+    - [ ] Input validation client and server
+    - [ ] Error messages don't leak info
+    - [ ] Rate limit handling
+  </Accordion>
+  
+  <Accordion title="Transport Security">
+    - [ ] HTTPS enforced in production
+    - [ ] Security headers configured
+    - [ ] CORS properly configured
+    - [ ] Cookie secure flags set
+  </Accordion>
+  
+  <Accordion title="Code Security">
+    - [ ] Dependencies regularly updated
+    - [ ] No secrets in code or logs
+    - [ ] User input sanitized
+    - [ ] SQL injection prevention (if custom backend)
+    - [ ] XSS prevention
+  </Accordion>
+</AccordionGroup>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Security Config" icon="shield" href="/reference/config/security-settings">
+    Configure security settings
+  </Card>
+  
+  <Card title="Environment Variables" icon="key" href="/reference/config/environment-variables">
+    Manage credentials securely
+  </Card>
+</CardGroup>

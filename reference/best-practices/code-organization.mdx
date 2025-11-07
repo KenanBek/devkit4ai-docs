@@ -1,9 +1,488 @@
 ---
 title: "Code Organization Best Practices"
-description: "Structure contributions so they align with the upstream repositories."
-icon: "folder"
+sidebarTitle: "Code Organization"
+description: "Structure your Starter Kit codebase for maintainability and scalability."
+icon: "folder-tree"
 ---
 
-- Follow the feature folder conventions in `devkit4ai/backend-api/app/features` and `devkit4ai/user-app/app` when adding functionality.
-- Avoid duplicating logic; reuse helpers from `lib/` or `app/system` where available.
-- Keep documentation changes in lockstep with code updates to maintain parity across Starter Kit exports.
+Follow these organizational patterns to keep your codebase clean and maintainable.
+
+## Directory structure
+
+The Starter Kit follows Next.js App Router conventions:
+
+```
+project-root/
+├── app/                    # Pages and routing
+│   ├── (auth)/            # Route group for auth pages
+│   ├── dashboard/         # Dashboard pages
+│   ├── actions.ts         # Server Actions
+│   ├── layout.tsx         # Root layout
+│   └── page.tsx           # Homepage
+│
+├── components/            # React components
+│   ├── ui/               # Base UI primitives
+│   ├── generic/          # Reusable components
+│   ├── project/          # App-specific components
+│   └── starter/          # Marketing sections
+│
+├── lib/                  # Core libraries
+│   ├── auth-server.ts    # Server-side auth
+│   ├── auth-context.tsx  # Client-side context
+│   ├── deployment-mode.ts # Config validation
+│   ├── utils.ts          # Utilities
+│   └── types/            # TypeScript types
+│
+├── config/               # App configuration
+│   ├── app.config.ts     # Main config
+│   └── mode.config.ts    # Mode-specific
+│
+├── public/               # Static assets
+│   ├── images/
+│   └── fonts/
+│
+└── tests/                # Test suites
+    ├── integration/
+    └── e2e/
+```
+
+## Component organization
+
+### Category-based structure
+
+**ui/** - Base UI primitives from Radix UI
+```tsx components/ui/button.tsx
+import * as React from 'react'
+import { cva, type VariantProps } from 'class-variance-authority'
+
+const buttonVariants = cva(/* styles */)
+
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {}
+
+export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, variant, size, ...props }, ref) => {
+    return (
+      <button
+        className={cn(buttonVariants({ variant, size, className }))}
+        ref={ref}
+        {...props}
+      />
+    )
+  }
+)
+```
+
+**generic/** - Domain-agnostic reusable components
+```tsx components/generic/info-box.tsx
+interface InfoBoxProps {
+  title: string
+  description: string
+  icon?: React.ReactNode
+}
+
+export function InfoBox({ title, description, icon }: InfoBoxProps) {
+  return (
+    <div className="rounded-lg border p-4">
+      {icon && <div className="mb-2">{icon}</div>}
+      <h3 className="font-semibold">{title}</h3>
+      <p className="text-sm text-muted-foreground">{description}</p>
+    </div>
+  )
+}
+```
+
+**project/** - Application-specific components
+```tsx components/project/header.tsx
+import { useDeploymentMode } from '@/lib/auth-context'
+import { appConfig } from '@/config/app.config'
+
+export function Header() {
+  const config = useDeploymentMode()
+  
+  return (
+    <header>
+      <nav>
+        {appConfig.header.nav.map(link => (
+          <a key={link.href} href={link.href}>{link.label}</a>
+        ))}
+      </nav>
+    </header>
+  )
+}
+```
+
+## File naming conventions
+
+**Components:** PascalCase
+```
+UserProfile.tsx
+LoginForm.tsx
+ProjectCard.tsx
+```
+
+**Pages:** lowercase (Next.js convention)
+```
+page.tsx
+layout.tsx
+error.tsx
+loading.tsx
+```
+
+**Utilities and libraries:** kebab-case
+```
+auth-server.ts
+deployment-mode.ts
+return-url.ts
+```
+
+**Configuration:** kebab-case with .config.ts suffix
+```
+app.config.ts
+mode.config.ts
+tailwind.config.ts
+```
+
+## Server vs Client Components
+
+### Default to Server Components
+
+```tsx app/dashboard/page.tsx
+// Server Component (default - no directive)
+import { requireAuth } from '@/lib/auth-server'
+
+export default async function DashboardPage() {
+  const user = await requireAuth()
+  return <Dashboard user={user} />
+}
+```
+
+### Use "use client" sparingly
+
+```tsx components/theme-switcher.tsx
+// Client Component (requires interactivity)
+'use client'
+
+import { useTheme } from 'next-themes'
+
+export function ThemeSwitcher() {
+  const { setTheme } = useTheme()
+  // Uses hooks, needs "use client"
+}
+```
+
+### Extract client logic
+
+```tsx
+// app/dashboard/page.tsx - Server Component
+import { ClientInteractive } from './client-interactive'
+
+export default async function Page() {
+  const data = await fetchData() // Server-side
+  
+  return (
+    <div>
+      <ServerContent data={data} />
+      <ClientInteractive /> {/* Only this needs client */}
+    </div>
+  )
+}
+
+// app/dashboard/client-interactive.tsx - Client Component
+'use client'
+
+export function ClientInteractive() {
+  const [state, setState] = useState()
+  // Interactive logic here
+}
+```
+
+## Server Actions organization
+
+### Group by feature
+
+```tsx
+// app/actions.ts - Auth actions
+'use server'
+
+export async function loginAction(formData: FormData) { }
+export async function signOutAction() { }
+
+// app/console/actions.ts - Console-specific
+'use server'
+
+export async function fetchProjects() { }
+export async function createProject(formData: FormData) { }
+```
+
+### Reusable helper pattern
+
+```tsx lib/api-helpers.ts
+'use server'
+
+import { hydrateDeploymentMode } from './deployment-mode'
+import { cookies } from 'next/headers'
+
+export async function getAuthHeaders() {
+  const config = await hydrateDeploymentMode()
+  const token = cookies().get('devkit4ai-token')?.value
+  
+  return {
+    'Authorization': `Bearer ${token}`,
+    ...config.headers
+  }
+}
+
+export async function callApi<T>(
+  endpoint: string,
+  options?: RequestInit
+): Promise<T> {
+  const config = await hydrateDeploymentMode()
+  const headers = await getAuthHeaders()
+  
+  const response = await fetch(`${config.backendApiUrl}${endpoint}`, {
+    ...options,
+    headers: { ...headers, ...options?.headers }
+  })
+  
+  if (!response.ok) {
+    throw new Error(`API error: ${response.status}`)
+  }
+  
+  return response.json()
+}
+```
+
+## Type definitions
+
+### Collocate with usage
+
+```tsx components/project-card.tsx
+// Type defined in same file
+interface ProjectCardProps {
+  project: Project
+  onSelect?: (id: string) => void
+}
+
+export function ProjectCard({ project, onSelect }: ProjectCardProps) {
+  // Implementation
+}
+```
+
+### Shared types in lib/types/
+
+```tsx lib/types/api.ts
+// Shared across multiple files
+export interface User {
+  id: string
+  email: string
+  role: 'end_user'
+  is_active: boolean
+  created_at: string
+}
+
+export interface Project {
+  id: string
+  name: string
+  description: string | null
+  is_active: boolean
+  created_at: string
+}
+```
+
+## Configuration management
+
+### Centralized app config
+
+```tsx config/app.config.ts
+export const appConfig = {
+  name: 'My AI App',
+  description: 'AI-powered application',
+  
+  logo: {
+    text: 'MyApp',
+    href: '/'
+  },
+  
+  header: {
+    nav: [
+      { label: 'Home', href: '/' },
+      { label: 'Dashboard', href: '/dashboard' }
+    ]
+  },
+  
+  footer: {
+    sections: [
+      {
+        title: 'Product',
+        links: [
+          { label: 'Features', href: '/features' },
+          { label: 'Pricing', href: '/pricing' }
+        ]
+      }
+    ]
+  },
+  
+  features: {
+    analytics: true,
+    aiGeneration: true,
+    darkMode: true
+  }
+}
+```
+
+### Environment-based config
+
+```tsx config/mode.config.ts
+export function getModeConfig() {
+  return {
+    mode: process.env.DEVKIT4AI_MODE || 'project',
+    apiUrl: process.env.NEXT_PUBLIC_API_URL || 'https://api.vibecoding.ad',
+    environment: process.env.ENVIRONMENT || 'local',
+    isDevelopment: process.env.NODE_ENV === 'development',
+    isProduction: process.env.NODE_ENV === 'production'
+  }
+}
+```
+
+## Import organization
+
+### Consistent import order
+
+```tsx
+// 1. External dependencies
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+
+// 2. Internal absolute imports (via @/)
+import { Button } from '@/components/ui/button'
+import { useAuth } from '@/lib/auth-context'
+import { appConfig } from '@/config/app.config'
+
+// 3. Relative imports
+import { LocalComponent } from './local-component'
+import type { LocalType } from './types'
+
+// 4. Type-only imports last
+import type { ReactNode } from 'react'
+```
+
+### Use path aliases
+
+```json tsconfig.json
+{
+  "compilerOptions": {
+    "paths": {
+      "@/*": ["./*"]
+    }
+  }
+}
+```
+
+```tsx
+// ✅ Good - Use alias
+import { Button } from '@/components/ui/button'
+
+// ❌ Avoid - Relative paths for distant files
+import { Button } from '../../../components/ui/button'
+```
+
+## Code style
+
+### Function vs const for components
+
+```tsx
+// ✅ Preferred - Named export function
+export function UserProfile({ user }: Props) {
+  return <div>{user.email}</div>
+}
+
+// ✅ Also good - Default export
+export default function UserProfile({ user }: Props) {
+  return <div>{user.email}</div>
+}
+
+// ❌ Avoid - Const with arrow function
+export const UserProfile = ({ user }: Props) => {
+  return <div>{user.email}</div>
+}
+```
+
+### Early returns
+
+```tsx
+export function UserDashboard({ userId }: Props) {
+  const user = useCurrentUser()
+  
+  // Early return for error states
+  if (!user) {
+    return <LoginPrompt />
+  }
+  
+  if (!user.is_active) {
+    return <ActivateAccountPrompt />
+  }
+  
+  // Main component logic
+  return <DashboardContent user={user} />
+}
+```
+
+## Documentation
+
+### Component documentation
+
+```tsx components/card.tsx
+/**
+ * Card component with optional header, footer, and action buttons.
+ * 
+ * @example
+ * ```tsx
+ * <Card>
+ *   <CardHeader>
+ *     <CardTitle>Project Name</CardTitle>
+ *   </CardHeader>
+ *   <CardContent>
+ *     <p>Description</p>
+ *   </CardContent>
+ * </Card>
+ * ```
+ */
+export function Card({ children, className }: CardProps) {
+  return (
+    <div className={cn('rounded-lg border', className)}>
+      {children}
+    </div>
+  )
+}
+```
+
+### Inline comments (sparingly)
+
+```tsx
+export async function fetchUserData(userId: string) {
+  // Timeout after 10 seconds to prevent hanging requests
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), 10000)
+  
+  try {
+    const response = await fetch(url, { signal: controller.signal })
+    return response.json()
+  } finally {
+    clearTimeout(timeoutId)
+  }
+}
+```
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Testing" icon="beaker" href="/reference/best-practices/testing">
+    Testing best practices
+  </Card>
+  
+  <Card title="Performance" icon="gauge" href="/reference/best-practices/performance">
+    Performance optimization
+  </Card>
+</CardGroup>

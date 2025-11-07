@@ -1,13 +1,180 @@
 ---
-title: "Local Backend Development"
-description: "Work on the FastAPI service with event sourcing enabled."
-icon: "server-cog"
+title: "Cloud API Integration"
+sidebarTitle: "API Integration"
+description: "Integrate your Starter Kit application with the Dev Kit for AI Cloud API."
+icon: "cloud"
 ---
 
-Backend setup follows the steps in `devkit4ai/backend-api/README.md`:
+Your Starter Kit application connects to the hosted Cloud API at **https://api.vibecoding.ad** for authentication, project data, and AI features. No backend development required.
 
-- `make setup` creates a virtual environment and installs dependencies pinned in `pyproject.toml`.
-- `make start-services` boots PostgreSQL and Redis via Docker, matching the infrastructure the app expects.
-- `make run` launches Uvicorn with auto-reload so command handlers, projectors, and policies rebuild as you edit them.
+## How it works
 
-The documentation here will expand with debugging workflows and common migrations pulled directly from the main repo.
+The Cloud API is fully managed and handles:
+
+- **Authentication**: User registration, login, JWT token management
+- **Project data**: Projects, API keys, user memberships
+- **AI features**: Image generation, content processing
+- **File storage**: Image uploads and management
+
+## Configuration
+
+Your application connects via environment variables in `.env.local`:
+
+```bash .env.local
+DEVKIT4AI_MODE=project
+NEXT_PUBLIC_API_URL=https://api.vibecoding.ad
+DEVKIT4AI_DEVELOPER_KEY=dk_your_developer_key
+DEVKIT4AI_PROJECT_ID=your-project-uuid
+DEVKIT4AI_PROJECT_KEY=pk_your_project_api_key
+```
+
+<Tip>
+Get your credentials from [Cloud Admin](https://devkit4ai.com) after creating a project.
+</Tip>
+
+## Making API calls
+
+### From Server Components
+
+Use the deployment config helper:
+
+```tsx app/dashboard/page.tsx
+import { hydrateDeploymentMode } from '@/lib/deployment-mode'
+import { cookies } from 'next/headers'
+
+export default async function DashboardPage() {
+  const config = await hydrateDeploymentMode()
+  const token = cookies().get('devkit4ai-token')?.value
+  
+  const response = await fetch(`${config.backendApiUrl}/api/v1/user/data`, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      ...config.headers // Includes X-Developer-Key, X-Project-ID, etc.
+    }
+  })
+  
+  const data = await response.json()
+  // Use data in your component
+}
+```
+
+### From Server Actions
+
+Create reusable server actions:
+
+```tsx app/actions.ts
+'use server'
+
+import { hydrateDeploymentMode } from '@/lib/deployment-mode'
+import { cookies } from 'next/headers'
+
+export async function fetchUserProjects() {
+  const config = await hydrateDeploymentMode()
+  const token = cookies().get('devkit4ai-token')?.value
+  
+  const response = await fetch(`${config.backendApiUrl}/api/v1/projects`, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      ...config.headers
+    }
+  })
+  
+  if (!response.ok) {
+    return { error: 'Failed to fetch projects' }
+  }
+  
+  return response.json()
+}
+```
+
+### From Client Components
+
+Use hooks to access configuration:
+
+```tsx components/data-fetcher.tsx
+'use client'
+
+import { useDeploymentMode } from '@/lib/auth-context'
+import { useEffect, useState } from 'react'
+
+export function DataFetcher() {
+  const config = useDeploymentMode()
+  const [data, setData] = useState(null)
+  
+  useEffect(() => {
+    fetch(`${config.backendApiUrl}/api/v1/public/stats`, {
+      headers: config.headers
+    })
+      .then(res => res.json())
+      .then(setData)
+  }, [config])
+  
+  return <div>{/* Render data */}</div>
+}
+```
+
+## Available endpoints
+
+Common Cloud API endpoints you'll use:
+
+**Authentication:**
+- `POST /api/v1/auth/register` - Register end users
+- `POST /api/v1/auth/login` - User login
+- `GET /api/v1/auth/me` - Get current user
+
+**Projects:**
+- `GET /api/v1/projects` - List projects (developer only)
+- `GET /api/v1/projects/{id}` - Get project details
+
+**AI Features:**
+- `POST /api/v1/generation/generate-v2` - Generate AI images
+- `GET /api/v1/generation/list` - List user generations
+
+<Info>
+See the [Cloud API Reference](/cloud-api/introduction) for complete endpoint documentation.
+</Info>
+
+## Error handling
+
+Always handle API errors gracefully:
+
+```tsx
+try {
+  const response = await fetch(apiUrl, options)
+  
+  if (!response.ok) {
+    const error = await response.json()
+    console.error('API Error:', error)
+    return { error: error.detail || 'Request failed' }
+  }
+  
+  return await response.json()
+} catch (error) {
+  console.error('Network error:', error)
+  return { error: 'Unable to connect to server' }
+}
+```
+
+## Rate limits
+
+The Cloud API enforces rate limits per project:
+
+- **Authentication**: 10 requests per minute
+- **Data endpoints**: 100 requests per minute
+- **AI generation**: 10 requests per minute
+
+<Warning>
+Implement retry logic with exponential backoff for production applications.
+</Warning>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="API Reference" icon="book" href="/cloud-api/introduction">
+    Complete endpoint documentation
+  </Card>
+  
+  <Card title="Authentication" icon="key" href="/starter-kit/auth/registration-login">
+    Implement user authentication
+  </Card>
+</CardGroup>

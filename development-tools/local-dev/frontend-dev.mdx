@@ -1,11 +1,120 @@
 ---
 title: "Local Frontend Development"
-description: "Run the multi-mode user app or Starter Kit locally with Turbopack."
+sidebarTitle: "Frontend Development"
+description: "Run the Starter Kit locally with hot reloading for rapid development."
 icon: "monitor"
 ---
 
-Use the commands provided in `devkit4ai/user-app/Makefile` and `starter-kit/Makefile`:
+Develop your AI-powered application locally with the Starter Kit's built-in development server. All changes to components, pages, and styles reload instantly.
 
-- `make run-operator`, `make run-console`, and `make run-project` spawn the user app in each mode (ports 3000-3002).
-- The Starter Kit's `npm run dev` starts the project-mode experience on port 3004, mirroring the exported configuration.
-- Hot reloading relies on Turbopack, so component and layout changes appear instantly during development.
+## Start development server
+
+<Steps>
+  <Step title="Navigate to your project">
+    ```bash
+    cd your-project-name
+    ```
+  </Step>
+  
+  <Step title="Start the development server">
+    ```bash
+    npm run dev
+    ```
+    
+    The app runs on `http://localhost:3004` by default.
+  </Step>
+  
+  <Step title="Verify it's running">
+    Open your browser to `http://localhost:3004` and you should see your application homepage.
+    
+    <Check>
+    Any changes to files in `app/`, `components/`, or `lib/` will hot-reload automatically.
+    </Check>
+  </Step>
+</Steps>
+
+## Development features
+
+**Turbopack:** The Starter Kit uses Next.js 15 with Turbopack for fast refresh and instant updates during development.
+
+**Server Components:** Most components render on the server by default. Client components (marked with `"use client"`) also support hot module replacement.
+
+**Type checking:** TypeScript validates your code in real-time as you edit.
+
+## Common workflows
+
+### Adding a new page
+
+1. Create a new file in `app/` following Next.js App Router conventions
+2. Server Components render automatically - no "use client" needed
+3. Save the file and navigate to the route in your browser
+
+### Modifying components
+
+1. Edit files in `components/ui/`, `components/generic/`, or `components/project/`
+2. Changes appear instantly in the browser
+3. TypeScript errors show in your editor and terminal
+
+### Updating configuration
+
+1. Edit `config/app.config.ts` for navigation, branding, footer links
+2. Changes to server-side config require restarting the dev server
+3. Client-side config changes hot-reload automatically
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Port 3004 already in use">
+    Stop any existing Next.js processes:
+    
+    ```bash
+    # Find process using port 3004
+    lsof -ti:3004
+    
+    # Kill the process
+    kill -9 $(lsof -ti:3004)
+    ```
+    
+    Or specify a different port:
+    
+    ```bash
+    PORT=3005 npm run dev
+    ```
+  </Accordion>
+  
+  <Accordion title="Changes not hot-reloading">
+    Try these steps:
+    
+    1. Save the file explicitly (Cmd+S / Ctrl+S)
+    2. Check the terminal for TypeScript errors
+    3. Restart the dev server: `Ctrl+C` then `npm run dev`
+    4. Clear Next.js cache: `rm -rf .next && npm run dev`
+  </Accordion>
+  
+  <Accordion title="TypeScript errors blocking development">
+    Temporarily disable type checking during development:
+    
+    ```bash
+    # In next.config.ts, add:
+    typescript: {
+      ignoreBuildErrors: true,
+    },
+    ```
+    
+    <Warning>
+    Re-enable type checking before deploying to production.
+    </Warning>
+  </Accordion>
+</AccordionGroup>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Testing" icon="beaker" href="/development-tools/local-dev/testing">
+    Run tests locally before deploying
+  </Card>
+  
+  <Card title="Deployment" icon="rocket" href="/starter-kit/deployment/production-build">
+    Deploy your application to production
+  </Card>
+</CardGroup>

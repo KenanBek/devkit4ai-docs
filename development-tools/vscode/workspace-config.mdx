@@ -1,11 +1,298 @@
 ---
-title: "VS Code Workspace Configuration"
-description: "Share workspace settings that align with the Dev Kit for AI repositories."
-icon: "terminal"
+title: "VS Code Configuration"
+sidebarTitle: "VS Code Setup"
+description: "Optimize VS Code for Starter Kit development with recommended settings and extensions."
+icon: "code"
 ---
 
-The `Dev Kit for AI.code-workspace` file in the monorepo configures recommended extensions and formatting defaults:
+Configure Visual Studio Code for the best development experience with the Starter Kit.
 
-- Black and isort for Python, Prettier and ESLint for TypeScript, matching the formatting rules enforced by the project.
-- Suggested extensions include Mintlify, Tailwind CSS IntelliSense, and Python tooling to mirror the development environment used internally.
-- Update workspace settings sparingly to keep alignment with the standards documented in `AGENTS.md` across services.
+## Recommended extensions
+
+Install these extensions for optimal development:
+
+### Essential
+
+**ES7+ React/Redux/React-Native snippets**
+- Publisher: dsznajder
+- Quick React component scaffolding
+
+**Tailwind CSS IntelliSense**
+- Publisher: Bradlc
+- Autocomplete for Tailwind classes
+- Class name validation
+
+**TypeScript and JavaScript Language Features**
+- Built-in with VS Code
+- Enable strict type checking
+
+### Recommended
+
+**Prettier - Code formatter**
+- Publisher: esbenp
+- Consistent code formatting
+- Auto-format on save
+
+**ESLint**
+- Publisher: dbaeumer
+- Real-time linting
+- Auto-fix on save
+
+**Path Intellisense**
+- Publisher: christian-kohler
+- Autocomplete for file paths
+
+**Auto Rename Tag**
+- Publisher: formulahendry
+- Sync HTML/JSX tag editing
+
+## VS Code settings
+
+Create `.vscode/settings.json` in your project:
+
+```json .vscode/settings.json
+{
+  // Editor settings
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+  "editor.tabSize": 2,
+  "editor.insertSpaces": true,
+  
+  // TypeScript settings
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true,
+  "typescript.preferences.importModuleSpecifier": "relative",
+  
+  // Tailwind CSS
+  "tailwindCSS.experimental.classRegex": [
+    ["cva\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"]
+  ],
+  "tailwindCSS.classAttributes": [
+    "class",
+    "className",
+    "classList",
+    ".*Class.*"
+  ],
+  
+  // Files to exclude
+  "files.exclude": {
+    "**/.git": true,
+    "**/.next": true,
+    "**/node_modules": true,
+    "**/.DS_Store": true
+  },
+  
+  // Search settings
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/.next": true,
+    "**/dist": true,
+    "**/build": true
+  }
+}
+```
+
+## Project-specific tasks
+
+Create `.vscode/tasks.json` for quick actions:
+
+```json .vscode/tasks.json
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "dev",
+      "type": "shell",
+      "command": "npm run dev",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "test",
+      "type": "shell",
+      "command": "npm run test",
+      "problemMatcher": [],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "build",
+      "type": "shell",
+      "command": "npm run build",
+      "problemMatcher": [],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    }
+  ]
+}
+```
+
+Run tasks with `Cmd+Shift+B` (macOS) or `Ctrl+Shift+B` (Windows/Linux).
+
+## Launch configuration
+
+Create `.vscode/launch.json` for debugging:
+
+```json .vscode/launch.json
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Next.js: debug server-side",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "npm run dev"
+    },
+    {
+      "name": "Next.js: debug client-side",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://localhost:3004"
+    },
+    {
+      "name": "Next.js: debug full stack",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "npm run dev",
+      "serverReadyAction": {
+        "pattern": "started server on .+, url: (https?://.+)",
+        "uriFormat": "%s",
+        "action": "debugWithChrome"
+      }
+    }
+  ]
+}
+```
+
+## Code snippets
+
+Create `.vscode/snippets.code-snippets` for custom snippets:
+
+```json .vscode/snippets.code-snippets
+{
+  "Server Component": {
+    "prefix": "rsc",
+    "body": [
+      "export default async function ${1:ComponentName}() {",
+      "  return (",
+      "    <div>",
+      "      $0",
+      "    </div>",
+      "  )",
+      "}"
+    ],
+    "description": "React Server Component"
+  },
+  "Client Component": {
+    "prefix": "rcc",
+    "body": [
+      "'use client'",
+      "",
+      "export function ${1:ComponentName}() {",
+      "  return (",
+      "    <div>",
+      "      $0",
+      "    </div>",
+      "  )",
+      "}"
+    ],
+    "description": "React Client Component"
+  },
+  "Server Action": {
+    "prefix": "rsa",
+    "body": [
+      "'use server'",
+      "",
+      "export async function ${1:actionName}(formData: FormData) {",
+      "  $0",
+      "}"
+    ],
+    "description": "React Server Action"
+  }
+}
+```
+
+## Keyboard shortcuts
+
+Optimize your workflow with these shortcuts:
+
+**Mac:**
+- `Cmd+P`: Quick file open
+- `Cmd+Shift+P`: Command palette
+- `Cmd+B`: Toggle sidebar
+- `Cmd+Shift+F`: Global search
+- `Cmd+Shift+B`: Run build task
+
+**Windows/Linux:**
+- `Ctrl+P`: Quick file open
+- `Ctrl+Shift+P`: Command palette
+- `Ctrl+B`: Toggle sidebar
+- `Ctrl+Shift+F`: Global search
+- `Ctrl+Shift+B`: Run build task
+
+## Workspace tips
+
+<AccordionGroup>
+  <Accordion title="Multi-root workspace">
+    If you have multiple related projects, create a workspace file:
+    
+    ```json my-workspace.code-workspace
+    {
+      "folders": [
+        { "path": "./my-app" },
+        { "path": "./shared-components" }
+      ],
+      "settings": {}
+    }
+    ```
+  </Accordion>
+  
+  <Accordion title="Format on save">
+    Enable automatic formatting:
+    
+    1. Install Prettier extension
+    2. Add to settings: `"editor.formatOnSave": true`
+    3. Configure Prettier with `.prettierrc`
+  </Accordion>
+  
+  <Accordion title="Organize imports">
+    Sort imports automatically:
+    
+    ```json
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": "explicit"
+    }
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Troubleshooting
+
+<Warning>
+Common issues:
+- **TypeScript not working**: Reload window (`Cmd+Shift+P` → "Reload Window")
+- **Prettier conflicts**: Disable other formatters for JavaScript/TypeScript
+- **IntelliSense slow**: Restart TS server (`Cmd+Shift+P` → "TypeScript: Restart TS Server")
+</Warning>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="AI Assistants" icon="robot" href="/development-tools/ai-assistants/cursor">
+    Set up AI coding assistants
+  </Card>
+  
+  <Card title="Testing" icon="beaker" href="/development-tools/local-dev/testing">
+    Configure testing in VS Code
+  </Card>
+</CardGroup>

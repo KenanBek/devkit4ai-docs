@@ -1,13 +1,199 @@
 ---
-title: "Deployment Modes"
-description: "Map environment settings to operator, console, and project experiences."
-icon: "toggle-right"
+title: "Deployment Environments"
+sidebarTitle: "Environments"
+description: "Configure your Starter Kit for different deployment environments."
+icon: "layer-group"
 ---
 
-Mode selection depends on `DEVKIT4AI_MODE`:
+The Starter Kit operates in **project mode**, which configures it as an end-user application connected to the Cloud API.
 
-- **operator**: Cloud Admin. Requires `DEVKIT4AI_OPERATOR_KEY`. Surfaces developer onboarding tools.
-- **console**: Developer workspace. Requires `DEVKIT4AI_DEVELOPER_KEY` and unlocks project and API key management.
-- **project**: End-user apps (Starter Kit). Requires developer key, project ID, and project API key.
+## Project mode configuration
 
-All modes rely on `NEXT_PUBLIC_API_URL` to communicate with the Cloud API, and each sends the appropriate headers enforced by `app/system/auth/rbac.py`.
+Your Starter Kit always uses `DEVKIT4AI_MODE=project`:
+
+```bash .env.local
+DEVKIT4AI_MODE=project
+NEXT_PUBLIC_API_URL=https://api.vibecoding.ad
+DEVKIT4AI_DEVELOPER_KEY=dk_your_developer_key
+DEVKIT4AI_PROJECT_ID=your-project-uuid
+DEVKIT4AI_PROJECT_KEY=pk_your_project_api_key
+```
+
+## Environment tiers
+
+Deploy your application across multiple environments:
+
+### Local development
+
+**Purpose:** Testing and development on your machine
+
+**Configuration:**
+```bash .env.local
+DEVKIT4AI_MODE=project
+NEXT_PUBLIC_API_URL=https://api.vibecoding.ad
+DEVKIT4AI_DEVELOPER_KEY=dk_dev_...
+DEVKIT4AI_PROJECT_ID=...
+DEVKIT4AI_PROJECT_KEY=pk_dev_...
+ENVIRONMENT=local
+NODE_ENV=development
+```
+
+**Access:** `http://localhost:3004`
+
+### Staging
+
+**Purpose:** Pre-production testing with production-like setup
+
+**Configuration:**
+```bash
+DEVKIT4AI_MODE=project
+NEXT_PUBLIC_API_URL=https://api.vibecoding.ad
+DEVKIT4AI_DEVELOPER_KEY=dk_staging_...
+DEVKIT4AI_PROJECT_ID=...
+DEVKIT4AI_PROJECT_KEY=pk_staging_...
+ENVIRONMENT=staging
+NODE_ENV=production
+```
+
+**Access:** Your staging URL (e.g., `staging.yourapp.com`)
+
+<Tip>
+Create a separate project in Cloud Admin for staging to isolate data.
+</Tip>
+
+### Production
+
+**Purpose:** Live application serving real users
+
+**Configuration:**
+Set via your hosting provider's environment variable system:
+
+```bash
+DEVKIT4AI_MODE=project
+NEXT_PUBLIC_API_URL=https://api.vibecoding.ad
+DEVKIT4AI_DEVELOPER_KEY=dk_prod_...
+DEVKIT4AI_PROJECT_ID=...
+DEVKIT4AI_PROJECT_KEY=pk_prod_...
+ENVIRONMENT=production
+NODE_ENV=production
+```
+
+**Access:** Your production domain (e.g., `yourapp.com`)
+
+<Warning>
+Never commit production credentials to version control.
+</Warning>
+
+## Environment-specific features
+
+### Development mode features
+
+```tsx
+if (process.env.NODE_ENV === 'development') {
+  // Enable debug logging
+  console.log('Debug:', data)
+  
+  // Show development-only UI
+  return <DevTools />
+}
+```
+
+### Production optimizations
+
+```tsx
+if (process.env.NODE_ENV === 'production') {
+  // Enable production features
+  - Error tracking (Sentry, etc.)
+  - Analytics (Vercel Analytics)
+  - Performance monitoring
+  - Aggressive caching
+}
+```
+
+## Configuration validation
+
+The Starter Kit validates environment configuration on startup:
+
+```tsx lib/deployment-mode.ts
+export async function hydrateDeploymentMode() {
+  const issues: ConfigIssue[] = []
+  
+  // Mode must be "project"
+  if (process.env.DEVKIT4AI_MODE !== 'project') {
+    issues.push({
+      severity: 'error',
+      message: 'DEVKIT4AI_MODE must be "project" for Starter Kit'
+    })
+  }
+  
+  // Validate required credentials
+  if (!process.env.DEVKIT4AI_DEVELOPER_KEY) {
+    issues.push({
+      severity: 'error',
+      message: 'DEVKIT4AI_DEVELOPER_KEY is required'
+    })
+  }
+  
+  return {
+    mode: 'project',
+    issues,
+    isReady: issues.filter(i => i.severity === 'error').length === 0
+  }
+}
+```
+
+## Deployment checklist
+
+<Steps>
+  <Step title="Create environment-specific project">
+    In Cloud Admin, create a project for each environment:
+    - `my-app-dev`
+    - `my-app-staging`
+    - `my-app-prod`
+  </Step>
+  
+  <Step title="Generate API keys">
+    Generate and copy API keys for each project. Store securely.
+  </Step>
+  
+  <Step title="Configure hosting provider">
+    Set environment variables in Vercel, Netlify, or your chosen platform.
+  </Step>
+  
+  <Step title="Deploy and test">
+    Deploy to each environment and verify:
+    - Authentication works
+    - API calls succeed
+    - Data is isolated between environments
+  </Step>
+</Steps>
+
+## Environment isolation
+
+Each environment should have:
+
+**Separate projects** in Cloud Admin
+- Prevents test data mixing with production
+- Allows independent API key rotation
+- Enables environment-specific permissions
+
+**Different API keys**
+- Development: Unrestricted testing
+- Staging: Production-like restrictions
+- Production: Strict rate limits and security
+
+**Isolated user data**
+- Register test users in dev/staging
+- Never use production data in testing
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Environment Variables" icon="settings" href="/reference/config/environment-variables">
+    Complete variable reference
+  </Card>
+  
+  <Card title="Deployment Guides" icon="rocket" href="/starter-kit/deployment/production-build">
+    Deploy to hosting platforms
+  </Card>
+</CardGroup>

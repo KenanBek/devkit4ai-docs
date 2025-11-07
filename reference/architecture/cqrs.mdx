@@ -1,13 +1,274 @@
 ---
-title: "CQRS"
-description: "Separate write commands from read models within Dev Kit for AI."
-icon: "split"
+title: "API Patterns"
+sidebarTitle: "API Patterns"
+description: "Common patterns for working with the Cloud API in your Starter Kit application."
+icon: "code"
 ---
 
-The platform implements Command Query Responsibility Segregation on top of its event store:
+Learn effective patterns for integrating your Starter Kit with the Cloud API.
 
-- **Commands** execute domain logic through aggregates and append events (e.g., `RegisterUserCommand`, `CreateProjectCommand`).
-- **Queries** consume projector-built tables (users, projects, API keys) so reads stay fast and isolated from write contention.
-- **Policies** react to events asynchronously, enabling side effects (emails, storage uploads) without blocking command execution.
+## Server-side data fetching
 
-These concepts align with the code documented in `devkit4ai/backend-api/SPECS.md` and the usage patterns visible in the user-app and Starter Kit.
+Fetch data in Server Components for better performance:
+
+```tsx app/dashboard/page.tsx
+import { hydrateDeploymentMode } from '@/lib/deployment-mode'
+import { cookies } from 'next/headers'
+
+export default async function DashboardPage() {
+  const config = await hydrateDeploymentMode()
+  const token = cookies().get('devkit4ai-token')?.value
+  
+  // Fetch data on the server
+  const response = await fetch(`${config.backendApiUrl}/api/v1/projects`, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      ...config.headers
+    },
+    // Add caching if data doesn't change often
+    next: { revalidate: 60 } // Revalidate every 60 seconds
+  })
+  
+  const projects = await response.json()
+  
+  return (
+    <div>
+      {projects.map(project => (
+        <ProjectCard key={project.id} project={project} />
+      ))}
+    </div>
+  )
+}
+```
+
+**Benefits:**
+- Faster page loads (no client-side waterfalls)
+- Better SEO (content rendered on server)
+- Reduced client bundle size
+- Secure (API credentials never exposed to browser)
+
+## Client-side mutations
+
+Use Server Actions for data mutations:
+
+```tsx app/actions.ts
+'use server'
+
+import { hydrateDeploymentMode } from '@/lib/deployment-mode'
+import { cookies } from 'next/headers'
+import { revalidatePath } from 'next/cache'
+
+export async function createProject(formData: FormData) {
+  const config = await hydrateDeploymentMode()
+  const token = cookies().get('devkit4ai-token')?.value
+  
+  const name = formData.get('name') as string
+  const description = formData.get('description') as string
+  
+  const response = await fetch(`${config.backendApiUrl}/api/v1/projects`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      ...config.headers,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ name, description })
+  })
+  
+  if (!response.ok) {
+    const error = await response.json()
+    return { error: error.detail || 'Failed to create project' }
+  }
+  
+  // Revalidate the projects page to show new data
+  revalidatePath('/console/projects')
+  
+  const project = await response.json()
+  return { success: true, project }
+}
+```
+
+Use in a form:
+
+```tsx components/create-project-form.tsx
+'use client'
+
+import { createProject } from '@/app/actions'
+import { useState } from 'react'
+
+export function CreateProjectForm() {
+  const [error, setError] = useState('')
+  
+  async function handleSubmit(formData: FormData) {
+    const result = await createProject(formData)
+    
+    if (result.error) {
+      setError(result.error)
+    } else {
+      // Success - form will reset and page will revalidate
+    }
+  }
+  
+  return (
+    <form action={handleSubmit}>
+      {error && <div className="text-red-600">{error}</div>}
+      <input name="name" required />
+      <textarea name="description" />
+      <button type="submit">Create Project</button>
+    </form>
+  )
+}
+```
+
+## Optimistic updates
+
+Update UI immediately, then sync with server:
+
+```tsx components/like-button.tsx
+'use client'
+
+import { useState, useTransition } from 'react'
+import { likePost } from '@/app/actions'
+
+export function LikeButton({ postId, initialLikes }: Props) {
+  const [likes, setLikes] = useState(initialLikes)
+  const [isPending, startTransition] = useTransition()
+  
+  function handleLike() {
+    // Optimistically update UI
+    setLikes(prev => prev + 1)
+    
+    // Then sync with server
+    startTransition(async () => {
+      const result = await likePost(postId)
+      
+      if (!result.success) {
+        // Revert on error
+        setLikes(prev => prev - 1)
+      }
+    })
+  }
+  
+  return (
+    <button onClick={handleLike} disabled={isPending}>
+      ❤️ {likes}
+    </button>
+  )
+}
+```
+
+## Error handling patterns
+
+Handle errors gracefully at multiple levels:
+
+```tsx app/actions.ts
+'use server'
+
+export async function fetchUserData() {
+  try {
+    const response = await fetch(apiUrl, {
+      headers: { /* ... */ },
+      // Timeout after 10 seconds
+      signal: AbortSignal.timeout(10000)
+    })
+    
+    // Handle HTTP errors
+    if (!response.ok) {
+      if (response.status === 401) {
+        return { error: 'Session expired. Please log in again.' }
+      }
+      if (response.status === 403) {
+        return { error: 'You do not have permission to view this resource.' }
+      }
+      if (response.status === 429) {
+        return { error: 'Too many requests. Please try again later.' }
+      }
+      if (response.status >= 500) {
+        return { error: 'Server error. Please try again later.' }
+      }
+      
+      const error = await response.json()
+      return { error: error.detail || 'Request failed' }
+    }
+    
+    return await response.json()
+  } catch (error) {
+    // Handle network errors
+    if (error.name === 'AbortError') {
+      return { error: 'Request timed out. Please try again.' }
+    }
+    
+    console.error('API error:', error)
+    return { error: 'Unable to connect to server. Please check your internet connection.' }
+  }
+}
+```
+
+## Caching strategies
+
+Choose the right caching approach:
+
+**Static Generation (ISR):**
+```tsx
+// Revalidate every hour
+const response = await fetch(url, {
+  next: { revalidate: 3600 }
+})
+```
+
+**On-Demand Revalidation:**
+```tsx
+import { revalidatePath, revalidateTag } from 'next/cache'
+
+// Revalidate specific path
+revalidatePath('/projects')
+
+// Revalidate by tag
+revalidateTag('projects')
+```
+
+**No caching:**
+```tsx
+// Always fetch fresh data
+const response = await fetch(url, {
+  cache: 'no-store'
+})
+```
+
+## Rate limit handling
+
+Implement exponential backoff for rate limits:
+
+```tsx
+async function fetchWithRetry(
+  url: string,
+  options: RequestInit,
+  maxRetries = 3
+) {
+  for (let i = 0; i < maxRetries; i++) {
+    const response = await fetch(url, options)
+    
+    if (response.status !== 429) {
+      return response
+    }
+    
+    // Exponential backoff: 1s, 2s, 4s
+    const delay = Math.pow(2, i) * 1000
+    await new Promise(resolve => setTimeout(resolve, delay))
+  }
+  
+  throw new Error('Rate limit exceeded after retries')
+}
+```
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="API Reference" icon="book" href="/cloud-api/introduction">
+    Complete endpoint documentation
+  </Card>
+  
+  <Card title="Best Practices" icon="shield-check" href="/reference/best-practices/performance">
+    Performance optimization guide
+  </Card>
+</CardGroup>

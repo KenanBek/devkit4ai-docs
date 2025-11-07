@@ -1,13 +1,278 @@
 ---
-title: "Testing"
-description: "Run backend, frontend, and starter kit tests locally."
+title: "Testing Your Application"
+sidebarTitle: "Testing"
+description: "Run integration and end-to-end tests for your Starter Kit application."
 icon: "beaker"
 ---
 
-Testing commands mirror the ones in each repository:
+The Starter Kit includes comprehensive testing infrastructure using Vitest for integration tests and Playwright for end-to-end testing.
 
-- Backend API: `cd devkit4ai/backend-api && make test` (or `make test-fast` / `make test-integration`). Tests rely on real services via Testcontainers, as outlined in `AGENTS.md`.
-- User App: `cd devkit4ai/user-app && npm run test` for Vitest, `npm run test:e2e` for Playwright.
-- Starter Kit: identical npm scripts live in the exported project so downstream developers can reuse them.
+## Test types
 
-Future sections will collect troubleshooting notes for common setup issues that have surfaced in the main repo.
+**Integration tests** (Vitest):
+- Test utilities and helper functions
+- Validate configuration logic
+- Check data transformations
+- Run fast without external dependencies
+
+**E2E tests** (Playwright):
+- Test complete user workflows
+- Verify authentication flows
+- Check page navigation
+- Test form submissions
+
+## Running tests
+
+### All tests
+
+Run both integration and E2E tests:
+
+```bash
+npm run test
+```
+
+### Integration tests only
+
+```bash
+npm run test:integration
+```
+
+Watch mode for development:
+
+```bash
+npm run test:integration:watch
+```
+
+### E2E tests only
+
+```bash
+npm run test:e2e
+```
+
+Run with UI mode:
+
+```bash
+npx playwright test --ui
+```
+
+## Writing integration tests
+
+Create tests in `tests/integration/` or colocate with your code:
+
+```tsx __tests__/utils.test.ts
+import { describe, it, expect } from 'vitest'
+import { sanitizeReturnUrl } from '@/lib/return-url'
+
+describe('sanitizeReturnUrl', () => {
+  it('allows valid relative paths', () => {
+    expect(sanitizeReturnUrl('/dashboard')).toBe('/dashboard')
+    expect(sanitizeReturnUrl('/profile')).toBe('/profile')
+  })
+  
+  it('rejects absolute URLs', () => {
+    expect(sanitizeReturnUrl('https://evil.com')).toBe(null)
+  })
+  
+  it('rejects protocol-relative URLs', () => {
+    expect(sanitizeReturnUrl('//evil.com/path')).toBe(null)
+  })
+})
+```
+
+### Testing Server Actions
+
+Test server-side logic:
+
+```tsx __tests__/actions.test.ts
+import { describe, it, expect, vi } from 'vitest'
+
+// Mock fetch for testing
+global.fetch = vi.fn()
+
+describe('Server Actions', () => {
+  it('handles API errors gracefully', async () => {
+    vi.mocked(fetch).mockResolvedValueOnce({
+      ok: false,
+      status: 401,
+      json: async () => ({ detail: 'Unauthorized' })
+    } as Response)
+    
+    const result = await myServerAction()
+    expect(result.error).toBe('Unauthorized')
+  })
+})
+```
+
+## Writing E2E tests
+
+Create tests in `tests/e2e/`:
+
+```tsx tests/e2e/auth.spec.ts
+import { test, expect } from '@playwright/test'
+
+test.describe('Authentication', () => {
+  test('user can log in', async ({ page }) => {
+    await page.goto('/login')
+    
+    // Fill login form
+    await page.fill('[name="email"]', 'test@example.com')
+    await page.fill('[name="password"]', 'password123')
+    
+    // Submit form
+    await page.click('button[type="submit"]')
+    
+    // Verify redirect to dashboard
+    await expect(page).toHaveURL('/dashboard')
+    
+    // Verify user is logged in
+    await expect(page.locator('text=Welcome')).toBeVisible()
+  })
+  
+  test('shows error for invalid credentials', async ({ page }) => {
+    await page.goto('/login')
+    
+    await page.fill('[name="email"]', 'wrong@example.com')
+    await page.fill('[name="password"]', 'wrongpassword')
+    await page.click('button[type="submit"]')
+    
+    // Verify error message
+    await expect(page.locator('text=Invalid credentials')).toBeVisible()
+  })
+})
+```
+
+### Testing protected pages
+
+```tsx tests/e2e/protected.spec.ts
+import { test, expect } from '@playwright/test'
+
+test('redirects to login when not authenticated', async ({ page }) => {
+  await page.goto('/dashboard')
+  
+  // Should redirect to login
+  await expect(page).toHaveURL(/\/login/)
+})
+
+test('allows access when authenticated', async ({ page }) => {
+  // Login first
+  await page.goto('/login')
+  await page.fill('[name="email"]', 'test@example.com')
+  await page.fill('[name="password"]', 'password123')
+  await page.click('button[type="submit"]')
+  
+  // Navigate to protected page
+  await page.goto('/dashboard')
+  
+  // Should allow access
+  await expect(page).toHaveURL('/dashboard')
+})
+```
+
+## Test configuration
+
+### Vitest config
+
+`vitest.config.ts` includes:
+- TypeScript support
+- Path aliases (@/ imports)
+- Coverage reporting
+- Fast watch mode
+
+### Playwright config
+
+`playwright.config.ts` includes:
+- Multiple browsers (Chromium, Firefox, WebKit)
+- Mobile viewport testing
+- Screenshot on failure
+- Video recording for CI
+
+## CI/CD integration
+
+Run tests in your CI pipeline:
+
+```yaml .github/workflows/test.yml
+name: Tests
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '19'
+      
+      - run: npm install
+      - run: npm run test
+      
+      - uses: actions/upload-artifact@v3
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/
+```
+
+## Best practices
+
+<AccordionGroup>
+  <Accordion title="Keep tests focused">
+    - Test one thing per test case
+    - Use descriptive test names
+    - Group related tests with `describe()`
+  </Accordion>
+  
+  <Accordion title="Mock external dependencies">
+    ```tsx
+    import { vi } from 'vitest'
+    
+    // Mock Cloud API calls
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ id: '123', name: 'Test' })
+    })
+    ```
+  </Accordion>
+  
+  <Accordion title="Test error cases">
+    Don't just test happy paths:
+    - Invalid inputs
+    - Network failures  
+    - Permission errors
+    - Edge cases
+  </Accordion>
+  
+  <Accordion title="Use test fixtures">
+    Create reusable test data:
+    
+    ```tsx
+    const mockUser = {
+      id: '123',
+      email: 'test@example.com',
+      role: 'end_user'
+    }
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Troubleshooting
+
+<Warning>
+Common issues:
+- **Port conflicts**: Ensure dev server isn't running during E2E tests
+- **Flaky tests**: Add proper wait conditions with Playwright
+- **Environment variables**: Set test-specific values in test setup
+</Warning>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Deployment" icon="rocket" href="/starter-kit/deployment/production-build">
+    Deploy with confidence after testing
+  </Card>
+  
+  <Card title="Best Practices" icon="shield-check" href="/reference/best-practices/testing">
+    Learn testing strategies
+  </Card>
+</CardGroup>

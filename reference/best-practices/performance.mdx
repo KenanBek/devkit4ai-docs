@@ -1,9 +1,475 @@
 ---
 title: "Performance Best Practices"
-description: "Optimize frontend and backend changes without breaking the event-sourced architecture."
-icon: "gauge"
+sidebarTitle: "Performance"
+description: "Optimize your Starter Kit application for speed and efficiency."
+icon: "gauge-high"
 ---
 
-- Lean on Server Components and caching helpers (`cache()`) to avoid duplicate fetches.
-- Keep backend commands idempotent so retries do not emit duplicate events.
-- Use pagination and filtering endpoints when exposing large read models to the UI.
+Implement these performance optimizations to create fast, responsive applications.
+
+## Server Components optimization
+
+### Default to Server Components
+
+```tsx app/dashboard/page.tsx
+// ✅ Good - Server Component (default)
+import { fetchUserData } from '@/app/actions'
+
+export default async function Dashboard() {
+  const data = await fetchUserData() // Runs on server
+  return <DashboardUI data={data} />
+}
+
+// ❌ Avoid - Unnecessary Client Component
+'use client'
+import { useEffect, useState } from 'react'
+
+export default function Dashboard() {
+  const [data, setData] = useState(null)
+  
+  useEffect(() => {
+    fetchUserData().then(setData) // Client-side waterfall
+  }, [])
+  
+  return <DashboardUI data={data} />
+}
+```
+
+**Benefits:**
+- Faster page loads (no client-side data fetching waterfall)
+- Smaller JavaScript bundles
+- Better SEO (content rendered on server)
+- Secure (API credentials never exposed)
+
+### Use React cache() for expensive operations
+
+```tsx lib/auth-server.ts
+import { cache } from 'react'
+
+export const getCurrentUser = cache(async () => {
+  const token = cookies().get('devkit4ai-token')?.value
+  if (!token) return null
+  
+  // Expensive API call cached per request
+  const response = await fetch(`${apiUrl}/api/v1/auth/me`, {
+    headers: { 'Authorization': `Bearer ${token}` }
+  })
+  
+  if (!response.ok) return null
+  return response.json()
+})
+```
+
+## Data fetching patterns
+
+### Parallel data fetching
+
+```tsx
+// ❌ Sequential - Slow
+export default async function Page() {
+  const user = await fetchUser()      // Wait
+  const projects = await fetchProjects() // Then wait
+  const stats = await fetchStats()       // Then wait
+}
+
+// ✅ Parallel - Fast
+export default async function Page() {
+  const [user, projects, stats] = await Promise.all([
+    fetchUser(),
+    fetchProjects(),
+    fetchStats()
+  ])
+}
+```
+
+### Streaming with Suspense
+
+```tsx app/dashboard/page.tsx
+import { Suspense } from 'react'
+
+export default function Dashboard() {
+  return (
+    <div>
+      <Suspense fallback={<UserSkeleton />}>
+        <UserInfo />
+      </Suspense>
+      
+      <Suspense fallback={<ProjectsSkeleton />}>
+        <ProjectsList />
+      </Suspense>
+    </div>
+  )
+}
+
+async function UserInfo() {
+  const user = await fetchUser()
+  return <div>{user.email}</div>
+}
+
+async function ProjectsList() {
+  const projects = await fetchProjects()
+  return <ul>{/* Render projects */}</ul>
+}
+```
+
+## Caching strategies
+
+### Static Generation with ISR
+
+```tsx
+// Revalidate every hour
+export default async function Page() {
+  const data = await fetch(url, {
+    next: { revalidate: 3600 }
+  })
+}
+```
+
+### On-demand revalidation
+
+```tsx app/actions.ts
+'use server'
+
+import { revalidatePath, revalidateTag } from 'next/cache'
+
+export async function createProject(formData: FormData) {
+  // Create project via API
+  await api.createProject(data)
+  
+  // Revalidate projects page
+  revalidatePath('/console/projects')
+  
+  // Or revalidate by tag
+  revalidateTag('projects')
+}
+```
+
+### Tagged caching
+
+```tsx
+// Add tags to fetch requests
+const data = await fetch(url, {
+  next: { 
+    tags: ['projects', `project-${id}`],
+    revalidate: 3600
+  }
+})
+
+// Later, revalidate by tag
+revalidateTag('projects')
+revalidateTag(`project-${id}`)
+```
+
+## Image optimization
+
+### Use Next.js Image component
+
+```tsx
+import Image from 'next/image'
+
+// ✅ Optimized
+export function Avatar({ src, alt }: Props) {
+  return (
+    <Image
+      src={src}
+      alt={alt}
+      width={40}
+      height={40}
+      className="rounded-full"
+      priority={false} // Lazy load
+    />
+  )
+}
+
+// ❌ Unoptimized
+export function Avatar({ src, alt }: Props) {
+  return (
+    <img
+      src={src}
+      alt={alt}
+      className="w-10 h-10 rounded-full"
+    />
+  )
+}
+```
+
+### Optimize generated images
+
+For AI-generated images from Cloud API:
+
+```tsx
+<Image
+  src={generation.generated_image_url}
+  alt={generation.instructions}
+  width={512}
+  height={512}
+  placeholder="blur"
+  blurDataURL="data:image/jpeg;base64,..." // Low-res preview
+/>
+```
+
+## Code splitting
+
+### Dynamic imports
+
+```tsx
+import dynamic from 'next/dynamic'
+
+// Lazy load heavy components
+const HeavyChart = dynamic(() => import('@/components/heavy-chart'), {
+  loading: () => <ChartSkeleton />,
+  ssr: false // Disable SSR for client-only components
+})
+
+export function Dashboard() {
+  return (
+    <div>
+      <Header />
+      <HeavyChart data={data} />
+    </div>
+  )
+}
+```
+
+### Route-based splitting
+
+Next.js automatically code-splits by route:
+
+```
+app/
+  page.tsx           # Chunk 1
+  dashboard/
+    page.tsx         # Chunk 2
+  console/
+    page.tsx         # Chunk 3
+```
+
+Each page only loads its required JavaScript.
+
+## Bundle size optimization
+
+### Analyze bundle
+
+```bash
+# Install analyzer
+npm install @next/bundle-analyzer
+
+# Configure in next.config.ts
+const withBundleAnalyzer = require('@next/bundle-analyzer')({
+  enabled: process.env.ANALYZE === 'true'
+})
+
+module.exports = withBundleAnalyzer(nextConfig)
+
+# Run analysis
+ANALYZE=true npm run build
+```
+
+### Tree-shaking
+
+```tsx
+// ❌ Imports entire library
+import _ from 'lodash'
+const result = _.debounce(fn, 100)
+
+// ✅ Imports only needed function
+import debounce from 'lodash/debounce'
+const result = debounce(fn, 100)
+```
+
+### Remove unused dependencies
+
+```bash
+npm uninstall unused-package
+npm prune
+```
+
+## Database query optimization
+
+<Info>
+Your Starter Kit uses the Cloud API, which handles query optimization. These tips apply if you add custom backend logic.
+</Info>
+
+### Minimize API calls
+
+```tsx
+// ❌ Multiple calls
+const user = await fetchUser(userId)
+const projects = await fetchUserProjects(userId)
+const stats = await fetchUserStats(userId)
+
+// ✅ Single call with all data
+const userData = await fetchCompleteUserData(userId)
+```
+
+### Pagination
+
+```tsx
+export default async function ProjectsPage({
+  searchParams
+}: {
+  searchParams: { page?: string }
+}) {
+  const page = parseInt(searchParams.page || '1')
+  const pageSize = 20
+  
+  const { items, total, has_more } = await fetch(
+    `${apiUrl}/api/v1/projects?page=${page}&page_size=${pageSize}`
+  ).then(r => r.json())
+  
+  return (
+    <div>
+      <ProjectsList projects={items} />
+      <Pagination page={page} hasMore={has_more} />
+    </div>
+  )
+}
+```
+
+## Client-side optimization
+
+### Debounce expensive operations
+
+```tsx
+import { useDeferredValue, useState } from 'react'
+
+export function SearchInput() {
+  const [search, setSearch] = useState('')
+  const deferredSearch = useDeferredValue(search)
+  
+  // deferredSearch updates less frequently
+  const results = useSearch(deferredSearch)
+  
+  return (
+    <>
+      <input
+        value={search}
+        onChange={e => setSearch(e.target.value)}
+      />
+      <Results items={results} />
+    </>
+  )
+}
+```
+
+### Virtualize long lists
+
+```tsx
+import { useVirtualizer } from '@tanstack/react-virtual'
+
+export function VirtualList({ items }: { items: any[] }) {
+  const parentRef = useRef<HTMLDivElement>(null)
+  
+  const virtualizer = useVirtualizer({
+    count: items.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 50
+  })
+  
+  return (
+    <div ref={parentRef} style={{ height: '400px', overflow: 'auto' }}>
+      <div style={{ height: `${virtualizer.getTotalSize()}px` }}>
+        {virtualizer.getVirtualItems().map(virtualItem => (
+          <div
+            key={virtualItem.key}
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              transform: `translateY(${virtualItem.start}px)`
+            }}
+          >
+            {items[virtualItem.index].name}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+```
+
+## Performance monitoring
+
+### Vercel Analytics
+
+Already included in Starter Kit:
+
+```tsx app/layout.tsx
+import { Analytics } from '@vercel/analytics/react'
+import { SpeedInsights } from '@vercel/speed-insights/next'
+
+export default function RootLayout({ children }) {
+  return (
+    <html>
+      <body>
+        {children}
+        <Analytics />
+        <SpeedInsights />
+      </body>
+    </html>
+  )
+}
+```
+
+### Core Web Vitals
+
+Monitor in Vercel dashboard:
+- **LCP** (Largest Contentful Paint): < 2.5s
+- **FID** (First Input Delay): < 100ms
+- **CLS** (Cumulative Layout Shift): < 0.1
+
+### Custom metrics
+
+```tsx
+import { sendGTMEvent } from '@next/third-parties/google'
+
+export function trackCustomMetric(name: string, value: number) {
+  if (typeof window !== 'undefined' && window.gtag) {
+    sendGTMEvent({ event: name, value })
+  }
+}
+```
+
+## Performance checklist
+
+<AccordionGroup>
+  <Accordion title="Rendering">
+    - [ ] Server Components by default
+    - [ ] React cache() for expensive operations
+    - [ ] Suspense for streaming
+    - [ ] Proper loading states
+  </Accordion>
+  
+  <Accordion title="Data fetching">
+    - [ ] Parallel fetches where possible
+    - [ ] Appropriate caching strategies
+    - [ ] Pagination for large lists
+    - [ ] Minimize API calls
+  </Accordion>
+  
+  <Accordion title="Assets">
+    - [ ] Next.js Image component
+    - [ ] Lazy load below-the-fold images
+    - [ ] Optimize generated images
+    - [ ] Compress static assets
+  </Accordion>
+  
+  <Accordion title="Code">
+    - [ ] Dynamic imports for heavy components
+    - [ ] Tree-shake unused code
+    - [ ] Remove unused dependencies
+    - [ ] Minimize bundle size
+  </Accordion>
+</AccordionGroup>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Testing" icon="beaker" href="/reference/best-practices/testing">
+    Test performance improvements
+  </Card>
+  
+  <Card title="Deployment" icon="rocket" href="/starter-kit/deployment/production-build">
+    Deploy optimized application
+  </Card>
+</CardGroup>

@@ -1,11 +1,156 @@
 ---
-title: "Local Multi-Mode Setup"
-description: "Run operator, console, and project apps together."
-icon: "workflow"
+title: "Environment Configuration"
+sidebarTitle: "Environment Setup"
+description: "Configure your local development environment for the Starter Kit."
+icon: "gear"
 ---
 
-Use the root `devkit4ai/Makefile` to boot the entire platform locally:
+Set up your development environment to work with the Cloud API and local services.
 
-- `make run-multi-mode` starts the backend API, operator console, developer console, two project apps, PostgreSQL, and Redis.
-- Ports (3000-3003 for frontends, 8000 for the API) match the defaults described in `AGENTS.md` and the top-level README.
-- This setup mirrors production headers and JWT flows, so it is the recommended way to test cross-service features before deployment.
+## Environment variables
+
+Create `.env.local` in your project root:
+
+```bash .env.local
+# Required - Set deployment mode
+DEVKIT4AI_MODE=project
+
+# Required - Cloud API URL
+NEXT_PUBLIC_API_URL=https://api.vibecoding.ad
+
+# Required - Your credentials from Cloud Admin
+DEVKIT4AI_DEVELOPER_KEY=dk_your_developer_key_from_cloud_admin
+DEVKIT4AI_PROJECT_ID=your-project-uuid-from-cloud_admin
+DEVKIT4AI_PROJECT_KEY=pk_your_project_api_key_from_cloud_admin
+
+# Optional - Deployment environment identifier
+ENVIRONMENT=local
+```
+
+<Steps>
+  <Step title="Get your credentials">
+    Log into [Cloud Admin](https://devkit4ai.com) and create a project. Copy your:
+    - Developer Key (starts with `dk_`)
+    - Project ID (UUID format)
+    - Project API Key (starts with `pk_`)
+  </Step>
+  
+  <Step title="Create .env.local file">
+    Copy the template above and replace placeholders with your actual credentials.
+    
+    <Warning>
+    Never commit `.env.local` to version control. It's already in `.gitignore`.
+    </Warning>
+  </Step>
+  
+  <Step title="Verify configuration">
+    Start the dev server:
+    
+    ```bash
+    npm run dev
+    ```
+    
+    If configuration is invalid, you'll see an amber banner at the top of the page with specific errors.
+  </Step>
+</Steps>
+
+## Configuration validation
+
+The Starter Kit automatically validates your environment on startup:
+
+**Error-level issues** (blocks API calls):
+- Missing required environment variables
+- Invalid Project ID format (must be UUID)
+- Invalid API URL format
+
+**Warning-level issues** (app works but review recommended):
+- Using default values
+- Non-standard configuration
+
+<Tip>
+Check the browser console and terminal output for detailed validation messages.
+</Tip>
+
+## Multiple environments
+
+Create environment-specific files:
+
+```bash
+.env.local          # Local development
+.env.development    # Development server
+.env.staging        # Staging environment  
+.env.production     # Production (use hosting provider secrets)
+```
+
+Next.js loads these automatically based on `NODE_ENV`.
+
+## Environment-specific API URLs
+
+For testing against different API environments:
+
+```bash .env.local
+# Production Cloud API (default)
+NEXT_PUBLIC_API_URL=https://api.vibecoding.ad
+
+# Or alternative deployment
+NEXT_PUBLIC_API_URL=https://api.devkit4ai.com
+```
+
+## Security best practices
+
+<Warning>
+Never expose sensitive credentials:
+- Don't commit `.env.local` or `.env.production`
+- Don't log environment variables in client code
+- Don't share developer or API keys publicly
+- Rotate keys if accidentally exposed
+</Warning>
+
+**For production:**
+- Use your hosting provider's secret management (Vercel, Netlify, etc.)
+- Enable environment variable encryption when available
+- Restrict API keys to specific domains in Cloud Admin
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Configuration errors on startup">
+    Check that:
+    - `.env.local` exists in project root
+    - All required variables are set
+    - Project ID is valid UUID format
+    - No extra spaces or quotes around values
+  </Accordion>
+  
+  <Accordion title="API calls failing with 401">
+    Verify:
+    - Developer key is correct and active
+    - Project ID matches your Cloud Admin project
+    - Project API key hasn't been revoked
+    - Restart dev server after changing `.env.local`
+  </Accordion>
+  
+  <Accordion title="Can't find .env.local file">
+    The file might be hidden in your file browser:
+    
+    ```bash
+    # Create it from terminal
+    touch .env.local
+    
+    # Open in editor
+    code .env.local
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Frontend Development" icon="monitor" href="/development-tools/local-dev/frontend-dev">
+    Start building your application
+  </Card>
+  
+  <Card title="Cloud Admin" icon="browser" href="/cloud-admin/getting-started">
+    Manage credentials and settings
+  </Card>
+</CardGroup>

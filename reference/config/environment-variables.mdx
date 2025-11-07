@@ -1,13 +1,282 @@
 ---
 title: "Environment Variables"
-description: "Centralize configuration values used across services."
-icon: "settings"
+sidebarTitle: "Variables Reference"
+description: "Complete reference of environment variables used in the Starter Kit."
+icon: "key"
 ---
 
-Key variables sourced from the repositories:
+All environment variables required for your Starter Kit application.
 
-- Backend API: `DATABASE_URL`, `SECRET_KEY`, `DEVKIT4AI_OPERATOR_KEY`, `REPLICATE_API_TOKEN`, storage and Redis settings (see `backend-api/SPECS.md`).
-- User App & Starter Kit: `DEVKIT4AI_MODE`, `NEXT_PUBLIC_API_URL`, plus mode-specific secrets validated by `hydrateDeploymentMode()`.
-- Starter Kit deployments reuse the same values to stay compatible with Cloud Admin.
+## Required variables
 
-Use provider-level secret managers for production so values never live in version control.
+These must be set for your application to function:
+
+### DEVKIT4AI_MODE
+
+**Value:** `project` (always for Starter Kit)
+
+**Description:** Configures the application as an end-user project mode deployment.
+
+```bash
+DEVKIT4AI_MODE=project
+```
+
+### NEXT_PUBLIC_API_URL
+
+**Value:** `https://api.vibecoding.ad` (or `https://api.devkit4ai.com`)
+
+**Description:** Base URL for the Cloud API. The `NEXT_PUBLIC_` prefix makes it available in the browser.
+
+```bash
+NEXT_PUBLIC_API_URL=https://api.vibecoding.ad
+```
+
+### DEVKIT4AI_DEVELOPER_KEY
+
+**Value:** Your developer key from Cloud Admin (starts with `dk_`)
+
+**Description:** Authenticates your application with the Cloud API. Get from Cloud Admin after creating an account.
+
+```bash
+DEVKIT4AI_DEVELOPER_KEY=dk_1234567890abcdef1234567890abcdef
+```
+
+<Warning>
+Never commit this to version control. Use `.env.local` locally and your hosting provider's secrets for production.
+</Warning>
+
+### DEVKIT4AI_PROJECT_ID
+
+**Value:** Your project UUID from Cloud Admin
+
+**Description:** Identifies which project this deployment belongs to. Must be a valid UUID.
+
+```bash
+DEVKIT4AI_PROJECT_ID=550e8400-e29b-41d4-a716-446655440000
+```
+
+### DEVKIT4AI_PROJECT_KEY
+
+**Value:** Your project API key from Cloud Admin (starts with `pk_`)
+
+**Description:** Scopes API requests to your specific project.
+
+```bash
+DEVKIT4AI_PROJECT_KEY=pk_abcdef1234567890abcdef1234567890
+```
+
+## Optional variables
+
+These enhance functionality but aren't required:
+
+### ENVIRONMENT
+
+**Value:** `local`, `development`, `staging`, `production`
+
+**Description:** Identifies the deployment environment for logging and debugging.
+
+```bash
+ENVIRONMENT=production
+```
+
+**Default:** `local`
+
+### NODE_ENV
+
+**Value:** `development` or `production`
+
+**Description:** Next.js uses this to enable/disable optimizations. Set automatically by most hosting providers.
+
+```bash
+NODE_ENV=production
+```
+
+**Default:** `development`
+
+### PORT
+
+**Value:** Any port number (e.g., `3000`, `3004`, `8080`)
+
+**Description:** HTTP port for the development/production server.
+
+```bash
+PORT=3004
+```
+
+**Default:** `3004` (development), `3000` (production)
+
+### NEXT_PUBLIC_DEMO_MODE
+
+**Value:** `true` or `false`
+
+**Description:** Enables demo features and development tools in the UI.
+
+```bash
+NEXT_PUBLIC_DEMO_MODE=true
+```
+
+**Default:** `false`
+
+**Usage:**
+```tsx
+if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') {
+  return <DemoFeatures />
+}
+```
+
+## Setting environment variables
+
+### Local development
+
+Create `.env.local` in your project root:
+
+```bash .env.local
+DEVKIT4AI_MODE=project
+NEXT_PUBLIC_API_URL=https://api.vibecoding.ad
+DEVKIT4AI_DEVELOPER_KEY=dk_your_key
+DEVKIT4AI_PROJECT_ID=your-uuid
+DEVKIT4AI_PROJECT_KEY=pk_your_key
+ENVIRONMENT=local
+```
+
+<Info>
+`.env.local` is in `.gitignore` and won't be committed to version control.
+</Info>
+
+### Vercel
+
+1. Go to Project Settings → Environment Variables
+2. Add each variable with appropriate scope:
+   - **Production**: Live site
+   - **Preview**: PR deployments
+   - **Development**: Local development with `vercel dev`
+3. Redeploy for changes to take effect
+
+### Netlify
+
+1. Go to Site Settings → Build & Deploy → Environment
+2. Click "Add variable"
+3. Enter key and value
+4. Deploy from Build settings or trigger webhook
+
+### Docker
+
+Pass via command line:
+
+```bash
+docker run -e DEVKIT4AI_MODE=project \
+  -e NEXT_PUBLIC_API_URL=https://api.vibecoding.ad \
+  -e DEVKIT4AI_DEVELOPER_KEY=dk_key \
+  -e DEVKIT4AI_PROJECT_ID=uuid \
+  -e DEVKIT4AI_PROJECT_KEY=pk_key \
+  your-image
+```
+
+Or use `.env` file:
+
+```bash
+docker run --env-file .env.production your-image
+```
+
+### Other platforms
+
+Consult your platform's documentation:
+- Railway: Environment variables in project settings
+- Render: Environment tab in web service settings
+- Fly.io: `fly secrets set KEY=value`
+- AWS Amplify: Environment variables in app settings
+
+## Accessing variables
+
+### Server-side (Server Components, API routes)
+
+```tsx
+const apiUrl = process.env.NEXT_PUBLIC_API_URL
+const developerKey = process.env.DEVKIT4AI_DEVELOPER_KEY
+```
+
+### Client-side (Client Components)
+
+Only `NEXT_PUBLIC_*` variables are available:
+
+```tsx
+const apiUrl = process.env.NEXT_PUBLIC_API_URL // ✅ Works
+const key = process.env.DEVKIT4AI_DEVELOPER_KEY // ❌ Undefined
+```
+
+<Warning>
+Never expose sensitive credentials in client-side code. Use Server Actions or API routes to access protected variables.
+</Warning>
+
+## Validation
+
+The Starter Kit validates required variables on startup:
+
+```tsx lib/deployment-mode.ts
+function validateEnv() {
+  const required = [
+    'DEVKIT4AI_MODE',
+    'NEXT_PUBLIC_API_URL',
+    'DEVKIT4AI_DEVELOPER_KEY',
+    'DEVKIT4AI_PROJECT_ID',
+    'DEVKIT4AI_PROJECT_KEY'
+  ]
+  
+  const missing = required.filter(key => !process.env[key])
+  
+  if (missing.length > 0) {
+    throw new Error(`Missing required env vars: ${missing.join(', ')}`)
+  }
+}
+```
+
+## Security best practices
+
+<AccordionGroup>
+  <Accordion title="Never commit secrets">
+    - Add `.env.local` to `.gitignore`
+    - Use `.env.example` with placeholder values
+    - Document required variables in README
+  </Accordion>
+  
+  <Accordion title="Rotate credentials regularly">
+    - Generate new API keys every 90 days
+    - Update in hosting provider and Cloud Admin
+    - Test before revoking old keys
+  </Accordion>
+  
+  <Accordion title="Use environment-specific keys">
+    - Different keys for dev, staging, production
+    - Prevents accidental production data access
+    - Isolates environment security
+  </Accordion>
+  
+  <Accordion title="Minimize NEXT_PUBLIC_ variables">
+    - Only make public what client needs
+    - API keys should stay server-side
+    - Use Server Actions to proxy sensitive calls
+  </Accordion>
+</AccordionGroup>
+
+## Troubleshooting
+
+<Warning>
+**Common issues:**
+
+- **Undefined variables**: Restart dev server after changing `.env.local`
+- **Old values persisting**: Clear Next.js cache with `rm -rf .next`
+- **Production not updating**: Trigger new deployment after changing env vars
+- **Variables not loading**: Check spelling, format, and quotes
+</Warning>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Deployment" icon="rocket" href="/reference/config/deployment-modes">
+    Configure environments
+  </Card>
+  
+  <Card title="Security" icon="shield" href="/reference/config/security-settings">
+    Security best practices
+  </Card>
+</CardGroup>

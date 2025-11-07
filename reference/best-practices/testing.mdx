@@ -1,9 +1,460 @@
 ---
 title: "Testing Best Practices"
-description: "Validate features with the same rigor used in the core repositories."
-icon: "flask-round"
+sidebarTitle: "Testing"
+description: "Implement comprehensive testing strategies for your Starter Kit application."
+icon: "vial"
 ---
 
-- Use Testcontainers for integration tests so databases and Redis match production, as mandated in project `AGENTS.md` files.
-- Prefer end-to-end flows (Vitest + Playwright) when touching authentication or multi-mode features.
-- Keep fixtures aligned with real Cloud API responses to avoid drift between tests and live services.
+Build confidence in your application with thorough testing practices.
+
+## Testing philosophy
+
+**Test pyramid:**
+1. **Integration tests** (70%): Test utilities, helpers, business logic
+2. **E2E tests** (20%): Test critical user flows
+3. **Manual testing** (10%): Exploratory and edge cases
+
+**What to test:**
+- ✅ Critical user flows (auth, payments, core features)
+- ✅ Business logic and data transformations
+- ✅ Error handling and edge cases
+- ✅ Security features (input validation, authorization)
+
+**What not to test:**
+- ❌ Implementation details (how, not what)
+- ❌ Third-party libraries (trust they're tested)
+- ❌ Trivial code (getters, setters)
+- ❌ UI styling (unless critical to functionality)
+
+## Integration testing with Vitest
+
+### Test structure
+
+```tsx __tests__/utils.test.ts
+import { describe, it, expect, beforeEach } from 'vitest'
+import { sanitizeReturnUrl } from '@/lib/return-url'
+
+describe('sanitizeReturnUrl', () => {
+  describe('valid paths', () => {
+    it('allows simple relative paths', () => {
+      expect(sanitizeReturnUrl('/dashboard')).toBe('/dashboard')
+      expect(sanitizeReturnUrl('/profile')).toBe('/profile')
+    })
+    
+    it('allows paths with query params', () => {
+      expect(sanitizeReturnUrl('/search?q=test')).toBe('/search?q=test')
+    })
+    
+    it('allows paths with hashes', () => {
+      expect(sanitizeReturnUrl('/page#section')).toBe('/page#section')
+    })
+  })
+  
+  describe('invalid paths', () => {
+    it('rejects absolute URLs', () => {
+      expect(sanitizeReturnUrl('https://evil.com')).toBe(null)
+      expect(sanitizeReturnUrl('http://evil.com')).toBe(null)
+    })
+    
+    it('rejects protocol-relative URLs', () => {
+      expect(sanitizeReturnUrl('//evil.com')).toBe(null)
+    })
+    
+    it('rejects control characters', () => {
+      expect(sanitizeReturnUrl('/path\x00')).toBe(null)
+    })
+  })
+})
+```
+
+### Testing Server Actions
+
+```tsx __tests__/actions.test.ts
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { loginAction } from '@/app/actions'
+
+// Mock fetch globally
+global.fetch = vi.fn()
+
+// Mock Next.js cookies
+vi.mock('next/headers', () => ({
+  cookies: () => ({
+    set: vi.fn(),
+    get: vi.fn(),
+    delete: vi.fn()
+  })
+}))
+
+describe('loginAction', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+  
+  it('returns error for invalid credentials', async () => {
+    vi.mocked(fetch).mockResolvedValueOnce({
+      ok: false,
+      status: 401,
+      json: async () => ({ detail: 'Invalid credentials' })
+    } as Response)
+    
+    const formData = new FormData()
+    formData.set('email', 'test@example.com')
+    formData.set('password', 'wrong')
+    
+    const result = await loginAction(formData)
+    
+    expect(result).toEqual({
+      error: 'Invalid credentials'
+    })
+  })
+  
+  it('succeeds with valid credentials', async () => {
+    vi.mocked(fetch).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        access_token: 'token123',
+        refresh_token: 'refresh123'
+      })
+    } as Response)
+    
+    const formData = new FormData()
+    formData.set('email', 'test@example.com')
+    formData.set('password', 'correct')
+    
+    const result = await loginAction(formData)
+    
+    expect(result).toEqual({ success: true })
+  })
+})
+```
+
+### Testing utilities
+
+```tsx __tests__/lib/utils.test.ts
+import { describe, it, expect } from 'vitest'
+import { cn } from '@/lib/utils'
+
+describe('cn (className utility)', () => {
+  it('merges classes', () => {
+    expect(cn('foo', 'bar')).toBe('foo bar')
+  })
+  
+  it('handles conditional classes', () => {
+    expect(cn('foo', false && 'bar', 'baz')).toBe('foo baz')
+  })
+  
+  it('merges Tailwind classes correctly', () => {
+    expect(cn('px-2', 'px-4')).toBe('px-4') // Later wins
+  })
+})
+```
+
+## E2E testing with Playwright
+
+### Authentication flows
+
+```tsx tests/e2e/auth.spec.ts
+import { test, expect } from '@playwright/test'
+
+test.describe('Authentication', () => {
+  test('complete registration flow', async ({ page }) => {
+    await page.goto('/register')
+    
+    // Fill registration form
+    await page.fill('[name="email"]', 'newuser@example.com')
+    await page.fill('[name="password"]', 'SecurePass123')
+    await page.click('button[type="submit"]')
+    
+    // Should show success message
+    await expect(page.locator('text=Registration successful')).toBeVisible()
+    
+    // Should be redirected to verification page
+    await expect(page).toHaveURL(/\/verify-email/)
+  })
+  
+  test('login and access protected page', async ({ page }) => {
+    await page.goto('/login')
+    
+    await page.fill('[name="email"]', 'test@example.com')
+    await page.fill('[name="password"]', 'password123')
+    await page.click('button[type="submit"]')
+    
+    // Should redirect to dashboard
+    await expect(page).toHaveURL('/dashboard')
+    
+    // Should see user email
+    await expect(page.locator('text=test@example.com')).toBeVisible()
+  })
+  
+  test('logout clears session', async ({ page }) => {
+    // Login first
+    await page.goto('/login')
+    await page.fill('[name="email"]', 'test@example.com')
+    await page.fill('[name="password"]', 'password123')
+    await page.click('button[type="submit"]')
+    
+    // Click logout
+    await page.click('button:has-text("Sign out")')
+    
+    // Should redirect to login
+    await expect(page).toHaveURL('/login')
+    
+    // Try accessing protected page
+    await page.goto('/dashboard')
+    
+    // Should be redirected back to login
+    await expect(page).toHaveURL(/\/login/)
+  })
+})
+```
+
+### Form validation
+
+```tsx tests/e2e/forms.spec.ts
+import { test, expect } from '@playwright/test'
+
+test.describe('Form validation', () => {
+  test('shows error for invalid email', async ({ page }) => {
+    await page.goto('/register')
+    
+    await page.fill('[name="email"]', 'invalid-email')
+    await page.fill('[name="password"]', 'Password123')
+    await page.click('button[type="submit"]')
+    
+    await expect(page.locator('text=Invalid email')).toBeVisible()
+  })
+  
+  test('shows error for weak password', async ({ page }) => {
+    await page.goto('/register')
+    
+    await page.fill('[name="email"]', 'test@example.com')
+    await page.fill('[name="password"]', 'weak')
+    await page.click('button[type="submit"]')
+    
+    await expect(page.locator('text=at least 8 characters')).toBeVisible()
+  })
+})
+```
+
+### Navigation and routing
+
+```tsx tests/e2e/navigation.spec.ts
+import { test, expect } from '@playwright/test'
+
+test.describe('Navigation', () => {
+  test('header links work', async ({ page }) => {
+    await page.goto('/')
+    
+    // Click dashboard link
+    await page.click('a:has-text("Dashboard")')
+    
+    // Should navigate (may redirect to login if not authenticated)
+    await expect(page).toHaveURL(/\/(dashboard|login)/)
+  })
+  
+  test('breadcrumbs show correct path', async ({ page }) => {
+    await page.goto('/console/projects/123')
+    
+    await expect(page.locator('nav[aria-label="breadcrumb"]')).toContainText('Console')
+    await expect(page.locator('nav[aria-label="breadcrumb"]')).toContainText('Projects')
+  })
+})
+```
+
+## Test fixtures and helpers
+
+### Reusable fixtures
+
+```tsx tests/fixtures/users.ts
+export const mockUsers = {
+  valid: {
+    id: '123',
+    email: 'test@example.com',
+    role: 'end_user' as const,
+    is_active: true,
+    created_at: '2024-01-01T00:00:00Z'
+  },
+  inactive: {
+    id: '456',
+    email: 'inactive@example.com',
+    role: 'end_user' as const,
+    is_active: false,
+    created_at: '2024-01-01T00:00:00Z'
+  }
+}
+
+export const mockProjects = [
+  {
+    id: '789',
+    name: 'Test Project',
+    description: 'A test project',
+    is_active: true,
+    created_at: '2024-01-01T00:00:00Z',
+    updated_at: null
+  }
+]
+```
+
+### Test helpers
+
+```tsx tests/helpers/auth.ts
+import { Page } from '@playwright/test'
+
+export async function login(page: Page, email: string, password: string) {
+  await page.goto('/login')
+  await page.fill('[name="email"]', email)
+  await page.fill('[name="password"]', password)
+  await page.click('button[type="submit"]')
+  await page.waitForURL('/dashboard')
+}
+
+export async function logout(page: Page) {
+  await page.click('button:has-text("Sign out")')
+  await page.waitForURL('/login')
+}
+```
+
+## Testing error states
+
+### Network errors
+
+```tsx __tests__/api-errors.test.ts
+import { describe, it, expect, vi } from 'vitest'
+import { fetchUserData } from '@/app/actions'
+
+describe('API error handling', () => {
+  it('handles network timeout', async () => {
+    vi.mocked(fetch).mockRejectedValueOnce(
+      new DOMException('Aborted', 'AbortError')
+    )
+    
+    const result = await fetchUserData()
+    
+    expect(result).toEqual({
+      error: 'Request timed out. Please try again.'
+    })
+  })
+  
+  it('handles server error', async () => {
+    vi.mocked(fetch).mockResolvedValueOnce({
+      ok: false,
+      status: 500,
+      json: async () => ({ detail: 'Internal error' })
+    } as Response)
+    
+    const result = await fetchUserData()
+    
+    expect(result.error).toContain('Server error')
+  })
+})
+```
+
+### Edge cases
+
+```tsx __tests__/edge-cases.test.ts
+import { describe, it, expect } from 'vitest'
+import { sanitizeReturnUrl } from '@/lib/return-url'
+
+describe('Edge cases', () => {
+  it('handles null input', () => {
+    expect(sanitizeReturnUrl(null)).toBe(null)
+  })
+  
+  it('handles empty string', () => {
+    expect(sanitizeReturnUrl('')).toBe(null)
+  })
+  
+  it('handles very long URLs', () => {
+    const longUrl = '/' + 'a'.repeat(3000)
+    expect(sanitizeReturnUrl(longUrl)).toBe(null)
+  })
+})
+```
+
+## CI/CD integration
+
+### GitHub Actions workflow
+
+```yaml .github/workflows/test.yml
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '19'
+          cache: 'npm'
+      
+      - run: npm ci
+      
+      - run: npm run test:integration
+      
+      - run: npx playwright install --with-deps
+      
+      - run: npm run test:e2e
+      
+      - uses: actions/upload-artifact@v3
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/
+```
+
+## Testing checklist
+
+<AccordionGroup>
+  <Accordion title="Integration tests">
+    - [ ] Test utility functions
+    - [ ] Test data transformations
+    - [ ] Test validation logic
+    - [ ] Test error handling
+    - [ ] Mock external dependencies
+  </Accordion>
+  
+  <Accordion title="E2E tests">
+    - [ ] Test authentication flows
+    - [ ] Test critical user paths
+    - [ ] Test form submissions
+    - [ ] Test navigation
+    - [ ] Test error states
+  </Accordion>
+  
+  <Accordion title="Test quality">
+    - [ ] Tests are independent
+    - [ ] Tests clean up after themselves
+    - [ ] Descriptive test names
+    - [ ] Tests are deterministic
+    - [ ] Fast execution
+  </Accordion>
+  
+  <Accordion title="Coverage">
+    - [ ] Critical paths covered
+    - [ ] Edge cases tested
+    - [ ] Error handling verified
+    - [ ] Security features tested
+    - [ ] CI/CD integration
+  </Accordion>
+</AccordionGroup>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Local Testing" icon="beaker" href="/development-tools/local-dev/testing">
+    Run tests locally
+  </Card>
+  
+  <Card title="Code Organization" icon="folder" href="/reference/best-practices/code-organization">
+    Structure your test files
+  </Card>
+</CardGroup>

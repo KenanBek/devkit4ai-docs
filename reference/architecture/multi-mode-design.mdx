@@ -1,13 +1,223 @@
 ---
-title: "Multi-Mode Design"
-description: "See how operator, console, and project deployments share one codebase."
-icon: "layers-3"
+title: "Deployment Configuration"
+sidebarTitle: "Deployment"
+description: "Configure your Starter Kit application for different deployment environments."
+icon: "rocket"
 ---
 
-Dev Kit for AI uses environment-driven mode selection handled by `lib/deployment-mode.ts` in the user app and Starter Kit:
+The Starter Kit uses environment variables to configure how it connects to the Cloud API and what features are available.
 
-- `operator` mode powers Cloud Admin and requires the `DEVKIT4AI_OPERATOR_KEY` header, exposing platform-level tooling.
-- `console` mode targets developers and uses `DEVKIT4AI_DEVELOPER_KEY` to authorize project management routes.
-- `project` mode serves end users, scoping requests with developer, project, and API keys.
+## Configuration basics
 
-The backend reads these headers to enforce RBAC, ensuring documentation and implementation stay in sync.
+Your application requires these environment variables:
+
+```bash .env.local
+# Deployment mode (always "project" for Starter Kit)
+DEVKIT4AI_MODE=project
+
+# Cloud API endpoint
+NEXT_PUBLIC_API_URL=https://api.vibecoding.ad
+
+# Your credentials from Cloud Admin
+DEVKIT4AI_DEVELOPER_KEY=dk_your_developer_key
+DEVKIT4AI_PROJECT_ID=your-project-uuid
+DEVKIT4AI_PROJECT_KEY=pk_your_api_key
+```
+
+## Environment-specific configuration
+
+### Local development
+
+```bash .env.local
+DEVKIT4AI_MODE=project
+NEXT_PUBLIC_API_URL=https://api.vibecoding.ad
+DEVKIT4AI_DEVELOPER_KEY=dk_dev_...
+DEVKIT4AI_PROJECT_ID=...
+DEVKIT4AI_PROJECT_KEY=pk_dev_...
+ENVIRONMENT=local
+```
+
+### Staging deployment
+
+```bash .env.staging
+DEVKIT4AI_MODE=project
+NEXT_PUBLIC_API_URL=https://api.vibecoding.ad
+DEVKIT4AI_DEVELOPER_KEY=dk_staging_...
+DEVKIT4AI_PROJECT_ID=...
+DEVKIT4AI_PROJECT_KEY=pk_staging_...
+ENVIRONMENT=staging
+```
+
+### Production deployment
+
+<Warning>
+Never commit production credentials to version control. Use your hosting provider's environment variable system.
+</Warning>
+
+**Vercel:**
+1. Go to Project Settings → Environment Variables
+2. Add each variable for Production environment
+3. Redeploy to apply changes
+
+**Netlify:**
+1. Go to Site Settings → Build & Deploy → Environment
+2. Add environment variables
+3. Trigger new deploy
+
+**Other platforms:**
+Follow your platform's documentation for setting environment variables.
+
+## Configuration validation
+
+The Starter Kit automatically validates configuration on startup via `lib/deployment-mode.ts`:
+
+```tsx lib/deployment-mode.ts
+export async function hydrateDeploymentMode() {
+  const issues: ConfigIssue[] = []
+  
+  // Validate required variables
+  if (!process.env.DEVKIT4AI_MODE) {
+    issues.push({
+      severity: 'error',
+      message: 'DEVKIT4AI_MODE is required'
+    })
+  }
+  
+  // Validate project ID format
+  const projectId = process.env.DEVKIT4AI_PROJECT_ID
+  if (projectId && !isValidUUID(projectId)) {
+    issues.push({
+      severity: 'error',
+      message: 'DEVKIT4AI_PROJECT_ID must be a valid UUID'
+    })
+  }
+  
+  return {
+    mode: process.env.DEVKIT4AI_MODE,
+    backendApiUrl: process.env.NEXT_PUBLIC_API_URL,
+    issues,
+    isReady: issues.filter(i => i.severity === 'error').length === 0
+  }
+}
+```
+
+## Runtime configuration access
+
+### Server Components
+
+```tsx
+import { hydrateDeploymentMode } from '@/lib/deployment-mode'
+
+export default async function Page() {
+  const config = await hydrateDeploymentMode()
+  
+  if (!config.isReady) {
+    return <ConfigurationError issues={config.issues} />
+  }
+  
+  // Use config.backendApiUrl, config.headers
+}
+```
+
+### Client Components
+
+```tsx
+'use client'
+
+import { useDeploymentMode } from '@/lib/auth-context'
+
+export function MyComponent() {
+  const config = useDeploymentMode()
+  
+  // Access config.backendApiUrl, config.headers, config.isReady
+}
+```
+
+### Server Actions
+
+```tsx
+'use server'
+
+import { hydrateDeploymentMode } from '@/lib/deployment-mode'
+
+export async function myAction() {
+  const config = await hydrateDeploymentMode()
+  
+  await fetch(`${config.backendApiUrl}/api/endpoint`, {
+    headers: config.headers
+  })
+}
+```
+
+## Request headers
+
+The configuration automatically constructs required headers:
+
+```tsx
+const headers = {
+  'X-User-Role': 'end_user',
+  'X-Developer-Key': process.env.DEVKIT4AI_DEVELOPER_KEY,
+  'X-Project-ID': process.env.DEVKIT4AI_PROJECT_ID,
+  'X-API-Key': process.env.DEVKIT4AI_PROJECT_KEY
+}
+```
+
+These headers authenticate your requests to the Cloud API.
+
+## Multi-project setup
+
+To deploy the same codebase for multiple projects:
+
+1. Create separate deployments (e.g., separate Vercel projects)
+2. Configure different environment variables for each
+3. Each deployment gets its own `PROJECT_ID` and `PROJECT_KEY`
+
+**Example:**
+
+```bash
+# Project A (app-a.vercel.app)
+DEVKIT4AI_PROJECT_ID=uuid-for-project-a
+DEVKIT4AI_PROJECT_KEY=pk_project_a_key
+
+# Project B (app-b.vercel.app)  
+DEVKIT4AI_PROJECT_ID=uuid-for-project-b
+DEVKIT4AI_PROJECT_KEY=pk_project_b_key
+```
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Configuration errors on startup">
+    Check that:
+    - All required variables are set
+    - Project ID is valid UUID format
+    - API URL is valid HTTPS URL
+    - No extra whitespace in values
+  </Accordion>
+  
+  <Accordion title="API calls return 401 Unauthorized">
+    Verify:
+    - Developer key is correct
+    - Project ID matches your Cloud Admin project
+    - Project API key is active
+    - Restart dev server after changing environment variables
+  </Accordion>
+  
+  <Accordion title="Environment variables not updating">
+    - Clear Next.js cache: `rm -rf .next`
+    - Restart development server
+    - For production: trigger new deployment
+  </Accordion>
+</AccordionGroup>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Environment Variables" icon="settings" href="/reference/config/environment-variables">
+    Complete variable reference
+  </Card>
+  
+  <Card title="Deploy" icon="rocket" href="/starter-kit/deployment/production-build">
+    Deploy to production
+  </Card>
+</CardGroup>

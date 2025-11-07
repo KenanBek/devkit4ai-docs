@@ -1,13 +1,346 @@
 ---
-title: "Security Settings"
-description: "Review authentication, hashing, and storage controls built into the platform."
-icon: "shield"
+title: "Security Configuration"
+sidebarTitle: "Security"
+description: "Configure security settings and understand built-in protections in your Starter Kit."
+icon: "shield-halved"
 ---
 
-Security practices are consistent across services:
+Your Starter Kit application includes multiple security layers to protect user data and prevent unauthorized access.
 
-- JWT access tokens (30 minutes) and refresh tokens (7 days) are stored in httpOnly cookies with secure flags in production.
-- Developer and project keys are hashed with SHA-256 and only revealed once, matching the backend implementation.
-- Optional S3 storage and Redis credentials are loaded from environment variables so secrets never live in the repository.
+## Authentication security
 
-We will extend this page with hardening guides as new security features roll out.
+### JWT tokens
+
+The Cloud API issues JSON Web Tokens for authentication:
+
+**Access tokens:**
+- Expire after 30 minutes
+- Stored in httpOnly cookies (`devkit4ai-token`)
+- Not accessible to JavaScript
+- Automatically included in API requests
+
+**Refresh tokens:**
+- Expire after 7 days
+- Stored in httpOnly cookies (`devkit4ai-refresh-token`)
+- Used to obtain new access tokens
+- Revoked on logout
+
+### Cookie configuration
+
+```tsx lib/auth-server.ts
+function storeTokensInCookies(tokens: TokenResponse) {
+  cookies().set('devkit4ai-token', tokens.access_token, {
+    httpOnly: true,        // Not accessible to JavaScript
+    secure: isProduction,  // HTTPS only in production
+    sameSite: 'lax',       // CSRF protection
+    maxAge: 60 * 30,       // 30 minutes
+    path: '/'              // Available site-wide
+  })
+}
+```
+
+<Warning>
+Never store authentication tokens in localStorage or sessionStorage. Use httpOnly cookies to prevent XSS attacks.
+</Warning>
+
+## API key security
+
+### Storage and handling
+
+**Environment variables:**
+- Store keys in `.env.local` for development
+- Use hosting provider secrets for production
+- Never commit keys to version control
+
+**Server-side only:**
+```tsx
+// ✅ Good - Server Component
+export default async function Page() {
+  const developerKey = process.env.DEVKIT4AI_DEVELOPER_KEY
+  // Key stays on server
+}
+
+// ❌ Bad - Client Component
+'use client'
+export function MyComponent() {
+  const key = process.env.DEVKIT4AI_DEVELOPER_KEY // Undefined!
+}
+```
+
+### Key rotation
+
+<Steps>
+  <Step title="Generate new keys">
+    In Cloud Admin, create new developer and project API keys.
+  </Step>
+  
+  <Step title="Update environment variables">
+    Set new keys in your hosting provider and local `.env.local`.
+  </Step>
+  
+  <Step title="Deploy and verify">
+    Deploy with new keys and confirm application works.
+  </Step>
+  
+  <Step title="Revoke old keys">
+    In Cloud Admin, revoke the old keys after confirming new ones work.
+  </Step>
+</Steps>
+
+<Tip>
+Rotate API keys every 90 days or immediately if compromised.
+</Tip>
+
+## Password security
+
+The Cloud API enforces strong password requirements:
+
+**Minimum requirements:**
+- At least 8 characters
+- One uppercase letter
+- One lowercase letter
+- One digit
+
+**Client-side validation:**
+```tsx components/register-form.tsx
+function validatePassword(password: string): string | null {
+  if (password.length < 8) {
+    return 'Password must be at least 8 characters'
+  }
+  if (!/[A-Z]/.test(password)) {
+    return 'Password must contain an uppercase letter'
+  }
+  if (!/[a-z]/.test(password)) {
+    return 'Password must contain a lowercase letter'
+  }
+  if (!/[0-9]/.test(password)) {
+    return 'Password must contain a digit'
+  }
+  return null
+}
+```
+
+**Server-side hashing:**
+Passwords are hashed with bcrypt before storage (handled by Cloud API).
+
+## HTTPS enforcement
+
+### Production configuration
+
+All production deployments must use HTTPS:
+
+**Vercel, Netlify:** Automatic HTTPS with free SSL certificates
+
+**Custom domains:**
+1. Configure SSL certificate
+2. Redirect HTTP to HTTPS
+3. Enable HSTS headers
+
+**Next.js middleware:**
+```tsx middleware.ts
+import { NextResponse } from 'next/server'
+
+export function middleware(request: Request) {
+  // Redirect HTTP to HTTPS in production
+  if (process.env.NODE_ENV === 'production' && 
+      request.url.startsWith('http://')) {
+    return NextResponse.redirect(
+      request.url.replace('http://', 'https://'),
+      301
+    )
+  }
+}
+```
+
+## CORS configuration
+
+The Cloud API restricts cross-origin requests:
+
+**Allowed origins:**
+- Your registered domain(s)
+- `localhost:*` for development
+
+**Configure in Cloud Admin:**
+1. Navigate to Project Settings
+2. Add allowed origins
+3. Wildcards supported for subdomains
+
+## Input validation
+
+Always validate user input:
+
+**Email addresses:**
+```tsx
+function isValidEmail(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+}
+```
+
+**Sanitize display values:**
+```tsx
+import DOMPurify from 'isomorphic-dompurify'
+
+function SafeContent({ html }: { html: string }) {
+  const clean = DOMPurify.sanitize(html)
+  return <div dangerouslySetInnerHTML={{ __html: clean }} />
+}
+```
+
+**Return URL validation:**
+```tsx lib/return-url.ts
+export function sanitizeReturnUrl(url: string | null): string | null {
+  if (!url) return null
+  
+  // Only allow relative paths
+  if (!url.startsWith('/')) return null
+  
+  // Prevent protocol-relative URLs
+  if (url.startsWith('//')) return null
+  
+  // Prevent control characters
+  if (/[\x00-\x1f]/.test(url)) return null
+  
+  return url
+}
+```
+
+## Rate limiting
+
+The Cloud API implements rate limits:
+
+**Per project:**
+- Authentication: 10 requests/minute
+- Data endpoints: 100 requests/minute
+- AI generation: 10 requests/minute
+
+**Handle rate limits:**
+```tsx
+async function fetchWithRetry(url: string, options: RequestInit) {
+  const response = await fetch(url, options)
+  
+  if (response.status === 429) {
+    // Rate limited - implement backoff
+    const retryAfter = response.headers.get('Retry-After') || '60'
+    throw new Error(`Rate limited. Retry after ${retryAfter} seconds.`)
+  }
+  
+  return response
+}
+```
+
+## Security headers
+
+Configure security headers in `next.config.ts`:
+
+```tsx next.config.ts
+const nextConfig = {
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          {
+            key: 'X-Frame-Options',
+            value: 'DENY'
+          },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff'
+          },
+          {
+            key: 'Referrer-Policy',
+            value: 'strict-origin-when-cross-origin'
+          },
+          {
+            key: 'Permissions-Policy',
+            value: 'camera=(), microphone=(), geolocation=()'
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+## Dependency security
+
+Keep dependencies updated:
+
+```bash
+# Check for vulnerabilities
+npm audit
+
+# Fix automatically where possible
+npm audit fix
+
+# Update dependencies
+npm update
+```
+
+**Enable Dependabot:**
+1. Go to GitHub repository settings
+2. Enable Dependabot alerts
+3. Configure automatic PR creation
+
+## Monitoring and logging
+
+**Never log sensitive data:**
+```tsx
+// ❌ Bad
+console.log('User password:', password)
+console.log('API key:', apiKey)
+
+// ✅ Good
+console.log('User authenticated successfully')
+console.log('API call completed')
+```
+
+**Log security events:**
+- Failed login attempts
+- API key usage
+- Permission denials
+- Rate limit hits
+
+## Security checklist
+
+<AccordionGroup>
+  <Accordion title="Environment security">
+    - [ ] All secrets in environment variables, not code
+    - [ ] `.env.local` in `.gitignore`
+    - [ ] Different keys for dev/staging/production
+    - [ ] HTTPS enforced in production
+  </Accordion>
+  
+  <Accordion title="Authentication security">
+    - [ ] JWT tokens in httpOnly cookies
+    - [ ] Password validation client and server-side
+    - [ ] Logout clears all tokens
+    - [ ] Protected routes check authentication
+  </Accordion>
+  
+  <Accordion title="API security">
+    - [ ] API keys stored server-side only
+    - [ ] Rate limiting implemented
+    - [ ] Input validation on all forms
+    - [ ] Error messages don't leak sensitive info
+  </Accordion>
+  
+  <Accordion title="Code security">
+    - [ ] Dependencies regularly updated
+    - [ ] No sensitive data in logs
+    - [ ] Security headers configured
+    - [ ] CORS properly configured
+  </Accordion>
+</AccordionGroup>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Best Practices" icon="shield-check" href="/reference/best-practices/security">
+    Security best practices
+  </Card>
+  
+  <Card title="Environment Variables" icon="key" href="/reference/config/environment-variables">
+    Secure credential management
+  </Card>
+</CardGroup>
