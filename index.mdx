@@ -1,44 +1,103 @@
 ---
-title: "Introduction"
-description: "Orientation for builders using Dev Kit for AI."
+title: "Dev Kit for AI - Launch Production-Ready AI SaaS Applications"
+sidebarTitle: "Introduction"
+description: "Complete platform for building AI-powered SaaS: hosted backend, Next.js starter kit, and admin console. Ship in hours with authentication, AI generation, and multi-tenancy built-in."
 icon: "compass"
 ---
 
-<Note>
-Dev Kit for AI helps developers launch SaaS-ready AI products by combining a hosted event-sourced backend, a multi-mode Next.js frontend, and a production-ready Starter Kit.
-</Note>
+## Ship AI-Powered SaaS in Hours, Not Weeks
 
-## Build Faster With Three Pillars
+Dev Kit for AI gives you everything you need to launch production-ready AI applications:
+- **Hosted Cloud API** with authentication, user management, and AI generation
+- **Next.js Starter Kit** ready to clone, customize, and deploy
+- **Cloud Admin** console to manage projects, users, and API keys
+
+<Check>Get running in 15 minutes with our [quickstart guide](/quickstart)</Check>
+
+## Built for Developers Who Want to Move Fast
+
+Perfect for:
+- **SaaS builders** launching AI-powered products without backend complexity
+- **Developers** who need production infrastructure without weeks of setup
+- **Teams** building multi-tenant AI applications with enterprise features
+
+<Info>
+**Before you start:** Node.js 19+, a GitHub account, and 15 minutes. No credit card required.
+</Info>
+
+## Why Dev Kit for AI?
+
+<CardGroup cols={3}>
+  <Card title="Production-Ready" icon="shield-check">
+    Secure backend with role-based access, JWT auth, and multi-tenancy built-in
+  </Card>
+  <Card title="Ship Faster" icon="rocket">
+    Clone, configure, and deploy in under an hour with our Starter Kit
+  </Card>
+  <Card title="Fully Customizable" icon="palette">
+    Next.js 15, React 19, Tailwind CSS - use the stack you already know
+  </Card>
+  <Card title="Hosted Backend" icon="cloud">
+    No infrastructure setup. Connect to our Cloud API and start building
+  </Card>
+  <Card title="AI-Ready" icon="sparkles">
+    Built-in AI generation endpoints powered by Replicate
+  </Card>
+  <Card title="Open Source" icon="code">
+    Full access to the Starter Kit codebase on GitHub
+  </Card>
+</CardGroup>
+
+## What You Can Build
+
+<AccordionGroup>
+  <Accordion title="AI Image Generation SaaS" icon="image">
+    Launch a platform where users upload examples and generate AI images. Built-in user management, API key handling, and generation tracking.
+  </Accordion>
+  <Accordion title="Multi-User AI Applications" icon="users">
+    Create applications with project-scoped access, team management, and usage analytics with built-in audit trails.
+  </Accordion>
+  <Accordion title="AI-Powered Content Platforms" icon="file-text">
+    Build content generation tools with user accounts, subscription tiers, and custom branding using the multi-mode architecture.
+  </Accordion>
+</AccordionGroup>
+
+## Three Core Components
 
 Dev Kit for AI ships the same stack we use internally:
 
-- **Starter Kit** — Project-mode Next.js application that end users interact with. It is exported from the private `user-app` service and already wired to the hosted Cloud API.
-- **Cloud Admin** — Operator-mode deployment that developers use to register, manage projects, and issue API keys. It runs the same codebase with different configuration and RBAC.
-- **Cloud API** — FastAPI backend that persists events, enforces RBAC, and exposes generation, project, and auth endpoints.
+- **Starter Kit** — Next.js application template for building your customer-facing AI product. Clone it, customize it, and deploy it as your own.
+- **Cloud Admin** — Web console where you manage projects, API keys, and users. Access it at devkit4ai.com/console or vibecoding.ad/console.
+- **Cloud API** — Hosted backend API that handles authentication, authorization, and AI generation endpoints.
 
-Each guide in this documentation maps directly to features implemented in `devkit4ai/` so you can trust what you read matches what you deploy.
+Each guide in this documentation maps directly to features implemented in the platform so you can trust what you read matches what you deploy.
 
-## Choose Your Starting Point
+## Start Here
 
-<Columns cols={2}>
-  <Card title="Quickstart" icon="rocket" href="/quickstart">
-    Launch the Starter Kit against the hosted Cloud API in under an hour.
+<Card title="🚀 Quickstart: Launch Your First AI App in 15 Minutes" icon="rocket" href="/quickstart">
+  Clone the Starter Kit, connect to the hosted Cloud API, and deploy your first AI-powered application.
+  
+  **You'll learn:** Registration → Setup → Configuration → First Deploy
+</Card>
+
+### Or Explore the Platform First
+
+<CardGroup cols={3}>
+  <Card title="Platform Overview" icon="boxes" href="/getting-started/platform-overview">
+    Understand the architecture and how components work together
   </Card>
-  <Card title="Platform Overview" icon="layers" href="/getting-started/platform-overview">
-    Understand how the Starter Kit, Cloud Admin, and Cloud API fit together.
+  <Card title="View Live Demo" icon="eye" href="https://devkit4ai.com/example-pages">
+    See a production deployment in action
   </Card>
-  <Card title="Install the Starter Kit" icon="download" href="/starter-kit/installation">
-    Clone the project-mode repo and run the Next.js dev server locally.
+  <Card title="Browse Examples" icon="code" href="/tutorials/use-cases/ai-image-saas">
+    Explore real-world use cases and applications
   </Card>
-  <Card title="Cloud Admin Access" icon="building" href="/cloud-admin/getting-started">
-    Register as a developer and issue the credentials the Starter Kit needs.
-  </Card>
-</Columns>
+</CardGroup>
 
 ## Go Deeper
 
 <CardGroup cols={2}>
-  <Card title="Starter Kit Guides" icon="layout" href="/starter-kit/project-structure">
+  <Card title="Starter Kit Guides" icon="boxes" href="/starter-kit/installation">
     Explore the app structure, authentication flows, and customization patterns.
   </Card>
   <Card title="Tutorials" icon="lightbulb" href="/tutorials/first-app/setup">
@@ -52,4 +111,6 @@ Each guide in this documentation maps directly to features implemented in `devki
   </Card>
 </CardGroup>
 
-Need help deciding what to read next? Start with the quickstart to get something running, then branch into the sections that align with your role and use case.
+<Tip>
+**New to Dev Kit?** Start with the [Quickstart](/quickstart) to get hands-on experience, then explore [Starter Kit Guides](/starter-kit/project-structure) for customization and [Tutorials](/tutorials/first-app/setup) for building complete features.
+</Tip>

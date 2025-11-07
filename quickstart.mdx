@@ -1,24 +1,33 @@
 ---
-title: "Quickstart"
-description: "Launch the Dev Kit for AI Starter Kit with the hosted Cloud API."
+title: "Quickstart: Deploy Your AI SaaS App in 15 Minutes"
+sidebarTitle: "Quickstart"
+description: "Step-by-step guide to clone the Starter Kit, connect to Cloud API, and launch your first AI application. Includes authentication, dashboard, and AI generation."
 icon: "rocket"
 ---
 
+<Check>
+**Goal:** In 15 minutes you'll have a working AI SaaS application connected to the hosted Cloud API.
+</Check>
+
+## What You'll Build
+
+By the end of this guide, you'll have:
+- ✅ A developer account with Cloud Admin access
+- ✅ A local Starter Kit connected to the Cloud API
+- ✅ Working authentication and user dashboard
+- ✅ AI generation endpoints ready to use
+
+**Time required:** 15-20 minutes
+
 <Info>
-You need a GitHub account, Node.js 19 or later, and access to the hosted Cloud Admin (`https://devkit4ai.com/console` or `https://vibecoding.ad/console`). Everything else is provided for you.
+**Prerequisites:** Node.js 19 or later, a GitHub account, and access to the hosted Cloud Admin at `https://devkit4ai.com/console` or `https://vibecoding.ad/console`.
 </Info>
-
-## Before you begin
-
-- Make sure you can sign in to Cloud Admin. New developer accounts can be created at `/register/developer` on either domain.
-- Confirm that Docker is available if you plan to run the backend locally later. The quickstart uses the hosted Cloud API, so Docker is optional.
-- Install `make` (or be ready to use the equivalent npm scripts) to match the commands referenced in the Starter Kit repository.
 
 ## Launch in Five Steps
 
 <Steps>
   <Step title="Create a developer workspace">
-    Visit `https://devkit4ai.com/register/developer` (or the `vibecoding.ad` equivalent) and complete the registration flow. The event-sourced backend automatically provisions your developer role, default project, and API credentials as soon as the confirmation succeeds.
+    Visit `https://devkit4ai.com/register/developer` (or the `vibecoding.ad` equivalent) and complete the registration flow. The backend automatically provisions your developer account, default project, and API credentials as soon as the confirmation succeeds.
   </Step>
   <Step title="Collect your credentials">
     After signing in, open the Console dashboard. Copy the generated **developer key**, **project ID**, and **project API key**. These values are stored securely in the backend as hashed secrets and surface once in the UI, so save them to your password manager.
@@ -29,7 +38,7 @@ You need a GitHub account, Node.js 19 or later, and access to the hosted Cloud A
     cd starter-kit
     make install   # or npm install
     ```
-    The repo mirrors the `user-app` project-mode build and expects Node.js 19+ with Turbopack.
+    The Starter Kit is built with Next.js 15 and requires Node.js 19+ with Turbopack.
   </Step>
   <Step title="Configure environment variables">
     Create `.env.local` (or update the existing example) with the credentials you gathered:
@@ -43,18 +52,26 @@ You need a GitHub account, Node.js 19 or later, and access to the hosted Cloud A
     ```
 
     The `NEXT_PUBLIC_API_URL` should match the region of the hosted Cloud API you are targeting.
+    
+    <Warning>
+    **Common mistakes:**
+    - Using quotes around values (remove them)
+    - Wrong PROJECT_ID format (must be a valid UUID)
+    - Mixing up developer key and project key
+    - Incorrect API URL (check for https:// and no trailing slash)
+    </Warning>
   </Step>
-  <Step title="Run the project-mode app">
+  <Step title="Run the development server">
     ```bash
     make dev   # boots npm run dev with Turbopack on port 3004
     ```
-    Sign in using the same credentials you created in Cloud Admin. You will land on `/dashboard`, which confirms the project-mode flow is using the hosted Cloud API successfully.
+    Sign in using the same credentials you created in Cloud Admin. You will land on `/dashboard`, which confirms your app is connected to the hosted Cloud API successfully.
   </Step>
 </Steps>
 
-## Verify the connection
+## Verify Your Setup
 
-Use the generated tokens to call the Cloud API directly. This confirms your headers and keys are valid.
+Use the Cloud API health check to confirm your configuration is correct:
 
 ```bash
 curl https://api.vibecoding.ad/api/v1/health \
@@ -66,19 +83,39 @@ curl https://api.vibecoding.ad/api/v1/health \
 
 You should receive a JSON payload indicating the service status. Any authentication errors mean an environment variable is missing or mis-typed.
 
-## Where to go next
+## ✅ Success Checklist
+
+You're ready to customize when:
+- [ ] You can sign in at `localhost:3004/login`
+- [ ] Dashboard loads without configuration errors
+- [ ] Health check curl command returns `{"status": "healthy"}`
+- [ ] You see your project in the Cloud Admin console
+
+<Tip>
+**What you learned:** You've successfully set up a developer account, cloned the Starter Kit, connected it to the Cloud API, and verified the integration. You now have a production-ready foundation for building AI features.
+</Tip>
+
+## Next Steps
+
+### Recommended Path
+
+<Card title="Build Your First AI Feature" icon="sparkles" href="/tutorials/first-app/customize-ui">
+  **Next:** Follow the First App tutorial to add custom UI and implement your first AI generation feature.
+</Card>
+
+### Learn More
 
 <CardGroup cols={2}>
-  <Card title="Platform Overview" icon="boxes" href="/getting-started/platform-overview">
-    Review how the three core services collaborate across modes.
+  <Card title="Customize the Starter Kit" icon="palette" href="/starter-kit/customization/branding-styling">
+    Update branding, colors, and styling to match your product.
   </Card>
-  <Card title="Environment Configuration" icon="gear" href="/starter-kit/environment-config">
-    Learn how each variable is validated inside the Starter Kit.
+  <Card title="Understand the Architecture" icon="boxes" href="/getting-started/platform-overview">
+    Deep dive into how the platform components work together.
   </Card>
-  <Card title="Cloud Admin Guide" icon="building" href="/cloud-admin/dashboard-overview">
-    Explore the console features that manage projects and keys.
+  <Card title="Explore Cloud Admin" icon="building" href="/cloud-admin/dashboard-overview">
+    Learn to manage multiple projects and API keys.
   </Card>
-  <Card title="First App Tutorial" icon="lightbulb" href="/tutorials/first-app/clone-starter">
-    Follow an end-to-end walkthrough that expands on this quickstart.
+  <Card title="Deploy to Production" icon="rocket" href="/starter-kit/deployment/production-build">
+    Deploy your application to Vercel, Netlify, or your own hosting.
   </Card>
 </CardGroup>

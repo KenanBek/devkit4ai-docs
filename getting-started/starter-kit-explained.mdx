@@ -1,13 +1,107 @@
 ---
 title: "Starter Kit Explained"
-description: "Understand what ships in the Next.js Starter Kit and how it relates to the private user app."
+sidebarTitle: "Starter Kit"
+description: "Understand what's included in the Next.js Starter Kit and how to use it for your AI application."
 icon: "box"
 ---
 
-The Starter Kit is the open-source export of the project-mode `user-app` described in `devkit4ai/user-app/SPECS.md`.
+The Starter Kit is your foundation for building AI-powered SaaS applications. It's a production-ready Next.js template that connects to the Cloud API for backend services.
 
-- It runs in **project** deployment mode only and expects the developer, project, and API keys you generate in Cloud Admin.
-- Authentication uses the shared JWT cookies (`devkit4ai-token`, `devkit4ai-refresh-token`) managed by the Cloud API.
-- Example pages, dashboards, and UI primitives mirror the components listed in `starter-kit/SPECS.md`, so what you deploy matches the documented behavior here.
+## What's Included
 
-Upcoming sections dive into installation, configuration, feature walkthroughs, and customization guidance tailored to the exported codebase.
+### Core Technology
+
+- **Next.js 15** with App Router and React 19 Server Components
+- **Tailwind CSS** with dark mode support and responsive design
+- **TypeScript** for type safety and better developer experience
+- **Radix UI** components for accessible, production-ready UI elements
+
+### Authentication System
+
+- User registration and login flows
+- JWT-based authentication with the Cloud API
+- Protected routes and role-based access
+- Email verification support
+- Secure httpOnly cookie storage
+
+### Pre-Built Features
+
+- **User Dashboard:** Responsive dashboard with user information and actions
+- **AI Generation UI:** Ready-to-use interfaces for AI image generation
+- **Profile Management:** User profile pages and settings
+- **Theme Switcher:** Built-in light/dark mode toggle
+- **Example Pages:** Landing pages, use cases, and component showcases
+
+### UI Component Library
+
+- Buttons, cards, forms, and inputs
+- Navigation components (header, footer, mobile menu)
+- Data display (tables, badges, avatars)
+- Feedback components (alerts, modals, toasts)
+- Layout primitives (containers, grids, columns)
+
+## How It Works
+
+<Steps>
+  <Step title="Clone from GitHub">
+    The Starter Kit is open-source and available at github.com/VibeCodingStarter/starter-kit
+  </Step>
+  <Step title="Configure credentials">
+    Add your Cloud Admin credentials (developer key, project ID, API key) to environment variables
+  </Step>
+  <Step title="Customize">
+    Update branding, colors, and content to match your product
+  </Step>
+  <Step title="Deploy">
+    Deploy to Vercel, Netlify, or any hosting provider that supports Next.js
+  </Step>
+</Steps>
+
+## Key Concepts
+
+### Environment Configuration
+
+The Starter Kit validates your environment variables on startup:
+
+- `DEVKIT4AI_MODE`: Set to "project" for production apps
+- `NEXT_PUBLIC_API_URL`: Points to the Cloud API (https://api.vibecoding.ad)
+- `DEVKIT4AI_DEVELOPER_KEY`: Your developer key from Cloud Admin
+- `DEVKIT4AI_PROJECT_ID`: Your project's unique identifier
+- `DEVKIT4AI_PROJECT_KEY`: API key for your specific project
+
+If any configuration is missing or invalid, you'll see a banner at the top of your app with specific error messages.
+
+### Authentication Flow
+
+All authentication happens through the Cloud API:
+
+1. User submits login/registration form
+2. Starter Kit sends request to Cloud API
+3. Cloud API validates credentials and returns JWT tokens
+4. Tokens are stored in secure httpOnly cookies
+5. Subsequent requests include tokens for authentication
+
+### Customization Options
+
+- **Branding:** Update logo, colors, and typography in config files
+- **Pages:** Add new pages using Next.js App Router conventions
+- **Components:** Modify existing or create new React components
+- **Styling:** Customize Tailwind theme in tailwind.config.ts
+- **Features:** Add custom AI features using the Cloud API
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Install the Starter Kit" icon="download" href="/starter-kit/installation">
+    Get started with installation and setup
+  </Card>
+  <Card title="Environment Config" icon="gear" href="/starter-kit/environment-config">
+    Learn about required environment variables
+  </Card>
+  <Card title="Customize Branding" icon="palette" href="/starter-kit/customization/branding-styling">
+    Update colors, logo, and styling
+  </Card>
+  <Card title="Deploy to Production" icon="rocket" href="/starter-kit/deployment/production-build">
+    Deploy your customized app
+  </Card>
+</CardGroup>

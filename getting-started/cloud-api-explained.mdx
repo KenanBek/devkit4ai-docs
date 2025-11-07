@@ -1,13 +1,150 @@
 ---
 title: "Cloud API Explained"
-description: "Review the FastAPI service that powers authentication, projects, and AI generation for Dev Kit for AI."
+sidebarTitle: "Cloud API"
+description: "Understand the hosted backend API that powers authentication, projects, and AI generation."
 icon: "server"
 ---
 
-The hosted Cloud API is the production deployment of the FastAPI service documented in `devkit4ai/backend-api/SPECS.md`.
+The Cloud API is a production-ready backend service hosted at **api.vibecoding.ad** that provides all the server-side functionality for your AI applications.
 
-- Every write flows through the event-sourced command → aggregate → event pipeline, so the behavior here mirrors the `RegisterUserCommand`, `CreateProjectCommand`, and related handlers in the codebase.
-- Authentication uses JWT access tokens with 30-minute lifetimes and refresh tokens with 7-day lifetimes, matching the cookie strategy used by the Starter Kit and Cloud Admin.
-- RBAC is enforced with the same header matrix (`X-User-Role`, `X-Operator-Key`, `X-Developer-Key`, `X-Project-ID`, `X-API-Key`) surfaced throughout this documentation to keep parity with production endpoints.
+## What It Provides
 
-The Cloud API tab contains endpoint-level references sourced from the live OpenAPI document so you can rely on it for integration work.
+### Authentication Services
+
+- **User registration:** Create new user accounts with email and password
+- **Login/logout:** Secure authentication with JWT tokens
+- **Token refresh:** Automatic token renewal for continuous sessions
+- **Email verification:** Verify user email addresses
+- **Password reset:** Secure password recovery flow
+- **Session management:** Handle user sessions across devices
+
+### Project Management
+
+- **Project CRUD:** Create, read, update, and delete projects
+- **API key generation:** Create project-scoped authentication keys
+- **Key management:** List, revoke, and track API key usage
+- **Project isolation:** Multi-tenant architecture ensures data separation
+
+### AI Generation
+
+- **Image generation:** Create AI images using Replicate models
+- **Status tracking:** Monitor generation progress and completion
+- **History management:** Access past generations for authenticated users
+- **Public sharing:** Toggle image visibility for sharing
+- **Anonymous generation:** Support for unauthenticated generation flows
+
+### Health & Monitoring
+
+- **Health checks:** Verify API availability and status
+- **Database status:** Check backend database connectivity
+- **Storage status:** Verify file storage availability
+- **Detailed diagnostics:** Get comprehensive system information
+
+## How Authentication Works
+
+### JWT Token Flow
+
+<Steps>
+  <Step title="User logs in">
+    Starter Kit sends email/password to `/api/v1/auth/login`
+  </Step>
+  <Step title="API validates credentials">
+    Cloud API checks credentials and generates tokens
+  </Step>
+  <Step title="Tokens returned">
+    Access token (30 min) and refresh token (7 days) sent to client
+  </Step>
+  <Step title="Tokens stored">
+    Starter Kit stores tokens in httpOnly cookies for security
+  </Step>
+  <Step title="Authenticated requests">
+    Subsequent requests include JWT token automatically
+  </Step>
+</Steps>
+
+### Required Headers
+
+All API requests from your Starter Kit include these authentication headers:
+
+- **X-User-Role:** Identifies the user type (end_user for Starter Kit users)
+- **X-Developer-Key:** Your developer credential from Cloud Admin
+- **X-Project-ID:** Your project's unique identifier (UUID format)
+- **X-API-Key:** Your project's API key
+- **Authorization:** JWT token for authenticated user requests
+
+## API Endpoints
+
+The Cloud API is organized into logical groups:
+
+### Health Check Endpoints
+
+- `GET /health` - Quick health status
+- `GET /api/v1/health` - Comprehensive health check
+- `GET /api/v1/health/database` - Database connectivity
+- `GET /api/v1/health/storage` - File storage status
+- `GET /api/v1/health/redis` - Cache status (if configured)
+
+### Authentication Endpoints
+
+- `POST /api/v1/auth/register` - Create new user
+- `POST /api/v1/auth/login` - Authenticate user
+- `GET /api/v1/auth/me` - Get current user info
+- `POST /api/v1/auth/refresh` - Refresh access token
+- `POST /api/v1/auth/verify-email` - Verify email address
+- `POST /api/v1/auth/request-verification` - Request verification email
+
+### Project Endpoints
+
+- `GET /api/v1/projects` - List user's projects
+- `POST /api/v1/projects` - Create new project
+- `GET /api/v1/projects/{id}` - Get project details
+- `DELETE /api/v1/projects/{id}` - Delete project
+- `POST /api/v1/projects/{id}/api-keys` - Generate API key
+- `GET /api/v1/projects/{id}/api-keys` - List project keys
+- `DELETE /api/v1/projects/{id}/api-keys/{key_id}` - Revoke key
+
+### Generation Endpoints
+
+- `POST /api/v1/generation/generate-v2` - Create AI generation
+- `GET /api/v1/generation/{id}` - Check generation status
+- `GET /api/v1/generation` - List user's generations
+- `PATCH /api/v1/generation/{id}/toggle-public` - Toggle visibility
+- `DELETE /api/v1/generation/{id}` - Delete generation
+- `GET /api/v1/generation/public` - List public generations
+
+## Integration with Starter Kit
+
+The Starter Kit is pre-configured to work with the Cloud API:
+
+1. **Environment variables** set the API URL and credentials
+2. **Deployment mode** validates configuration on startup
+3. **Server actions** in `app/actions.ts` call API endpoints
+4. **Authentication context** manages user state from API responses
+5. **Headers automatically included** in all requests
+
+## Rate Limits & Quotas
+
+<Info>
+Rate limits and quotas depend on your plan. Contact support for details about upgrading or custom limits.
+</Info>
+
+## API Documentation
+
+For detailed endpoint documentation, request/response examples, and parameter descriptions, see the [Cloud API Reference](/cloud-api/introduction) section.
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="API Reference" icon="book" href="/cloud-api/introduction">
+    Explore detailed endpoint documentation
+  </Card>
+  <Card title="Authentication Guide" icon="lock" href="/starter-kit/auth/jwt-flow">
+    Learn about JWT authentication flow
+  </Card>
+  <Card title="API Integration" icon="plug" href="/starter-kit/advanced/api-integration">
+    Advanced API integration patterns
+  </Card>
+  <Card title="Health Checks" icon="heart-pulse" href="/cloud-api/health/check">
+    Monitor API availability
+  </Card>
+</CardGroup>

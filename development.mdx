@@ -1,105 +1,209 @@
 ---
-title: "Development"
-description: "Run Dev Kit for AI services locally and match the production configuration."
+title: "Local Development Guide"
+sidebarTitle: "Development"
+description: "Set up your local environment and run the Starter Kit with the hosted Cloud API or a local backend."
 icon: "wrench"
 ---
 
 <Info>
   **Prerequisites**:
   - Node.js 19 or later
-  - Python 3.13 with virtualenv support
-  - Docker Desktop (for PostgreSQL and Redis test containers)
-  - Make (or the ability to run the equivalent npm/pip commands)
+  - A GitHub account
+  - Cloud Admin access at devkit4ai.com/console or vibecoding.ad/console
+  - Make (or npm) for running commands
 </Info>
 
-Dev Kit for AI is a multi-repo platform. The primary services live in `devkit4ai/` (backend API and user app), while the open-source Starter Kit is exported to its own repository. This page explains how to run everything locally so the documentation tracks with reality.
+This guide helps you set up a productive local development environment for building with the Starter Kit. You can connect to the hosted Cloud API for the fastest setup, or run a local backend if you're contributing to the platform itself.
 
-## Local environment overview
+## Quick Start with Hosted Cloud API
 
-- **Hosted-first flow:** The quickest way to build is to pair the Starter Kit with the hosted Cloud API. No local services are required beyond Node.js.
-- **Full-stack flow:** Run the backend API, user app, and Starter Kit locally to develop new features before exporting updates.
-- **Docs flow:** The Mintlify docs you are reading live in this repository; use them to keep instructions aligned with the code.
-
-## Run the backend API (FastAPI + event store)
+The recommended approach for most developers is to use the hosted Cloud API:
 
 <Steps>
+  <Step title="Clone the Starter Kit">
+    ```bash
+    git clone https://github.com/VibeCodingStarter/starter-kit.git
+    cd starter-kit
+    ```
+  </Step>
   <Step title="Install dependencies">
     ```bash
-    cd devkit4ai/backend-api
-    make setup
+    make install   # or npm install
     ```
-    `make setup` creates a virtual environment, installs requirements, and copies the default `.env` file.
   </Step>
-  <Step title="Start PostgreSQL and Redis">
+  <Step title="Configure environment">
+    Create `.env.local` with your Cloud Admin credentials:
     ```bash
-    make start-services
+    DEVKIT4AI_MODE=project
+    NEXT_PUBLIC_API_URL=https://api.vibecoding.ad
+    DEVKIT4AI_DEVELOPER_KEY=dk_your_developer_key
+    DEVKIT4AI_PROJECT_ID=your-project-uuid
+    DEVKIT4AI_PROJECT_KEY=pk_your_project_key
     ```
-    This spins up Docker containers that match the production database and PubSub expectations.
+    Get these values from your Cloud Admin dashboard.
   </Step>
-  <Step title="Run the API server">
+  <Step title="Start development server">
     ```bash
-    make run
+    make dev   # starts on port 3004
     ```
-    Uvicorn starts on port 8000 with auto-reload. Use `make run-with-workers/4` when you need a multi-worker process without reloads.
+    Visit `http://localhost:3004` and sign in with your Cloud Admin credentials.
   </Step>
 </Steps>
 
-The backend loads configuration from `backend-api/app/system/settings.py`. Update `.env` if you want to mirror Cloud API secrets or toggle storage providers.
+## Development Workflow
 
-## Run the user app in multi-mode
+### Making Changes
 
-From the `devkit4ai/` root you can boot every mode that the documentation references:
+The Starter Kit is built with Next.js 15 and React 19 Server Components:
 
-```bash
-cd devkit4ai
-make run-multi-mode
-```
+- **Components** are in `components/` (ui, generic, project folders)
+- **Pages** use the App Router in `app/`
+- **Styles** use Tailwind CSS with dark mode support
+- **Configuration** is in `config/app.config.ts`
 
-This command starts:
+When you save changes, Turbopack automatically reloads your browser.
 
-- Operator mode at `http://localhost:3000`
-- Console (developer) mode at `http://localhost:3001`
-- Two project-mode instances at `http://localhost:3002` and `3003`
-
-Each mode uses the same Next.js codebase with different `DEVKIT4AI_MODE` values. The readiness banner in the UI comes from `lib/deployment-mode.ts`; if it reports errors, double-check your environment variables.
-
-To work on a single mode, run the make target inside `devkit4ai/user-app`:
+### Testing Your Changes
 
 ```bash
-cd devkit4ai/user-app
-make run-project   # or run-operator / run-console
+# Run all tests
+npm run test
+
+# Run integration tests with Vitest
+npm run test:integration
+
+# Run E2E tests with Playwright
+npm run test:e2e
+
+# Lint your code
+npm run lint
 ```
 
-## Iterate on the Starter Kit export
-
-The Starter Kit repository is what customers clone. After making changes under `devkit4ai/user-app`, export or cherry-pick the relevant updates and then:
+### Building for Production
 
 ```bash
-cd starter-kit
-make install
-make dev     # starts Turbopack on port 3004
+# Create production build
+npm run build
+
+# Test production build locally
+npm run start
 ```
 
-Use the same environment variables as project mode so the Starter Kit points to either the hosted Cloud API or your local backend.
+## Customization Guide
 
-## Testing and quality checks
+### Update Branding
 
-- **Backend API:** `cd devkit4ai/backend-api && make test` runs unit and integration suites. Use `make test-integration` to execute the Testcontainers workflows.
-- **User app:** `cd devkit4ai/user-app && npm run test` for Vitest, `npm run test:e2e` for Playwright.
-- **Starter Kit:** The repository mirrors the user app scripts (`npm run test`, `npm run lint`) so instructions stay consistent across distributions.
+1. Edit `config/app.config.ts` to change app name and description
+2. Replace logo files in `public/`
+3. Update colors in `tailwind.config.ts`
+4. Modify `components/project/header.tsx` and `footer.tsx`
+
+See the [Branding & Styling](/starter-kit/customization/branding-styling) guide for details.
+
+### Add New Features
+
+1. Create new pages in `app/` following Next.js App Router conventions
+2. Use Server Components by default for better performance
+3. Add "use client" only when you need interactivity
+4. Reference existing patterns in `app/dashboard/page.tsx`
+
+See [Custom Pages](/starter-kit/customization/custom-pages) for examples.
+
+### Connect to Cloud API
+
+All API calls use the configuration from `lib/deployment-mode.ts`:
+
+- Authentication headers are automatically added
+- Server Actions in `app/actions.ts` handle login/registration
+- The deployment mode validates your environment variables
+
+See [API Integration](/starter-kit/advanced/api-integration) for advanced patterns.
+
+## Advanced: Local Backend Development
+
+<Warning>
+Only needed if you're contributing to the Dev Kit for AI platform itself. Most developers should use the hosted Cloud API.
+</Warning>
+
+If you need to run the backend locally:
+
+<Steps>
+  <Step title="Prerequisites">
+    Install additional requirements:
+    - Python 3.13 with virtualenv
+    - Docker Desktop for PostgreSQL and Redis
+    - Git access to the private devkit4ai repository
+  </Step>
+  <Step title="Clone and setup backend">
+    ```bash
+    git clone [private-repo-url] devkit4ai
+    cd devkit4ai/backend-api
+    make setup
+    make start-services  # starts PostgreSQL and Redis
+    make run            # starts API on port 8000
+    ```
+  </Step>
+  <Step title="Point Starter Kit to local backend">
+    Update your `.env.local`:
+    ```bash
+    NEXT_PUBLIC_API_URL=http://localhost:8000
+    ```
+  </Step>
+</Steps>
 
 ## Troubleshooting
 
 <AccordionGroup>
-  <Accordion title="Port already in use">
-    Stop any existing multi-mode processes (`make stop` from the repo root) before re-running the stack, or adjust the ports in the `.env` files if you need concurrent instances.
+  <Accordion title="Configuration errors shown in banner" icon="triangle-exclamation">
+    The amber banner indicates environment variable issues. Check:
+    - All required variables are set in `.env.local`
+    - `DEVKIT4AI_PROJECT_ID` is a valid UUID format
+    - No quotes around values
+    - Developer key and project key are not mixed up
   </Accordion>
-  <Accordion title="Backend cannot connect to PostgreSQL or Redis">
-    Ensure Docker Desktop is running and the containers from `make start-services` are healthy. Check logs with `docker compose logs -f` inside `backend-api/` if needed.
+  <Accordion title="Cannot connect to Cloud API" icon="cloud-exclamation">
+    Verify:
+    - Your internet connection is working
+    - `NEXT_PUBLIC_API_URL` is correct (https://api.vibecoding.ad)
+    - Your credentials are valid in Cloud Admin
+    - No firewall blocking the connection
   </Accordion>
-  <Accordion title="Starter Kit shows configuration errors">
-    The banner reflects issues detected by `lib/deployment-mode.ts`. Verify all `DEVKIT4AI_*` variables are set and that `DEVKIT4AI_PROJECT_ID` is a valid UUID.
+  <Accordion title="Port 3004 already in use" icon="plug">
+    Either stop the existing process or change the port:
+    ```bash
+    # Find and kill process
+    lsof -ti:3004 | xargs kill
+    
+    # Or change port in package.json dev script
+    ```
+  </Accordion>
+  <Accordion title="npm install fails" icon="package">
+    Ensure you're using Node.js 19 or later:
+    ```bash
+    node --version  # should be v19.0.0 or higher
+    ```
+    Try clearing npm cache:
+    ```bash
+    npm cache clean --force
+    rm -rf node_modules package-lock.json
+    npm install
+    ```
   </Accordion>
 </AccordionGroup>
 
-Keep this page updated whenever the Makefiles or environment flows change so the quickstart and deeper guides stay trustworthy.
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Customize Your App" icon="palette" href="/starter-kit/customization/branding-styling">
+    Update branding, colors, and styling to match your product
+  </Card>
+  <Card title="Add Authentication" icon="lock" href="/starter-kit/auth/registration-login">
+    Configure user registration and login flows
+  </Card>
+  <Card title="Deploy to Production" icon="rocket" href="/starter-kit/deployment/production-build">
+    Deploy to Vercel, Netlify, or your hosting provider
+  </Card>
+  <Card title="Explore Components" icon="box" href="/starter-kit/customization/component-library">
+    Browse the built-in UI component library
+  </Card>
+</CardGroup>

@@ -79,6 +79,8 @@ When creating or updating documentation:
   - Request/response examples
   - Integration patterns with Starter Kit
 
+Always prefer devkit4ai.com URLs but always mention alternative vibecoding.ad.
+
 ### What to Avoid
 
 - Do not include internal implementation details or architecture
@@ -123,6 +125,21 @@ icon: "icon-name"
 - Include prerequisites and context before instructions
 - Use progressive disclosure: basic concepts before advanced ones
 - Group related information logically with clear section breaks
+
+### SEO
+
+Optimize documentation for search engines and discoverability:
+
+- **Title Tags**: Use clear, keyword-rich titles in frontmatter (50-60 characters optimal)
+- **Descriptions**: Write compelling meta descriptions (150-160 characters) that summarize page value
+- **Headings**: Structure content with H2-H6 headings containing relevant keywords
+- **Keywords**: Include primary and secondary keywords naturally throughout content
+- **Internal Linking**: Link to related documentation pages using descriptive anchor text
+- **URL Structure**: Use clean, descriptive URLs that match page titles (handled by file naming)
+- **Alt Text**: Provide descriptive alt text for all images for accessibility and SEO
+- **Content Length**: Aim for comprehensive coverage (300+ words) for main pages
+- **Code Examples**: Include working code examples as they improve engagement metrics
+- **Update Frequency**: Keep documentation current to maintain search rankings
 
 ## Mintlify Components
 

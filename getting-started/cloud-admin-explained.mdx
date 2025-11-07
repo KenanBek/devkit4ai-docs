@@ -1,13 +1,110 @@
 ---
 title: "Cloud Admin Explained"
-description: "Learn how the operator-mode deployment powers developer onboarding and workspace management."
-icon: "shield-check"
+sidebarTitle: "Cloud Admin"
+description: "Learn how to use the Cloud Admin console to manage your projects, API keys, and users."
+icon: "building"
 ---
 
-Cloud Admin is the operator-mode deployment of the shared Next.js codebase described in `devkit4ai/user-app/SPECS.md`.
+Cloud Admin is your management console for the Dev Kit for AI platform. Access it at **devkit4ai.com/console** or **vibecoding.ad/console** to manage everything related to your AI applications.
 
-- It enforces the **developer** role and requires the `DEVKIT4AI_OPERATOR_KEY` header so actions resolve through the RBAC policies in `devkit4ai/backend-api/app/system/auth`.
-- Developers sign up here, and the backend emits the `UserWasRegistered` and `ProjectWasCreated` events to provision an initial project, API key, and developer key exactly as implemented in the event-sourced workflow.
-- Console features—projects, API keys, usage dashboards—are the same capabilities surfaced in the `/console` routes documented in `CURRENT_FEATURES.md`.
+## What You Can Do
 
-The forthcoming Cloud Admin section provides setup guidance, feature tours, and operational checklists aligned with the production service.
+### Developer Registration
+
+- **Sign up:** Create your developer account with email and password
+- **Automatic provisioning:** Get your first project and credentials automatically
+- **Secure access:** Role-based authentication protects your workspace
+
+### Project Management
+
+- **Create projects:** Set up multiple projects for different applications
+- **View details:** See project status, creation date, and configuration
+- **Update settings:** Modify project names and descriptions
+- **Delete projects:** Remove projects you no longer need
+
+### API Key Management
+
+- **Generate keys:** Create API keys for each project
+- **View credentials:** Access your developer key and project keys
+- **Monitor usage:** Track when keys were last used
+- **Revoke access:** Disable keys if they're compromised
+
+### User Analytics
+
+- **End user overview:** See how many users are registered in your projects
+- **Activity tracking:** Monitor user registrations and engagement
+- **Project statistics:** View metrics across all your projects
+
+## Key Features
+
+### Dashboard Overview
+
+When you log in, you'll see:
+
+- **Quick stats:** Total projects, API keys, and end users at a glance
+- **Recent activity:** Latest actions and updates in your workspace
+- **Quick actions:** Shortcuts to create projects, generate keys, and view users
+- **Getting started guide:** Step-by-step instructions for first-time setup
+
+### Console Navigation
+
+The console is organized into clear sections:
+
+- **Projects:** Manage all your projects in one place
+- **API Keys:** Generate and manage authentication keys
+- **Users:** View and manage end users across projects
+- **Settings:** Configure your developer account preferences
+
+### Security Features
+
+- **Developer keys:** SHA256 hashed with "dk_" prefix
+- **API keys:** Project-scoped with secure storage
+- **One-time display:** Full keys shown only once at generation
+- **Key prefixes:** Stored for identification without exposing full keys
+
+## Typical Workflow
+
+<Steps>
+  <Step title="Create your account">
+    Sign up at devkit4ai.com/console with your email and password. Your first project is created automatically.
+  </Step>
+  <Step title="Get your credentials">
+    Copy your developer key, project ID, and project API key from the dashboard. Store them securely.
+  </Step>
+  <Step title="Configure Starter Kit">
+    Add these credentials to your Starter Kit's environment variables.
+  </Step>
+  <Step title="Create additional projects">
+    As you build more applications, create new projects and generate separate API keys for each.
+  </Step>
+  <Step title="Monitor usage">
+    Check the dashboard regularly to see user growth and API key usage.
+  </Step>
+</Steps>
+
+## Important Notes
+
+<Warning>
+**Save your keys immediately:** Developer keys and API keys are shown in full only once when generated. Copy them to a secure location (like a password manager) before leaving the page.
+</Warning>
+
+<Tip>
+**One project per application:** Create a separate project for each Starter Kit deployment. This keeps your users, data, and analytics isolated.
+</Tip>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Getting Started" icon="rocket" href="/cloud-admin/getting-started">
+    Learn how to set up your account
+  </Card>
+  <Card title="Create Projects" icon="folder" href="/cloud-admin/projects/creating-projects">
+    Set up your first project
+  </Card>
+  <Card title="Generate API Keys" icon="key" href="/cloud-admin/api-keys/creating-developer-keys">
+    Create authentication credentials
+  </Card>
+  <Card title="Dashboard Overview" icon="chart-line" href="/cloud-admin/dashboard-overview">
+    Explore the console features
+  </Card>
+</CardGroup>

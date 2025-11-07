@@ -1,19 +1,70 @@
 ---
 title: "Platform Overview"
-description: "See how the Starter Kit, Cloud Admin, and Cloud API work together inside Dev Kit for AI."
+sidebarTitle: "Platform Overview"
+description: "See how the Starter Kit, Cloud Admin, and Cloud API work together to help you build AI-powered applications."
 icon: "boxes"
 ---
 
 <Note>
-Dev Kit for AI combines a FastAPI backend, a multi-mode Next.js frontend, and hosted cloud services so you can launch AI-powered products quickly.
+Dev Kit for AI combines a hosted backend API, a customizable Next.js frontend template, and a management console so you can launch AI-powered products quickly.
 </Note>
 
-The platform ships with three production-ready building blocks:
+The platform provides three production-ready components:
 
-- **Starter Kit:** A project-mode Next.js app that end users interact with, exported from the private `user-app` codebase.
-- **Cloud Admin:** The operator-mode deployment that developers use to manage projects, API keys, and end users.
-- **Cloud API:** A hosted FastAPI service that delivers authentication, project management, and AI generation endpoints.
+## Starter Kit
 
-All components share the same multi-tenant event-sourced backend model described in `devkit4ai/backend-api/SPECS.md`, ensuring the documentation here matches the live implementation.
+A Next.js 15 application template that serves as your customer-facing product:
 
-Further guidance on each component appears in the linked pages across this section.
+- **What it is:** Open-source Next.js app with React 19, Tailwind CSS, and dark mode
+- **What you do:** Clone it from GitHub, customize the UI, and deploy to your hosting
+- **How it connects:** Uses environment variables to authenticate with the Cloud API
+- **Key features:** User authentication, dashboards, AI generation UI, responsive design
+
+## Cloud Admin
+
+A web console where you manage your projects and users:
+
+- **What it is:** Hosted management interface at devkit4ai.com/console or vibecoding.ad/console
+- **What you do:** Register your developer account, create projects, generate API keys
+- **What you get:** Developer keys, project IDs, API keys needed to configure your Starter Kit
+- **Key features:** Project management, API key generation, user analytics, quick actions
+
+## Cloud API
+
+A hosted backend service that powers your application:
+
+- **What it is:** Production-ready FastAPI service with authentication and AI features
+- **What you do:** Connect your Starter Kit using the credentials from Cloud Admin
+- **What it provides:** User authentication, role-based access, AI generation, project management
+- **Key features:** JWT authentication, multi-tenant architecture, AI image generation, secure API endpoints
+
+## How They Work Together
+
+<Steps>
+  <Step title="Sign up for Cloud Admin">
+    Create your developer account at devkit4ai.com/console. The system automatically creates your first project and generates your credentials.
+  </Step>
+  <Step title="Clone the Starter Kit">
+    Get the Next.js template from GitHub and install dependencies locally.
+  </Step>
+  <Step title="Configure credentials">
+    Add your developer key, project ID, and API key to the Starter Kit's environment file.
+  </Step>
+  <Step title="Customize and deploy">
+    Update branding, add features, and deploy to your hosting provider. Your app now uses Cloud API for backend services.
+  </Step>
+</Steps>
+
+## Next Steps
+
+<CardGroup cols={3}>
+  <Card title="Starter Kit Details" icon="box" href="/getting-started/starter-kit-explained">
+    Learn what's included in the template
+  </Card>
+  <Card title="Cloud Admin Guide" icon="building" href="/getting-started/cloud-admin-explained">
+    Understand the management console
+  </Card>
+  <Card title="Cloud API Reference" icon="server" href="/getting-started/cloud-api-explained">
+    Explore the backend API
+  </Card>
+</CardGroup>
