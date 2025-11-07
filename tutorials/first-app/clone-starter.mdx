@@ -1,11 +1,215 @@
 ---
 title: "First App: Clone the Starter Kit"
-description: "Fetch the project-mode template from GitHub."
+sidebarTitle: "Clone Starter Kit"
+description: "Download the Next.js template and install dependencies."
 icon: "git-pull-request"
 ---
 
-Clone `https://github.com/VibeCodingStarter/starter-kit` and install dependencies with `make install` or `npm install`. This mirrors the workflow the internal team uses when exporting the project-mode `user-app`.
+Now that your environment is ready, let's get the Starter Kit running locally.
 
-- Run `npm run dev` to verify the development server boots and the deployment banner confirms configuration readiness.
-- Keep the repository tied to upstream releases so you can pull improvements that stay aligned with these docs.
-- The next step walks through wiring the project to your Cloud Admin workspace.
+## Clone the Repository
+
+<Steps>
+  <Step title="Clone from GitHub">
+    ```bash
+    git clone https://github.com/VibeCodingStarter/starter-kit.git
+    cd starter-kit
+    ```
+    
+    This downloads the complete Next.js template with all pre-built features.
+  </Step>
+  
+  <Step title="Install dependencies">
+    Using make (recommended):
+    ```bash
+    make install
+    ```
+    
+    Or using npm directly:
+    ```bash
+    npm install
+    ```
+    
+    <Info>
+    Installation takes 1-3 minutes depending on your internet speed. The package manager downloads Next.js, React, Tailwind CSS, and all UI components.
+    </Info>
+  </Step>
+  
+  <Step title="Start the development server">
+    ```bash
+    npm run dev
+    ```
+    
+    The server starts on port 3004. You'll see output like:
+    ```
+    ▲ Next.js 15.5.6
+    - Local:        http://localhost:3004
+    - Environments: .env.local
+    
+    ✓ Ready in 2.3s
+    ```
+  </Step>
+  
+  <Step title="Open in your browser">
+    Visit `http://localhost:3004`
+    
+    You should see:
+    - The Starter Kit homepage
+    - An amber configuration banner at the top
+    - Navigation menu and theme toggle
+    
+    <Warning>
+    **Configuration errors expected:** The banner appears because environment variables aren't set yet. This is normal - we'll fix it in the next step.
+    </Warning>
+  </Step>
+</Steps>
+
+## What You Just Installed
+
+### Technology Stack
+
+- **Next.js 15:** Latest version with App Router and Turbopack
+- **React 19:** Server Components and Server Actions
+- **TypeScript:** Full type safety throughout
+- **Tailwind CSS:** Utility-first styling with dark mode
+- **Radix UI:** Accessible component primitives
+
+### Pre-Built Features
+
+<AccordionGroup>
+  <Accordion title="Authentication pages" icon="lock">
+    - User registration form
+    - Login page with error handling
+    - Password reset flow
+    - Email verification support
+  </Accordion>
+  
+  <Accordion title="User dashboard" icon="gauge">
+    - Responsive dashboard layout
+    - User profile display
+    - Account information
+    - Sign out functionality
+  </Accordion>
+  
+  <Accordion title="UI components" icon="box">
+    - Buttons, forms, and inputs
+    - Cards and containers
+    - Navigation (header, footer, mobile menu)
+    - Tables and data display
+    - Modals and dialogs
+    - Theme switcher (light/dark)
+  </Accordion>
+  
+  <Accordion title="Example pages" icon="file">
+    - Landing page templates
+    - AI use case examples
+    - Component showcase
+    - Pricing page templates
+  </Accordion>
+</AccordionGroup>
+
+## Verify the Installation
+
+### Check the Development Server
+
+Make sure these work:
+
+```bash
+# Homepage loads
+curl http://localhost:3004
+
+# Health check works (will fail without env vars)
+curl http://localhost:3004/api/health
+```
+
+### Explore the Interface
+
+Browse through:
+
+1. **Homepage:** See the marketing template
+2. **Navigation:** Try the mobile menu
+3. **Theme toggle:** Switch between light/dark mode
+4. **Example pages:** Click "All examples" to see templates
+5. **Login page:** Visit `/login` to see the auth form
+
+<Tip>
+Don't try to log in yet - we need to configure environment variables first!
+</Tip>
+
+## Understanding the Configuration Banner
+
+The amber banner shows configuration issues:
+
+**Current errors you'll see:**
+- ❌ `DEVKIT4AI_DEVELOPER_KEY` is missing
+- ❌ `DEVKIT4AI_PROJECT_ID` is missing
+- ❌ `DEVKIT4AI_PROJECT_KEY` is missing
+- ❌ `NEXT_PUBLIC_API_URL` is not set
+
+This is expected! The Starter Kit validates environment variables on startup to help you catch configuration problems early.
+
+## Project Structure
+
+Key folders you'll work with:
+
+```
+starter-kit/
+├── app/              # Next.js pages (App Router)
+│   ├── (auth)/      # Login, registration
+│   ├── dashboard/   # User dashboard
+│   └── page.tsx     # Homepage
+│
+├── components/       # React components  
+│   ├── ui/          # Base UI (buttons, forms)
+│   ├── generic/     # Reusable components
+│   └── project/     # Header, footer
+│
+├── config/          # App configuration
+│   └── app.config.ts  # Branding, navigation
+│
+├── lib/             # Utilities
+│   ├── deployment-mode.ts  # Config validation
+│   └── auth-server.ts      # Auth helpers
+│
+└── public/          # Static files (images, fonts)
+```
+
+## Keep Your Repository Updated
+
+### Link to Upstream
+
+Stay updated with improvements:
+
+```bash
+# Add upstream remote
+git remote add upstream https://github.com/VibeCodingStarter/starter-kit.git
+
+# Fetch updates
+git fetch upstream
+
+# Merge updates (after you've committed your changes)
+git merge upstream/main
+```
+
+<Tip>
+**Pull updates regularly:** The Starter Kit receives bug fixes, new features, and security updates. Check for updates every few weeks.
+</Tip>
+
+## Next Steps
+
+Your Starter Kit is running! Now let's configure it:
+
+<CardGroup cols={2}>
+  <Card title="Configure Environment" icon="gear" href="/tutorials/first-app/configure-connect">
+    Add your Cloud Admin credentials
+  </Card>
+  <Card title="Customize UI" icon="palette" href="/tutorials/first-app/customize-ui">
+    Update branding and styling
+  </Card>
+  <Card title="Environment Guide" icon="sliders" href="/starter-kit/environment-config">
+    Detailed environment variable reference
+  </Card>
+  <Card title="Project Structure" icon="folder-tree" href="/starter-kit/project-structure">
+    Understand the codebase organization
+  </Card>
+</CardGroup>

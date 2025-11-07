@@ -1,11 +1,111 @@
 ---
-title: "First Login"
-description: "Complete the developer onboarding flow inside Cloud Admin."
+title: "First Login Experience"
+sidebarTitle: "First Login"
+description: "What to expect when you sign in to Cloud Admin for the first time."
 icon: "badge-check"
 ---
 
-After a developer registers, the backend emits the `UserWasRegistered` event and returns provisioning data (developer key, project ID, project API key) exactly as described in `CURRENT_FEATURES.md`.
+After creating your developer account, your first login experience is designed to get you building quickly.
 
-- On first sign-in, `backendLoginAction` stores JWT cookies and redirects to `/console`, matching the shared server action implementation.
-- The console banner surfaces configuration issues (if any) based on the deployment mode checks in `lib/deployment-mode.ts`.
-- Developers can immediately copy their keys for use in the Starter Kit, keeping the documentation aligned with the real onboarding journey.
+## What Happens on First Login
+
+When you sign in for the first time:
+
+1. **Automatic redirect to console:** You land on `/console` dashboard
+2. **Credentials displayed:** Your developer key, project ID, and API key are shown
+3. **Project created:** A default project is already set up for you
+4. **Ready to build:** All credentials needed for the Starter Kit are available
+
+## Dashboard Welcome Screen
+
+Your first view of the console shows:
+
+### Quick Stats
+
+- **Projects:** 1 (your default project)
+- **API Keys:** 1 (your default project key)
+- **End Users:** 0 (no users yet)
+- **Status:** Active and ready
+
+### Getting Started Guide
+
+A step-by-step checklist helps you:
+
+<Steps>
+  <Step title="Copy your credentials">
+    Save your developer key, project ID, and API key to a secure location
+  </Step>
+  <Step title="Clone the Starter Kit">
+    Download the template from GitHub
+  </Step>
+  <Step title="Configure environment">
+    Add your credentials to the Starter Kit's `.env.local` file
+  </Step>
+  <Step title="Start building">
+    Run the development server and customize your app
+  </Step>
+</Steps>
+
+### Quick Actions Panel
+
+Shortcuts to common tasks:
+
+- **Create New Project:** Set up additional projects
+- **Generate API Key:** Create more keys for your projects
+- **View Documentation:** Access guides and tutorials
+- **View Examples:** See sample applications
+
+## Configuration Banner
+
+If you see a banner at the top of the console, it indicates:
+
+- **Missing environment variables:** Some configuration is incomplete
+- **Invalid credentials:** Check that your keys are properly formatted
+- **Connection issues:** Verify you can reach the Cloud API
+
+The banner provides specific error messages to help you resolve issues quickly.
+
+## Copying Your Credentials
+
+<Warning>
+**One-time display:** Full credentials (developer key and API keys) are shown in their entirety only when first generated. After you navigate away, only the key prefix will be visible for security.
+</Warning>
+
+### Best Practices
+
+1. **Use a password manager:** Store credentials securely
+2. **Don't commit to version control:** Never add keys to Git
+3. **Use environment variables:** Keep keys out of your codebase
+4. **Regenerate if compromised:** Create new keys if you suspect exposure
+
+## What to Copy
+
+Make sure you save these three values:
+
+```bash
+# Developer Key (starts with dk_)
+DEVKIT4AI_DEVELOPER_KEY=dk_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+# Project ID (UUID format)
+DEVKIT4AI_PROJECT_ID=123e4567-e89b-12d3-a456-426614174000
+
+# Project API Key (starts with pk_)
+DEVKIT4AI_PROJECT_KEY=pk_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+## Next Steps After First Login
+
+<CardGroup cols={2}>
+  <Card title="Dashboard Tour" icon="compass" href="/cloud-admin/dashboard-overview">
+    Explore all console features
+  </Card>
+  <Card title="Install Starter Kit" icon="download" href="/starter-kit/installation">
+    Get the Next.js template
+  </Card>
+  <Card title="Environment Setup" icon="gear" href="/starter-kit/environment-config">
+    Configure your development environment
+  </Card>
+  <Card title="Deploy Your App" icon="rocket" href="/tutorials/first-app/setup">
+    Follow the first app tutorial
+  </Card>
+</CardGroup>

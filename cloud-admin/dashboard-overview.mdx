@@ -1,13 +1,177 @@
 ---
 title: "Console Dashboard Overview"
-description: "Tour the developer workspace available after signing in."
+sidebarTitle: "Dashboard Overview"
+description: "Navigate the Cloud Admin console and understand key features."
 icon: "gauge"
 ---
 
-The `/console` route renders a dashboard sourced from `user-app/app/console/page.tsx` (and mirrored in the Starter Kit for completeness):
+The Cloud Admin dashboard is your central workspace for managing projects, API keys, and users. This guide walks you through each section.
 
-- Stats cards pull project and API key counts via the server actions in `app/console/actions.ts`.
-- Quick actions and getting started tiles link to project creation, API key management, and documentation.
-- Configuration issue banners alert you to missing environment variables, matching the same readiness checks used in other modes.
+## Dashboard Layout
 
-As new console widgets ship, this page will expand with accurate screenshots and workflows derived directly from the code.
+The console is organized into clear sections for easy navigation:
+
+### Header Navigation
+
+- **Logo and home link:** Return to dashboard from anywhere
+- **User menu:** Access account settings and sign out
+- **Theme toggle:** Switch between light and dark mode
+
+### Main Dashboard
+
+#### Statistics Cards
+
+Four key metrics displayed prominently:
+
+<CardGroup cols={2}>
+  <Card title="Projects" icon="folder">
+    Total number of projects in your workspace
+  </Card>
+  <Card title="API Keys" icon="key">
+    Active API keys across all projects
+  </Card>
+  <Card title="End Users" icon="users">
+    Total users registered in your applications
+  </Card>
+  <Card title="Status" icon="circle-check">
+    Overall workspace health indicator
+  </Card>
+</CardGroup>
+
+#### Quick Actions Section
+
+Shortcut buttons for common tasks:
+
+- **Create Project:** Set up a new project
+- **Generate API Key:** Create authentication credentials
+- **View Documentation:** Access guides and references
+- **Browse Examples:** See sample applications
+
+#### Getting Started Guide
+
+For new developers, a step-by-step checklist appears:
+
+<Steps>
+  <Step title="Set up your first project">
+    Your default project is already created, or create additional ones
+  </Step>
+  <Step title="Generate API credentials">
+    Create or view your developer and project API keys
+  </Step>
+  <Step title="Clone the Starter Kit">
+    Download the Next.js template from GitHub
+  </Step>
+  <Step title="Configure and deploy">
+    Add credentials and customize your application
+  </Step>
+</Steps>
+
+<Tip>
+The getting started guide hides once you've completed the initial setup, but you can always access it from the Help menu.
+</Tip>
+
+## Sidebar Navigation
+
+Access all console features from the sidebar:
+
+### Projects
+
+Manage your application projects:
+
+- **View all projects:** See complete project list
+- **Create new project:** Add projects for different applications
+- **Project details:** View configuration and settings
+- **Delete projects:** Remove projects you no longer need
+
+### API Keys
+
+Manage authentication credentials:
+
+- **Developer keys:** Your personal authentication key
+- **Project API keys:** Keys scoped to specific projects
+- **Generate new keys:** Create additional credentials
+- **Revoke keys:** Disable compromised or unused keys
+- **Usage tracking:** See when keys were last used
+
+### Users
+
+Monitor your application users:
+
+- **User list:** View all end users across projects
+- **User analytics:** Track registration trends
+- **User details:** See individual user information
+- **Filter by project:** Isolate users for specific projects
+
+### Settings
+
+Configure your developer account:
+
+- **Profile information:** Update email and password
+- **Preferences:** Set dashboard defaults
+- **Security:** Manage authentication settings
+
+## Configuration Issues Banner
+
+If you see an amber banner at the top:
+
+<Warning>
+The banner indicates environment or configuration problems. Common issues include:
+
+- Missing environment variables
+- Invalid credential formats
+- Connection problems with Cloud API
+- Incorrect project ID format (must be UUID)
+
+Click the banner for specific error details and resolution steps.
+</Warning>
+
+## Dashboard Actions
+
+### Creating a New Project
+
+1. Click "Create Project" from quick actions or sidebar
+2. Enter project name and description
+3. Click "Create"
+4. System generates project ID and API key automatically
+5. Copy credentials before navigating away
+
+### Generating API Keys
+
+1. Navigate to Projects section
+2. Select the project
+3. Click "Generate API Key"
+4. Optionally add a key name for identification
+5. Copy the full key immediately (shown only once)
+
+### Viewing Users
+
+1. Click "Users" in sidebar
+2. See all registered end users
+3. Filter by project if needed
+4. View user details and registration dates
+
+## Mobile Experience
+
+The console is fully responsive:
+
+- **Collapsible sidebar:** Hamburger menu on mobile devices
+- **Stacked cards:** Stats display vertically on small screens
+- **Touch-optimized:** All buttons and controls work with touch
+- **Readable text:** Font sizes adjusted for mobile viewing
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Create Projects" icon="folder-plus" href="/cloud-admin/projects/creating-projects">
+    Set up your application projects
+  </Card>
+  <Card title="Manage API Keys" icon="key" href="/cloud-admin/api-keys/creating-project-keys">
+    Generate and manage credentials
+  </Card>
+  <Card title="View Users" icon="users" href="/cloud-admin/users/viewing-end-users">
+    Monitor your application users
+  </Card>
+  <Card title="Console Features" icon="wrench" href="/cloud-admin/console/quick-actions">
+    Explore advanced console features
+  </Card>
+</CardGroup>

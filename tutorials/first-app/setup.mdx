@@ -1,13 +1,181 @@
 ---
 title: "First App: Environment Setup"
-description: "Prepare your tools before cloning the Starter Kit."
+sidebarTitle: "Setup"
+description: "Prepare your development environment before building your first AI application."
 icon: "wrench"
 ---
 
-This tutorial chains together steps already covered in the Getting Started and Starter Kit sections:
+<Info>
+This tutorial guides you through building and deploying your first AI-powered application using Dev Kit for AI. We'll start by setting up your development environment.
+</Info>
 
-- Install Node.js 19+, pnpm or npm, and the Mintlify CLI if you plan to preview docs locally.
-- Provision a developer account and keys through Cloud Admin so the Starter Kit can authenticate against the Cloud API.
-- Confirm Docker is available if you intend to run the backend locally, matching the workflows in `devkit4ai/README.md`.
+## Prerequisites Checklist
 
-Subsequent steps reuse this foundation to build, configure, and deploy your app.
+Before you begin, ensure you have:
+
+<AccordionGroup>
+  <Accordion title="Node.js 19 or later" icon="node-js">
+    **Check your version:**
+    ```bash
+    node --version
+    ```
+    Should show `v19.0.0` or higher.
+    
+    **Install or upgrade:**
+    - **macOS:** `brew install node` or download from [nodejs.org](https://nodejs.org)
+    - **Windows:** Download installer from [nodejs.org](https://nodejs.org)
+    - **Linux:** Use your package manager or [nvm](https://github.com/nvm-sh/nvm)
+  </Accordion>
+  
+  <Accordion title="Package manager" icon="box">
+    Choose one of:
+    - **npm** (included with Node.js)
+    - **pnpm:** `npm install -g pnpm`
+    - **yarn:** `npm install -g yarn`
+    
+    This tutorial uses npm, but commands work with any package manager.
+  </Accordion>
+  
+  <Accordion title="Git" icon="git">
+    **Check installation:**
+    ```bash
+    git --version
+    ```
+    
+    **Install if needed:**
+    - **macOS:** `brew install git`
+    - **Windows:** Download from [git-scm.com](https://git-scm.com)
+    - **Linux:** `sudo apt install git` or equivalent
+  </Accordion>
+  
+  <Accordion title="Code editor" icon="code">
+    Recommended editors:
+    - **VS Code:** [code.visualstudio.com](https://code.visualstudio.com)
+    - **Cursor:** [cursor.sh](https://cursor.sh)
+    - **WebStorm:** [jetbrains.com/webstorm](https://www.jetbrains.com/webstorm)
+    
+    Any editor with TypeScript support works.
+  </Accordion>
+  
+  <Accordion title="Cloud Admin account" icon="user">
+    **Create an account:**
+    1. Visit [devkit4ai.com/register/developer](https://devkit4ai.com/register/developer)
+    2. Complete registration with email and password
+    3. Save your credentials when shown
+    
+    **What you'll get:**
+    - Developer key (starts with `dk_`)
+    - Project ID (UUID format)
+    - Project API key (starts with `pk_`)
+    
+    See [Cloud Admin Getting Started](/cloud-admin/getting-started) for details.
+  </Accordion>
+</AccordionGroup>
+
+## Optional Tools
+
+These tools enhance your development experience but aren't required:
+
+### Docker Desktop
+
+**When you need it:** Only if you plan to run the backend API locally for development or contribution.
+
+**For this tutorial:** Not needed - we'll use the hosted Cloud API.
+
+**Install:**
+- Download from [docker.com](https://www.docker.com/products/docker-desktop)
+- Follow installation instructions for your OS
+
+### Mintlify CLI
+
+**When you need it:** If you want to preview documentation changes locally.
+
+**For this tutorial:** Not needed - documentation is already online.
+
+**Install:**
+```bash
+npm install -g mintlify
+```
+
+## Workspace Setup
+
+### Create a Project Directory
+
+Organize your work in a dedicated folder:
+
+```bash
+mkdir ~/projects/my-ai-app
+cd ~/projects/my-ai-app
+```
+
+### Verify Your Environment
+
+Run these checks to ensure everything is ready:
+
+<Steps>
+  <Step title="Check Node.js">
+    ```bash
+    node --version
+    npm --version
+    ```
+    Both commands should complete successfully.
+  </Step>
+  
+  <Step title="Check Git">
+    ```bash
+    git --version
+    ```
+    Should show Git version 2.x or higher.
+  </Step>
+  
+  <Step title="Test Cloud API connection">
+    ```bash
+    curl https://api.vibecoding.ad/health
+    ```
+    Should return `{"status":"healthy"}` or similar.
+  </Step>
+</Steps>
+
+## Get Your Credentials Ready
+
+You'll need these values from Cloud Admin:
+
+```bash
+# Developer Key
+DEVKIT4AI_DEVELOPER_KEY=dk_your_actual_key_here
+
+# Project ID  
+DEVKIT4AI_PROJECT_ID=your-uuid-here
+
+# Project API Key
+DEVKIT4AI_PROJECT_KEY=pk_your_actual_key_here
+```
+
+<Tip>
+**Keep these handy:** You'll paste them into your environment file in the next step. Store them securely in a password manager.
+</Tip>
+
+## What's Next
+
+Your environment is ready! The next steps will:
+
+1. **Clone the Starter Kit** from GitHub
+2. **Configure environment variables** with your credentials
+3. **Start the development server** and verify everything works
+4. **Customize the UI** to match your brand
+5. **Deploy to production** on your hosting provider
+
+<CardGroup cols={2}>
+  <Card title="Clone Starter Kit" icon="git-pull-request" href="/tutorials/first-app/clone-starter">
+    Download and install the template
+  </Card>
+  <Card title="Configure & Connect" icon="gear" href="/tutorials/first-app/configure-connect">
+    Set up environment variables
+  </Card>
+  <Card title="Customize UI" icon="palette" href="/tutorials/first-app/customize-ui">
+    Update branding and styling
+  </Card>
+  <Card title="Deploy" icon="rocket" href="/tutorials/first-app/deploy">
+    Launch to production
+  </Card>
+</CardGroup>

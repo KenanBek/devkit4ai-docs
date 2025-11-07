@@ -1,13 +1,90 @@
 ---
 title: "Install the Starter Kit"
-description: "Clone the project-mode Next.js app and install its dependencies."
+sidebarTitle: "Installation"
+description: "Clone the Starter Kit repository and set up your local development environment."
 icon: "download"
 ---
 
-Follow the same workflow used internally when exporting the project-mode `user-app`:
+<Info>
+**Prerequisites:** Node.js 19 or later and a package manager (npm, pnpm, or yarn).
+</Info>
 
-1. Clone the public repository at `https://github.com/VibeCodingStarter/starter-kit`.
-2. Install Node.js 19+ and run `make install` or `npm install`, mirroring the commands listed in `starter-kit/README.md`.
-3. Verify the Turbopack development server with `npm run dev`, which boots on port 3004 by default per the shared Makefile.
+The Starter Kit is an open-source Next.js template available on GitHub. Follow these steps to get it running locally.
 
-Additional setup details—environment variables, Cloud API connectivity, and mode validation—are documented in the following pages.
+## Clone the Repository
+
+<Steps>
+  <Step title="Clone from GitHub">
+    ```bash
+    git clone https://github.com/VibeCodingStarter/starter-kit.git
+    cd starter-kit
+    ```
+    This downloads the complete Starter Kit template to your local machine.
+  </Step>
+  
+  <Step title="Install dependencies">
+    ```bash
+    make install   # or npm install
+    ```
+    This installs all required packages including Next.js, React, Tailwind CSS, and UI components.
+  </Step>
+  
+  <Step title="Verify installation">
+    ```bash
+    npm run dev
+    ```
+    The development server starts on port 3004. Visit `http://localhost:3004` to see the default homepage.
+    
+    <Warning>
+    You'll see a configuration banner at the top because environment variables aren't set yet. This is normal - we'll configure them in the next steps.
+    </Warning>
+  </Step>
+</Steps>
+
+## What Gets Installed
+
+The Starter Kit includes:
+
+- **Next.js 15** with App Router and Turbopack for fast development
+- **React 19** with Server Components for optimal performance
+- **Tailwind CSS** for styling with dark mode support
+- **Radix UI** components for accessible, production-ready UI
+- **TypeScript** for type safety and better developer experience
+- **Pre-built pages** including authentication, dashboard, and examples
+
+## Project Structure Overview
+
+After installation, you'll see this structure:
+
+```
+starter-kit/
+├── app/                  # Next.js App Router pages
+│   ├── (auth)/          # Authentication pages
+│   ├── dashboard/       # User dashboard
+│   └── page.tsx         # Homepage
+├── components/          # React components
+│   ├── ui/             # Base UI primitives
+│   ├── generic/        # Reusable components
+│   └── project/        # Project-specific components
+├── config/             # App configuration
+├── lib/                # Utilities and helpers
+├── public/             # Static assets
+└── .env.local          # Environment variables (create this)
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Environment Config" icon="gear" href="/starter-kit/environment-config">
+    Set up required environment variables
+  </Card>
+  <Card title="Connect to Cloud API" icon="plug" href="/starter-kit/connecting-to-cloud">
+    Link your app to the hosted backend
+  </Card>
+  <Card title="Project Structure" icon="folder-tree" href="/starter-kit/project-structure">
+    Understand the codebase organization
+  </Card>
+  <Card title="Customize Branding" icon="palette" href="/starter-kit/customization/branding-styling">
+    Update colors, logo, and styling
+  </Card>
+</CardGroup>

@@ -1,13 +1,112 @@
 ---
-title: "Cloud Admin Overview"
-description: "Sign in to the operator-mode deployment that powers developer onboarding."
-icon: "building"
+title: "Getting Started with Cloud Admin"
+sidebarTitle: "Getting Started"
+description: "Create your developer account and access the Cloud Admin console."
+icon: "rocket"
 ---
 
-Cloud Admin runs the same Next.js codebase as the Starter Kit but in **operator** mode (`DEVKIT4AI_MODE=operator`). It is available at `https://devkit4ai.com/console` and `https://vibecoding.ad/console`.
+<Info>
+Cloud Admin is available at **[devkit4ai.com/console](https://devkit4ai.com/console)** or **[vibecoding.ad/console](https://vibecoding.ad/console)**. Choose whichever domain you prefer - they offer the same functionality.
+</Info>
 
-- Access requires the `DEVKIT4AI_OPERATOR_KEY`, which is validated against the backend RBAC helpers in `devkit4ai/backend-api/app/system/auth`.
-- New developer accounts are provisioned through the `/register/developer` flow, triggering the event sourcing pipeline that creates default projects and keys.
-- Once authenticated, developers land in the console experience documented throughout this section.
+The Cloud Admin console is your workspace for managing AI projects, generating API keys, and monitoring users. This guide walks you through creating your account and understanding the console.
 
-The remaining pages break down each workflow so the docs stay aligned with what the live service delivers today.
+## Create Your Developer Account
+
+<Steps>
+  <Step title="Navigate to registration">
+    Visit [devkit4ai.com/register/developer](https://devkit4ai.com/register/developer) (or use [vibecoding.ad/register/developer](https://vibecoding.ad/register/developer)).
+  </Step>
+  
+  <Step title="Complete the registration form">
+    Provide:
+    - **Email address:** Use a valid email you have access to
+    - **Password:** At least 8 characters with uppercase, lowercase, and a digit
+    
+    <Tip>
+    Use a password manager to generate and store a strong password.
+    </Tip>
+  </Step>
+  
+  <Step title="Automatic provisioning">
+    Upon successful registration, the system automatically:
+    - Creates your developer account
+    - Sets up your first project
+    - Generates your developer key and project API key
+    
+    <Check>
+    These credentials are ready to use immediately - no waiting for approval.
+    </Check>
+  </Step>
+  
+  <Step title="Verify your email (optional)">
+    Check your inbox for a verification email. While email verification isn't required to start building, it's recommended for account security.
+  </Step>
+</Steps>
+
+## First Login
+
+After registration, you're automatically signed in and redirected to the console dashboard.
+
+### What You'll See
+
+- **Dashboard overview:** Quick stats showing your projects, API keys, and users
+- **Credentials panel:** Your developer key, project ID, and API key
+- **Quick actions:** Shortcuts to create projects, generate keys, and view documentation
+- **Getting started guide:** Step-by-step instructions for your first deployment
+
+<Warning>
+**Save your credentials immediately!** Your developer key and API keys are shown in full only once. Copy them to a secure location (like a password manager) before navigating away.
+</Warning>
+
+## Understanding Your Credentials
+
+You receive three types of credentials:
+
+### Developer Key
+
+- **Format:** Starts with `dk_` followed by random characters
+- **Purpose:** Authenticates you as a developer across all your projects
+- **Usage:** Required in Starter Kit environment variables
+- **Security:** SHA256 hashed in the database, never stored in plain text
+
+### Project ID
+
+- **Format:** UUID (e.g., `123e4567-e89b-12d3-a456-426614174000`)
+- **Purpose:** Uniquely identifies each project you create
+- **Usage:** Links your Starter Kit deployment to a specific project
+- **Note:** Each Starter Kit instance needs its own project ID
+
+### Project API Key
+
+- **Format:** Starts with `pk_` followed by random characters  
+- **Purpose:** Authenticates API requests from your Starter Kit
+- **Usage:** Required in Starter Kit environment variables
+- **Scope:** Limited to the specific project it was created for
+
+## Console Navigation
+
+The Cloud Admin console is organized into sections:
+
+- **Dashboard:** Overview of your workspace with key metrics
+- **Projects:** Manage all your projects in one place
+- **API Keys:** Generate and revoke authentication keys
+- **Users:** View end users across your projects
+- **Settings:** Configure your developer account preferences
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Dashboard Overview" icon="gauge" href="/cloud-admin/dashboard-overview">
+    Explore the console dashboard features
+  </Card>
+  <Card title="Create a Project" icon="folder-plus" href="/cloud-admin/projects/creating-projects">
+    Set up additional projects
+  </Card>
+  <Card title="Generate API Keys" icon="key" href="/cloud-admin/api-keys/creating-developer-keys">
+    Create credentials for your apps
+  </Card>
+  <Card title="Connect Starter Kit" icon="plug" href="/starter-kit/connecting-to-cloud">
+    Link your app to Cloud Admin
+  </Card>
+</CardGroup>
