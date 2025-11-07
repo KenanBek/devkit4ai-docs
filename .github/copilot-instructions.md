@@ -19,6 +19,8 @@ For Cloud Admin and Cloud API, there are two usage patterns:
 - **SaaS Platform** - Developers use the hosted Cloud Admin and Cloud API services provided at [devkit4ai.com](https://devkit4ai.com) or [vibecoding.ad](https://vibecoding.ad) to manage their projects and power their applications. It has a free tier and paid plans for advanced features.
 - **Self-Hosted** - Advanced users can deploy their own instances of Cloud Admin and Cloud API for full control. This is not the primary use case and is a paid feature for Enterprise and Team plans. Documentation for self-hosting is not the main focus at this time.
 
+Always check the relevant project in the workspace when documenting features to ensure accuracy.
+
 ## Technology Stack
 
 - **Framework**: Mintlify documentation platform
@@ -86,7 +88,7 @@ When creating or updating documentation:
   - Request/response examples
   - Integration patterns with Starter Kit
 
-Always prefer devkit4ai.com URLs but always mention alternative vibecoding.ad.
+Always prefer `devkit4ai.com` URLs but also always mention alternative `vibecoding.ad`.
 
 ### What to Avoid
 
