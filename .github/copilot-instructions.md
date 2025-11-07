@@ -12,6 +12,13 @@ The documentation focuses on three core components of the Dev Kit platform (orde
 
 When documenting or updating content, prioritize these components and their user-facing features.
 
+The Starter Kit is open-source and available on GitHub at [GitHub Repository](https://github.com/your-repo/starter-kit).
+
+For Cloud Admin and Cloud API, there are two usage patterns:
+
+- **SaaS Platform** - Developers use the hosted Cloud Admin and Cloud API services provided at [devkit4ai.com](https://devkit4ai.com) or [vibecoding.ad](https://vibecoding.ad) to manage their projects and power their applications. It has a free tier and paid plans for advanced features.
+- **Self-Hosted** - Advanced users can deploy their own instances of Cloud Admin and Cloud API for full control. This is not the primary use case and is a paid feature for Enterprise and Team plans. Documentation for self-hosting is not the main focus at this time.
+
 ## Technology Stack
 
 - **Framework**: Mintlify documentation platform
@@ -262,8 +269,8 @@ The starter-kit is exported from the user-app in the private devkit4ai project. 
 
 The following should generally not be modified by automated tools:
 
+- `.git/` - Git directory
+- `node_modules/` - Dependencies (if present locally)
 - `/logo` - Brand assets
 - `favicon.ico` - Site icon
 - `LICENSE` - License file
-- `.git/` - Git directory
-- `node_modules/` - Dependencies (if present locally)
