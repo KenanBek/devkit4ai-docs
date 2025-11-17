@@ -1,0 +1,386 @@
+---
+title: "App Configuration"
+description: "Customize branding, navigation, and layout through app.config.ts"
+icon: "sliders"
+---
+
+The Starter Kit centralizes all application-wide configuration in `config/app.config.ts`. This file controls your app's branding, navigation structure, footer content, and deployment mode integration.
+
+## Overview
+
+The app configuration provides a single source of truth for:
+
+- Application name, title, and description (used for metadata and SEO)
+- Logo text and navigation links
+- Header navigation structure
+- Footer sections and external links
+- Deployment mode integration
+
+All configuration changes automatically propagate to relevant components without additional code modifications.
+
+## File Location
+
+```
+starter-kit/
+├── config/
+│   ├── app.config.ts          # Main configuration file
+│   ├── app.config.types.ts    # TypeScript type definitions
+│   └── mode.config.ts          # Deployment mode helpers
+```
+
+## Basic Properties
+
+### Application Identity
+
+<CodeGroup>
+
+```typescript config/app.config.ts
+export const appConfig: AppConfig = {
+  name: "Your App Name",
+  title: "Your App Title",
+  description: "Your app description for SEO and metadata",
+  // ... other properties
+}
+```
+
+</CodeGroup>
+
+<ParamField path="name" type="string" required>
+  The application name displayed throughout the UI. Used in the header, page titles, and metadata.
+</ParamField>
+
+<ParamField path="title" type="string" required>
+  The primary title shown in browser tabs and search engine results. Can be overridden per page.
+</ParamField>
+
+<ParamField path="description" type="string" required>
+  A concise description of your application. Used for SEO meta tags and appears in search results.
+</ParamField>
+
+### Example Customization
+
+```typescript config/app.config.ts
+export const appConfig: AppConfig = {
+  name: "AI Image Studio",
+  title: "AI Image Studio - Create Amazing AI Art",
+  description: "Transform your ideas into stunning AI-generated images with our powerful creation platform.",
+  // ... other properties
+}
+```
+
+## Logo Configuration
+
+The logo configuration controls the branding in your application header.
+
+```typescript config/app.config.ts
+export const appConfig: AppConfig = {
+  // ... other properties
+  logo: {
+    text: "Your Brand",
+    href: "/"
+  },
+}
+```
+
+<ParamField path="logo.text" type="string" required>
+  The text displayed as your logo in the header. Keep it short and memorable.
+</ParamField>
+
+<ParamField path="logo.href" type="string" required>
+  The destination URL when users click the logo. Typically `"/"` for the homepage.
+</ParamField>
+
+<Tip>
+If you want to use an image logo instead of text, you'll need to modify `components/project/header.tsx` to replace the text with an `<Image>` component. See [Branding and Styling](/starter-kit/customization/branding-styling) for details.
+</Tip>
+
+## Header Navigation
+
+Define your main navigation links in the header configuration:
+
+```typescript config/app.config.ts
+export const appConfig: AppConfig = {
+  // ... other properties
+  header: {
+    links: [
+      { href: "/", label: "Home" },
+      { href: "/features", label: "Features" },
+      { href: "/pricing", label: "Pricing" },
+      { href: "/about", label: "About" },
+    ]
+  },
+}
+```
+
+<ParamField path="header.links" type="array" required>
+  An array of navigation link objects. Each link must have `href` and `label` properties.
+</ParamField>
+
+<ParamField path="header.links[].href" type="string" required>
+  The destination path or URL for the navigation link.
+</ParamField>
+
+<ParamField path="header.links[].label" type="string" required>
+  The visible text for the navigation link.
+</ParamField>
+
+### Mode-Aware Navigation
+
+The Starter Kit automatically filters navigation links based on the deployment mode. In project mode (the default), all links defined in your configuration are displayed.
+
+```typescript
+// This helper function is already implemented
+function getModeSpecificLinks(mode: string) {
+  // Project mode shows all configured links
+  if (mode === 'project') {
+    return appConfig.header.links
+  }
+  
+  // Operator and console modes have different links
+  // (not relevant for typical Starter Kit usage)
+}
+```
+
+<Note>
+The Starter Kit operates exclusively in **project mode**. The mode-aware logic exists for compatibility with the upstream user-app but doesn't affect standard deployments.
+</Note>
+
+## Footer Customization
+
+The footer configuration organizes links into labeled sections:
+
+```typescript config/app.config.ts
+export const appConfig: AppConfig = {
+  // ... other properties
+  footer: {
+    title: "Your Company Name",
+    description: "A brief tagline or description for your company.",
+    links: {
+      "Product": [
+        { href: "/features", label: "Features" },
+        { href: "/pricing", label: "Pricing" },
+        { href: "/docs", label: "Documentation", external: true },
+      ],
+      "Company": [
+        { href: "/about", label: "About Us" },
+        { href: "/blog", label: "Blog" },
+        { href: "/contact", label: "Contact" },
+      ],
+      "Legal": [
+        { href: "/privacy", label: "Privacy Policy" },
+        { href: "/terms", label: "Terms of Service" },
+      ],
+    }
+  },
+}
+```
+
+<ParamField path="footer.title" type="string" required>
+  Your company or product name displayed in the footer.
+</ParamField>
+
+<ParamField path="footer.description" type="string" required>
+  A short description or tagline displayed below the footer title.
+</ParamField>
+
+<ParamField path="footer.links" type="object" required>
+  An object where keys are section names and values are arrays of link objects.
+</ParamField>
+
+<ParamField path="footer.links[section][].href" type="string" required>
+  The destination path or URL for the footer link.
+</ParamField>
+
+<ParamField path="footer.links[section][].label" type="string" required>
+  The visible text for the footer link.
+</ParamField>
+
+<ParamField path="footer.links[section][].external" type="boolean">
+  Set to `true` to open the link in a new tab. Defaults to `false` for internal links.
+</ParamField>
+
+### External Links
+
+Mark external links to automatically open in a new tab with security attributes:
+
+```typescript
+{
+  href: "https://docs.example.com",
+  label: "API Documentation",
+  external: true  // Opens in new tab with rel="noopener noreferrer"
+}
+```
+
+## Complete Example
+
+Here's a real-world configuration for an AI image generation SaaS:
+
+```typescript config/app.config.ts
+import { AppConfig } from './app.config.types'
+import { getModeConfig } from './mode.config'
+
+export const appConfig: AppConfig = {
+  name: "PixelForge AI",
+  title: "PixelForge AI - Professional AI Image Generation",
+  description: "Create stunning, professional-quality images with advanced AI models. Perfect for designers, marketers, and content creators.",
+  
+  logo: {
+    text: "PixelForge",
+    href: "/"
+  },
+  
+  header: {
+    links: [
+      { href: "/", label: "Home" },
+      { href: "/gallery", label: "Gallery" },
+      { href: "/how-it-works", label: "How It Works" },
+      { href: "/pricing", label: "Pricing" },
+      { href: "/blog", label: "Blog" },
+    ]
+  },
+  
+  footer: {
+    title: "PixelForge AI",
+    description: "Professional AI image generation for creators and businesses.",
+    links: {
+      "Product": [
+        { href: "/features", label: "Features" },
+        { href: "/pricing", label: "Pricing" },
+        { href: "/gallery", label: "Gallery" },
+        { href: "/api", label: "API Access" },
+      ],
+      "Resources": [
+        { href: "/blog", label: "Blog" },
+        { href: "/tutorials", label: "Tutorials" },
+        { href: "https://docs.pixelforge.ai", label: "Documentation", external: true },
+        { href: "/support", label: "Support" },
+      ],
+      "Company": [
+        { href: "/about", label: "About Us" },
+        { href: "/careers", label: "Careers" },
+        { href: "/contact", label: "Contact" },
+      ],
+      "Legal": [
+        { href: "/privacy", label: "Privacy Policy" },
+        { href: "/terms", label: "Terms of Service" },
+        { href: "/acceptable-use", label: "Acceptable Use" },
+      ],
+    }
+  },
+  
+  mode: getModeConfig(),
+}
+
+// Helper function for mode-specific header links
+export function getModeSpecificHeader() {
+  return appConfig.header
+}
+
+// Helper function for mode-specific title
+export function getModeSpecificTitle() {
+  return appConfig.title
+}
+```
+
+## Using Configuration in Components
+
+The configuration is automatically used by built-in components. For custom components, import and use it directly:
+
+```typescript
+import { appConfig } from '@/config/app.config'
+
+export default function MyComponent() {
+  return (
+    <div>
+      <h1>{appConfig.name}</h1>
+      <p>{appConfig.description}</p>
+    </div>
+  )
+}
+```
+
+### Where Configuration is Used
+
+<CardGroup cols={2}>
+  <Card title="Root Layout" icon="window">
+    `app/layout.tsx` uses `title` and `description` for metadata
+  </Card>
+  <Card title="Header Component" icon="bars">
+    `components/project/header.tsx` uses `logo` and `header.links`
+  </Card>
+  <Card title="Footer Component" icon="table-cells">
+    `components/project/footer.tsx` uses all `footer` properties
+  </Card>
+  <Card title="Page Metadata" icon="file">
+    Individual pages can override the default title and description
+  </Card>
+</CardGroup>
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Keep Navigation Concise">
+    Limit header navigation to 5-7 primary links. Too many links can overwhelm users and hurt mobile usability. Use footer sections for secondary navigation.
+  </Accordion>
+  
+  <Accordion title="Organize Footer Logically">
+    Group related links into clear sections. Common patterns: Product features, Resources/help, Company info, Legal/compliance.
+  </Accordion>
+  
+  <Accordion title="Use Descriptive Labels">
+    Navigation labels should be clear and specific. Avoid generic terms like "Resources" or "More" without context.
+  </Accordion>
+  
+  <Accordion title="Mark External Links">
+    Always set `external: true` for links to external websites. This improves user experience and security.
+  </Accordion>
+  
+  <Accordion title="Test on Mobile">
+    Navigation automatically collapses to a hamburger menu on mobile. Test your configuration on small screens to ensure all links are accessible.
+  </Accordion>
+  
+  <Accordion title="SEO Optimization">
+    Your `title` and `description` appear in search results. Keep the title under 60 characters and description under 160 characters for best display.
+  </Accordion>
+</AccordionGroup>
+
+## Environment-Specific Configuration
+
+For different environments (development, staging, production), use environment variables:
+
+```typescript config/app.config.ts
+export const appConfig: AppConfig = {
+  name: "PixelForge AI",
+  title: process.env.NODE_ENV === 'development' 
+    ? "PixelForge AI (Dev)" 
+    : "PixelForge AI",
+  // ... other properties
+}
+```
+
+Or create environment-specific configuration files:
+
+```
+config/
+├── app.config.ts           # Base configuration
+├── app.config.dev.ts       # Development overrides
+├── app.config.staging.ts   # Staging overrides
+└── app.config.prod.ts      # Production overrides
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Branding & Styling" icon="palette" href="/starter-kit/customization/branding-styling">
+    Customize colors, fonts, and visual design
+  </Card>
+  <Card title="Theme Configuration" icon="moon" href="/starter-kit/customization/theme-config">
+    Set up light and dark mode theming
+  </Card>
+  <Card title="Custom Pages" icon="file-plus" href="/starter-kit/customization/custom-pages">
+    Add new pages to your application
+  </Card>
+  <Card title="Component Library" icon="boxes" href="/starter-kit/customization/component-library">
+    Explore available UI components
+  </Card>
+</CardGroup>

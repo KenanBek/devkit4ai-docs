@@ -4,10 +4,614 @@ description: "Control light and dark themes with next-themes and shared Tailwind
 icon: "moon"
 ---
 
-Theme handling matches the upstream implementation:
+The Starter Kit includes a complete dark mode implementation using `next-themes` and Tailwind CSS. Users can toggle between light, dark, and system themes with their preference persisted across sessions.
 
-- `ThemeProvider` from `next-themes` is initialized in `app/layout.tsx` with `attribute="class"` so Tailwind's `dark:` modifiers behave reliably.
-- The header includes a `ThemeSwitcher` component that persists the selection across sessions using the same storage logic as the private repo.
-- System defaults and transitions are configured exactly as described in `starter-kit/SPECS.md` to minimize divergence between documentation and code.
+## Overview
 
-Future updates will add recipes for introducing additional palettes without breaking these defaults.
+The theme system provides:
+
+- **Light and dark mode** with instant switching
+- **System preference detection** that respects OS settings
+- **Persistent user selection** stored in localStorage
+- **No flash of unstyled content** on page load
+- **Tailwind integration** using `dark:` class modifiers
+
+## Architecture
+
+### ThemeProvider Setup
+
+The theme system is initialized in the root layout:
+
+```tsx app/layout.tsx
+import { ThemeProvider } from 'next-themes'
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="en" suppressHydrationWarning>
+      <body>
+        <DeploymentModeProvider deploymentConfig={deploymentConfig}>
+          <AuthProvider user={user}>
+            <ThemeProvider
+              attribute="class"
+              defaultTheme="system"
+              enableSystem
+              disableTransitionOnChange
+            >
+              {children}
+            </ThemeProvider>
+          </AuthProvider>
+        </DeploymentModeProvider>
+      </body>
+    </html>
+  )
+}
+```
+
+<ParamField path="attribute" type="string" default="class">
+  How the theme is applied. Using `"class"` enables Tailwind's `dark:` modifiers.
+</ParamField>
+
+<ParamField path="defaultTheme" type="string" default="system">
+  The default theme when no preference is stored. `"system"` follows the OS preference.
+</ParamField>
+
+<ParamField path="enableSystem" type="boolean" default={true}>
+  Allows detecting and using the system theme preference.
+</ParamField>
+
+<ParamField path="disableTransitionOnChange" type="boolean" default={false}>
+  Prevents CSS transitions during theme switches for instant changes. Set to `true` to avoid visual glitches.
+</ParamField>
+
+<Note>
+The `suppressHydrationWarning` prop on the `<html>` element prevents hydration warnings caused by `next-themes` modifying the class attribute before React hydrates.
+</Note>
+
+### ThemeSwitcher Component
+
+The header includes a theme toggle button:
+
+```tsx components/theme-switcher.tsx
+'use client'
+
+import { Moon, Sun } from 'lucide-react'
+import { useTheme } from 'next-themes'
+import { useEffect, useState } from 'react'
+import { Button } from '@/components/ui/button'
+
+export function ThemeSwitcher() {
+  const [mounted, setMounted] = useState(false)
+  const { theme, setTheme } = useTheme()
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  if (!mounted) {
+    return null
+  }
+
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+    >
+      <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+      <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+      <span className="sr-only">Toggle theme</span>
+    </Button>
+  )
+}
+```
+
+<Tip>
+The component returns `null` until mounted to prevent hydration mismatches, since the theme is determined client-side.
+</Tip>
+
+## Tailwind Configuration
+
+### Enabling Dark Mode
+
+Dark mode is enabled in `tailwind.config.ts`:
+
+```typescript tailwind.config.ts
+import type { Config } from "tailwindcss";
+
+const config: Config = {
+  content: [
+    "./pages/**/*.{js,ts,jsx,tsx,mdx}",
+    "./components/**/*.{js,ts,jsx,tsx,mdx}",
+    "./app/**/*.{js,ts,jsx,tsx,mdx}",
+  ],
+  darkMode: "class", // Enable class-based dark mode
+  theme: {
+    extend: {
+      // Your theme customizations
+    },
+  },
+  plugins: [],
+};
+
+export default config;
+```
+
+<ParamField path="darkMode" type="string" default="media">
+  Set to `"class"` to use `next-themes` with Tailwind's `dark:` modifier. The alternative `"media"` uses CSS media queries only.
+</ParamField>
+
+### Dark Mode Color Palette
+
+Define colors that work in both themes:
+
+```typescript tailwind.config.ts
+const config: Config = {
+  theme: {
+    extend: {
+      colors: {
+        // Semantic colors that adapt to theme
+        background: {
+          DEFAULT: '#ffffff',
+          dark: '#0a0a0a',
+        },
+        foreground: {
+          DEFAULT: '#0a0a0a',
+          dark: '#ffffff',
+        },
+        // Component-specific colors
+        card: {
+          DEFAULT: '#ffffff',
+          dark: '#171717',
+        },
+        'card-foreground': {
+          DEFAULT: '#0a0a0a',
+          dark: '#fafafa',
+        },
+        border: {
+          DEFAULT: '#e5e5e5',
+          dark: '#262626',
+        },
+        // Brand colors with dark variants
+        primary: {
+          50: '#f0fdf4',
+          100: '#dcfce7',
+          200: '#bbf7d0',
+          300: '#86efac',
+          400: '#4ade80',
+          500: '#22c55e',
+          600: '#16a34a',
+          700: '#15803d',
+          800: '#166534',
+          900: '#14532d',
+          950: '#052e16',
+        },
+      },
+    },
+  },
+};
+```
+
+## Styling Components for Dark Mode
+
+### Basic Dark Mode Styles
+
+Use Tailwind's `dark:` modifier to apply dark mode styles:
+
+```tsx
+<div className="bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+  <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+    Title adapts to theme
+  </h1>
+  <p className="text-gray-600 dark:text-gray-400">
+    Secondary text with good contrast in both modes
+  </p>
+</div>
+```
+
+### Component Example
+
+Create theme-aware components:
+
+```tsx components/ui/card.tsx
+import { cn } from '@/lib/utils'
+
+interface CardProps {
+  children: React.ReactNode
+  className?: string
+}
+
+export function Card({ children, className }: CardProps) {
+  return (
+    <div
+      className={cn(
+        'rounded-lg border bg-white p-6 shadow-sm',
+        'dark:border-gray-800 dark:bg-gray-900',
+        className
+      )}
+    >
+      {children}
+    </div>
+  )
+}
+```
+
+### Complex Color Transitions
+
+Handle colors that need different values in each theme:
+
+```tsx
+<button className="
+  bg-blue-500 hover:bg-blue-600 
+  dark:bg-blue-600 dark:hover:bg-blue-700
+  text-white
+  border border-blue-600 dark:border-blue-500
+">
+  Themed Button
+</button>
+```
+
+## CSS Variables Approach
+
+For dynamic theming, use CSS variables:
+
+### Define Variables
+
+```css app/globals.css
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 4%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 4%;
+    --primary: 142 76% 45%;
+    --primary-foreground: 0 0% 100%;
+    --border: 0 0% 90%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 0 0% 4%;
+    --foreground: 0 0% 98%;
+    --card: 0 0% 9%;
+    --card-foreground: 0 0% 98%;
+    --primary: 142 70% 50%;
+    --primary-foreground: 0 0% 4%;
+    --border: 0 0% 15%;
+  }
+}
+```
+
+### Use in Tailwind
+
+Reference CSS variables in Tailwind config:
+
+```typescript tailwind.config.ts
+const config: Config = {
+  theme: {
+    extend: {
+      colors: {
+        background: 'hsl(var(--background))',
+        foreground: 'hsl(var(--foreground))',
+        card: {
+          DEFAULT: 'hsl(var(--card))',
+          foreground: 'hsl(var(--card-foreground))',
+        },
+        primary: {
+          DEFAULT: 'hsl(var(--primary))',
+          foreground: 'hsl(var(--primary-foreground))',
+        },
+        border: 'hsl(var(--border))',
+      },
+      borderRadius: {
+        lg: 'var(--radius)',
+        md: 'calc(var(--radius) - 2px)',
+        sm: 'calc(var(--radius) - 4px)',
+      },
+    },
+  },
+};
+```
+
+### Apply in Components
+
+```tsx
+<div className="bg-background text-foreground border-border">
+  <div className="bg-card text-card-foreground rounded-lg">
+    Theme-aware card
+  </div>
+</div>
+```
+
+<Tip>
+Using HSL color values in CSS variables makes it easy to adjust saturation and lightness programmatically.
+</Tip>
+
+## Advanced Theme Patterns
+
+### Multi-Theme Dropdown
+
+Create a full theme selector with light, dark, and system options:
+
+```tsx components/theme-selector.tsx
+'use client'
+
+import { Check, Moon, Sun, Monitor } from 'lucide-react'
+import { useTheme } from 'next-themes'
+import { useEffect, useState } from 'react'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { Button } from '@/components/ui/button'
+
+export function ThemeSelector() {
+  const [mounted, setMounted] = useState(false)
+  const { theme, setTheme } = useTheme()
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  if (!mounted) {
+    return null
+  }
+
+  const themes = [
+    { value: 'light', label: 'Light', icon: Sun },
+    { value: 'dark', label: 'Dark', icon: Moon },
+    { value: 'system', label: 'System', icon: Monitor },
+  ]
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon">
+          <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+          <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+          <span className="sr-only">Toggle theme</span>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        {themes.map((t) => (
+          <DropdownMenuItem
+            key={t.value}
+            onClick={() => setTheme(t.value)}
+            className="cursor-pointer"
+          >
+            <t.icon className="mr-2 h-4 w-4" />
+            <span>{t.label}</span>
+            {theme === t.value && <Check className="ml-auto h-4 w-4" />}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}
+```
+
+### Detecting System Theme
+
+Access the resolved theme (accounting for system preference):
+
+```tsx
+'use client'
+
+import { useTheme } from 'next-themes'
+
+export function ThemedComponent() {
+  const { theme, resolvedTheme } = useTheme()
+  
+  // theme: 'light' | 'dark' | 'system'
+  // resolvedTheme: 'light' | 'dark' (actual computed theme)
+  
+  return (
+    <div>
+      Selected: {theme}
+      Active: {resolvedTheme}
+    </div>
+  )
+}
+```
+
+### Conditional Rendering
+
+Render different content based on theme:
+
+```tsx
+import { useTheme } from 'next-themes'
+
+export function ThemedImage() {
+  const { resolvedTheme } = useTheme()
+  
+  return (
+    <img
+      src={resolvedTheme === 'dark' ? '/logo-dark.svg' : '/logo-light.svg'}
+      alt="Logo"
+    />
+  )
+}
+```
+
+## Custom Color Schemes
+
+### Creating Theme Variants
+
+Define multiple color schemes:
+
+```css app/globals.css
+:root {
+  --theme-blue-primary: 219 95% 55%;
+  --theme-green-primary: 142 76% 45%;
+  --theme-purple-primary: 271 81% 56%;
+}
+
+[data-color-scheme="blue"] {
+  --primary: var(--theme-blue-primary);
+}
+
+[data-color-scheme="green"] {
+  --primary: var(--theme-green-primary);
+}
+
+[data-color-scheme="purple"] {
+  --primary: var(--theme-purple-primary);
+}
+```
+
+Implement color scheme switching:
+
+```tsx
+'use client'
+
+import { useEffect, useState } from 'react'
+
+export function ColorSchemeSelector() {
+  const [scheme, setScheme] = useState('blue')
+  
+  useEffect(() => {
+    document.documentElement.setAttribute('data-color-scheme', scheme)
+  }, [scheme])
+  
+  return (
+    <select value={scheme} onChange={(e) => setScheme(e.target.value)}>
+      <option value="blue">Blue</option>
+      <option value="green">Green</option>
+      <option value="purple">Purple</option>
+    </select>
+  )
+}
+```
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Always Use Semantic Colors">
+    Use semantic color names like `background`, `foreground`, `border` instead of specific colors like `white` or `gray-900`. This makes theme changes easier.
+    
+    ```tsx
+    // Good
+    <div className="bg-background text-foreground">
+    
+    // Avoid
+    <div className="bg-white dark:bg-gray-900 text-black dark:text-white">
+    ```
+  </Accordion>
+  
+  <Accordion title="Test Both Themes">
+    Always test your UI in both light and dark modes. Colors that work in light mode may have insufficient contrast in dark mode.
+  </Accordion>
+  
+  <Accordion title="Provide Sufficient Contrast">
+    Ensure WCAG AA contrast ratios (4.5:1 for text) in both themes. Use tools like [Contrast Checker](https://webaim.org/resources/contrastchecker/).
+  </Accordion>
+  
+  <Accordion title="Avoid Transition Flickering">
+    Set `disableTransitionOnChange` to prevent CSS transitions from animating during theme switches, which can cause visual glitches.
+  </Accordion>
+  
+  <Accordion title="Handle Images Appropriately">
+    For logos and images, provide theme-specific variants or use images that work in both themes. Transparent PNGs and SVGs work best.
+  </Accordion>
+  
+  <Accordion title="Preserve Theme Across Navigation">
+    `next-themes` automatically persists the user's theme preference in localStorage. No additional code needed.
+  </Accordion>
+</AccordionGroup>
+
+## Accessibility Considerations
+
+### Respecting System Preferences
+
+The default `system` theme respects the user's OS-level preference:
+
+```tsx
+<ThemeProvider defaultTheme="system" enableSystem>
+```
+
+This ensures users who have set a dark mode preference at the OS level see dark mode by default.
+
+### Reduced Motion
+
+Respect the `prefers-reduced-motion` setting:
+
+```css
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+```
+
+### Focus Indicators
+
+Ensure focus indicators are visible in both themes:
+
+```tsx
+<button className="
+  focus:outline-none 
+  focus:ring-2 focus:ring-primary-500 focus:ring-offset-2
+  dark:focus:ring-primary-400 dark:focus:ring-offset-gray-900
+">
+  Button with themed focus
+</button>
+```
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Flash of Unstyled Content">
+    If you see a flash when the page loads, ensure `suppressHydrationWarning` is on the `<html>` element:
+    
+    ```tsx
+    <html lang="en" suppressHydrationWarning>
+    ```
+  </Accordion>
+  
+  <Accordion title="Theme Not Persisting">
+    Ensure `next-themes` can access localStorage. Check browser settings and privacy modes. The theme is stored in `localStorage.theme`.
+  </Accordion>
+  
+  <Accordion title="Icons Not Switching">
+    If theme toggle icons don't switch properly, verify both icons are present and CSS transitions are working:
+    
+    ```tsx
+    <Sun className="... dark:scale-0" />
+    <Moon className="... dark:scale-100" />
+    ```
+  </Accordion>
+  
+  <Accordion title="Hydration Mismatch">
+    If you see hydration errors, ensure theme-dependent components use the mounted check:
+    
+    ```tsx
+    const [mounted, setMounted] = useState(false)
+    useEffect(() => setMounted(true), [])
+    if (!mounted) return null
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Branding & Styling" icon="palette" href="/starter-kit/customization/branding-styling">
+    Apply your brand colors and visual identity
+  </Card>
+  <Card title="App Configuration" icon="sliders" href="/starter-kit/customization/app-config">
+    Configure navigation and layout settings
+  </Card>
+  <Card title="Component Library" icon="boxes" href="/starter-kit/customization/component-library">
+    Explore theme-aware UI components
+  </Card>
+  <Card title="Custom Pages" icon="file-plus" href="/starter-kit/customization/custom-pages">
+    Create custom pages with dark mode support
+  </Card>
+</CardGroup>

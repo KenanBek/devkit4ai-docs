@@ -65,6 +65,7 @@
           {
             "group": "Customization",
             "pages": [
+              "starter-kit/customization/app-config",
               "starter-kit/customization/branding-styling",
               "starter-kit/customization/custom-pages",
               "starter-kit/customization/component-library",
