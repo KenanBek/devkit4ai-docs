@@ -26,14 +26,14 @@ Retrieve a list of all projects belonging to the authenticated user.
     <ResponseField name="description" type="string">
       Project description
     </ResponseField>
-    <ResponseField name="user_id" type="string">
-      Owner's user ID
+    <ResponseField name="is_active" type="boolean">
+      Whether the project is active
     </ResponseField>
     <ResponseField name="created_at" type="string">
-      Project creation timestamp
+      Project creation timestamp (ISO 8601)
     </ResponseField>
     <ResponseField name="updated_at" type="string">
-      Last update timestamp
+      Last update timestamp (ISO 8601)
     </ResponseField>
   </Expandable>
 </ResponseField>

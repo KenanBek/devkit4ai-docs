@@ -3,16 +3,16 @@
     "info": {
         "title": "Dev Kit for AI API",
         "description": "API for Dev Kit for AI: Developer Toolkit for AI-Powered Web Applications",
-        "version": "1.1.0"
+        "version": "1.2.0"
     },
     "servers": [
         {
             "url": "https://api.devkit4ai.com",
-            "description": "DevKit4AI Production Server"
+            "description": "Dev Kit for AI Production Server"
         },
         {
             "url": "https://api.vibecoding.ad",
-            "description": "VibeCoding Production Server"
+            "description": "Vibe Coding Production Server"
         }
     ],
     "paths": {
@@ -456,6 +456,63 @@
                         }
                     }
                 ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProjectResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Project Management"
+                ],
+                "summary": "Update Project",
+                "description": "Update project details",
+                "operationId": "update_project_api_v1_projects__project_id__put",
+                "security": [
+                    {
+                        "OAuth2PasswordBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "project_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "title": "Project Id"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ProjectUpdateRequest"
+                            }
+                        }
+                    }
+                },
                 "responses": {
                     "200": {
                         "description": "Successful Response",
@@ -1725,6 +1782,38 @@
                     "updated_at"
                 ],
                 "title": "ProjectResponse"
+            },
+            "ProjectUpdateRequest": {
+                "properties": {
+                    "name": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "maxLength": 255,
+                                "minLength": 1
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Name"
+                    },
+                    "description": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "maxLength": 1000
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Description"
+                    }
+                },
+                "type": "object",
+                "title": "ProjectUpdateRequest",
+                "description": "Request payload for updating a project"
             },
             "ProvisioningData": {
                 "properties": {

@@ -1,10 +1,10 @@
 ---
-title: "Get Project"
-icon: "folder-open"
-openapi: "GET /api/v1/projects/{project_id}"
+title: "Update Project"
+icon: "pen-to-square"
+openapi: "PUT /api/v1/projects/{project_id}"
 ---
 
-Retrieve detailed information about a specific project.
+Update project details such as name and description.
 
 ### Headers
 
@@ -17,6 +17,20 @@ Retrieve detailed information about a specific project.
 <ParamField path="project_id" type="string" required>
   Unique project identifier
 </ParamField>
+
+### Body
+
+<ParamField body="name" type="string">
+  Updated project name (1-255 characters)
+</ParamField>
+
+<ParamField body="description" type="string">
+  Updated project description (max 1000 characters)
+</ParamField>
+
+<Note>
+  All fields are optional. Only provide fields you want to update.
+</Note>
 
 ### Response
 

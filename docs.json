@@ -177,6 +177,7 @@
               "cloud-api/projects/list",
               "cloud-api/projects/create",
               "cloud-api/projects/get",
+              "cloud-api/projects/update",
               "cloud-api/projects/delete",
               "cloud-api/projects/create-api-key",
               "cloud-api/projects/list-api-keys",
