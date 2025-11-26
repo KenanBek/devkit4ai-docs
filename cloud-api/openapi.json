@@ -3,7 +3,7 @@
     "info": {
         "title": "Dev Kit for AI API",
         "description": "API for Dev Kit for AI: Developer Toolkit for AI-Powered Web Applications",
-        "version": "1.2.0"
+        "version": "1.4.0"
     },
     "servers": [
         {
@@ -431,6 +431,205 @@
                 ]
             }
         },
+        "/api/v1/projects/stats": {
+            "get": {
+                "tags": [
+                    "Project Management"
+                ],
+                "summary": "Get Global Stats",
+                "description": "Get global statistics for all developer's projects with optional filtering",
+                "operationId": "get_global_stats_api_v1_projects_stats_get",
+                "security": [
+                    {
+                        "OAuth2PasswordBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Search"
+                        }
+                    },
+                    {
+                        "name": "is_active",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "boolean"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Is Active"
+                        }
+                    },
+                    {
+                        "name": "project_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string",
+                                    "format": "uuid"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Project Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/GlobalStatsResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/projects/users": {
+            "get": {
+                "tags": [
+                    "Project Management"
+                ],
+                "summary": "List All Users",
+                "description": "List all end users across all developer's projects with search and filtering",
+                "operationId": "list_all_users_api_v1_projects_users_get",
+                "security": [
+                    {
+                        "OAuth2PasswordBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "default": 1,
+                            "title": "Page"
+                        }
+                    },
+                    {
+                        "name": "page_size",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1,
+                            "default": 50,
+                            "title": "Page Size"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Search"
+                        }
+                    },
+                    {
+                        "name": "is_active",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "boolean"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Is Active"
+                        }
+                    },
+                    {
+                        "name": "project_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string",
+                                    "format": "uuid"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Project Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DeveloperUsersListResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/projects/{project_id}": {
             "get": {
                 "tags": [
@@ -563,6 +762,87 @@
                 "responses": {
                     "204": {
                         "description": "Successful Response"
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/projects/{project_id}/stats": {
+            "get": {
+                "tags": [
+                    "Project Management"
+                ],
+                "summary": "Get Project Stats",
+                "description": "Get statistics for a specific project with optional filtering",
+                "operationId": "get_project_stats_api_v1_projects__project_id__stats_get",
+                "security": [
+                    {
+                        "OAuth2PasswordBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "project_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "title": "Project Id"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Search"
+                        }
+                    },
+                    {
+                        "name": "is_active",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "boolean"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Is Active"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProjectStatsResponse"
+                                }
+                            }
+                        }
                     },
                     "422": {
                         "description": "Validation Error",
@@ -739,6 +1019,110 @@
                 }
             }
         },
+        "/api/v1/projects/{project_id}/users": {
+            "get": {
+                "tags": [
+                    "Project Management"
+                ],
+                "summary": "List Project Users",
+                "description": "List end users for a project with search and filtering",
+                "operationId": "list_project_users_api_v1_projects__project_id__users_get",
+                "security": [
+                    {
+                        "OAuth2PasswordBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "project_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "title": "Project Id"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "default": 1,
+                            "title": "Page"
+                        }
+                    },
+                    {
+                        "name": "page_size",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1,
+                            "default": 50,
+                            "title": "Page Size"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Search"
+                        }
+                    },
+                    {
+                        "name": "is_active",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "boolean"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Is Active"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProjectUsersListResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/generation/generate-v2": {
             "post": {
                 "tags": [
@@ -852,6 +1236,7 @@
                         "required": false,
                         "schema": {
                             "type": "integer",
+                            "minimum": 1,
                             "default": 1,
                             "title": "Page"
                         }
@@ -862,6 +1247,8 @@
                         "required": false,
                         "schema": {
                             "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1,
                             "default": 20,
                             "title": "Per Page"
                         }
@@ -1007,6 +1394,7 @@
                         "required": false,
                         "schema": {
                             "type": "integer",
+                            "minimum": 1,
                             "default": 1,
                             "title": "Page"
                         }
@@ -1017,6 +1405,8 @@
                         "required": false,
                         "schema": {
                             "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1,
                             "default": 20,
                             "title": "Per Page"
                         }
@@ -1350,6 +1740,25 @@
                 ],
                 "title": "Body_toggle_generation_public_v2_api_v1_generation_generations_v2__generation_id__public_patch"
             },
+            "CountStats": {
+                "properties": {
+                    "total": {
+                        "type": "integer",
+                        "title": "Total"
+                    },
+                    "active": {
+                        "type": "integer",
+                        "title": "Active"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "total",
+                    "active"
+                ],
+                "title": "CountStats",
+                "description": "Nested count statistics"
+            },
             "DatabaseHealthResponse": {
                 "properties": {
                     "status": {
@@ -1453,6 +1862,96 @@
                     "timestamp"
                 ],
                 "title": "DetailedHealthCheckResponse"
+            },
+            "DeveloperUserResponse": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Id"
+                    },
+                    "email": {
+                        "type": "string",
+                        "title": "Email"
+                    },
+                    "full_name": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Full Name"
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "title": "Is Active"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Created At"
+                    },
+                    "joined_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Joined At"
+                    },
+                    "project_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Project Id"
+                    },
+                    "project_name": {
+                        "type": "string",
+                        "title": "Project Name"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "id",
+                    "email",
+                    "full_name",
+                    "is_active",
+                    "created_at",
+                    "joined_at",
+                    "project_id",
+                    "project_name"
+                ],
+                "title": "DeveloperUserResponse"
+            },
+            "DeveloperUsersListResponse": {
+                "properties": {
+                    "users": {
+                        "items": {
+                            "$ref": "#/components/schemas/DeveloperUserResponse"
+                        },
+                        "type": "array",
+                        "title": "Users"
+                    },
+                    "total": {
+                        "type": "integer",
+                        "title": "Total"
+                    },
+                    "page": {
+                        "type": "integer",
+                        "title": "Page"
+                    },
+                    "page_size": {
+                        "type": "integer",
+                        "title": "Page Size"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "users",
+                    "total",
+                    "page",
+                    "page_size"
+                ],
+                "title": "DeveloperUsersListResponse"
             },
             "GenerationCreateResponse": {
                 "properties": {
@@ -1604,6 +2103,27 @@
                     "status"
                 ],
                 "title": "GenerationStatusResponse"
+            },
+            "GlobalStatsResponse": {
+                "properties": {
+                    "projects": {
+                        "$ref": "#/components/schemas/CountStats"
+                    },
+                    "users": {
+                        "$ref": "#/components/schemas/CountStats"
+                    },
+                    "api_keys": {
+                        "$ref": "#/components/schemas/CountStats"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "projects",
+                    "users",
+                    "api_keys"
+                ],
+                "title": "GlobalStatsResponse",
+                "description": "Global statistics for all developer's projects"
             },
             "HTTPValidationError": {
                 "properties": {
@@ -1783,6 +2303,23 @@
                 ],
                 "title": "ProjectResponse"
             },
+            "ProjectStatsResponse": {
+                "properties": {
+                    "users": {
+                        "$ref": "#/components/schemas/CountStats"
+                    },
+                    "api_keys": {
+                        "$ref": "#/components/schemas/CountStats"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "users",
+                    "api_keys"
+                ],
+                "title": "ProjectStatsResponse",
+                "description": "Statistics for a specific project"
+            },
             "ProjectUpdateRequest": {
                 "properties": {
                     "name": {
@@ -1814,6 +2351,85 @@
                 "type": "object",
                 "title": "ProjectUpdateRequest",
                 "description": "Request payload for updating a project"
+            },
+            "ProjectUserResponse": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Id"
+                    },
+                    "email": {
+                        "type": "string",
+                        "title": "Email"
+                    },
+                    "full_name": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Full Name"
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "title": "Is Active"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Created At"
+                    },
+                    "joined_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Joined At"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "id",
+                    "email",
+                    "full_name",
+                    "is_active",
+                    "created_at",
+                    "joined_at"
+                ],
+                "title": "ProjectUserResponse"
+            },
+            "ProjectUsersListResponse": {
+                "properties": {
+                    "users": {
+                        "items": {
+                            "$ref": "#/components/schemas/ProjectUserResponse"
+                        },
+                        "type": "array",
+                        "title": "Users"
+                    },
+                    "total": {
+                        "type": "integer",
+                        "title": "Total"
+                    },
+                    "page": {
+                        "type": "integer",
+                        "title": "Page"
+                    },
+                    "page_size": {
+                        "type": "integer",
+                        "title": "Page Size"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "users",
+                    "total",
+                    "page",
+                    "page_size"
+                ],
+                "title": "ProjectUsersListResponse"
             },
             "ProvisioningData": {
                 "properties": {
@@ -1986,6 +2602,40 @@
                                 "type": "null"
                             }
                         ]
+                    },
+                    "access_token": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Access Token"
+                    },
+                    "refresh_token": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Refresh Token"
+                    },
+                    "token_type": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Token Type",
+                        "default": "bearer"
                     }
                 },
                 "type": "object",
@@ -2157,6 +2807,17 @@
                         "minLength": 8,
                         "title": "Password",
                         "description": "Password must be at least 8 characters long"
+                    },
+                    "full_name": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Full Name"
                     }
                 },
                 "type": "object",

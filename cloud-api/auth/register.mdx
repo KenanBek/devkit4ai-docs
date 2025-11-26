@@ -13,7 +13,11 @@ Create a new user account with email and password.
 </ParamField>
 
 <ParamField body="password" type="string" required>
-  User's password
+  User's password (minimum 8 characters)
+</ParamField>
+
+<ParamField body="full_name" type="string">
+  User's full name (optional)
 </ParamField>
 
 ### Response
@@ -34,6 +38,17 @@ Create a new user account with email and password.
   Account creation timestamp
 </ResponseField>
 
-<ResponseField name="provisioning_data" type="object">
+<ResponseField name="provisioning" type="object">
   One-time provisioning data for developers (if applicable)
 </ResponseField>
+
+<ResponseField name="access_token" type="string">
+  JWT access token (optional, returned for certain registration flows)
+</ResponseField>
+
+<ResponseField name="refresh_token" type="string">
+  JWT refresh token (optional, returned for certain registration flows)
+</ResponseField>
+
+<ResponseField name="token_type" type="string">
+  Token type, typically "bearer" (optional)

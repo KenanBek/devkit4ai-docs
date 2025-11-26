@@ -1,0 +1,82 @@
+---
+title: "Get Project Stats"
+icon: "chart-pie"
+openapi: "GET /api/v1/projects/{project_id}/stats"
+---
+
+Retrieve statistics for a specific project. This endpoint provides counts for users and API keys within the specified project.
+
+### Headers
+
+<ParamField header="Authorization" type="string" required>
+  Bearer token for authentication
+</ParamField>
+
+### Path Parameters
+
+<ParamField path="project_id" type="string" required>
+  Project unique identifier (UUID format)
+</ParamField>
+
+### Query Parameters
+
+<ParamField query="search" type="string">
+  Optional search term to filter statistics
+</ParamField>
+
+<ParamField query="is_active" type="boolean">
+  Filter by active status
+</ParamField>
+
+### Response
+
+<ResponseField name="users" type="object" required>
+  User statistics for the project
+  <Expandable title="Count Stats">
+    <ResponseField name="total" type="integer" required>
+      Total number of end users in the project
+    </ResponseField>
+    <ResponseField name="active" type="integer" required>
+      Number of active end users in the project
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="api_keys" type="object" required>
+  API key statistics for the project
+  <Expandable title="Count Stats">
+    <ResponseField name="total" type="integer" required>
+      Total number of API keys for the project
+    </ResponseField>
+    <ResponseField name="active" type="integer" required>
+      Number of active API keys for the project
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl -X GET "https://api.devkit4ai.com/api/v1/projects/123e4567-e89b-12d3-a456-426614174000/stats" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+```
+
+```bash cURL with filters
+curl -X GET "https://api.devkit4ai.com/api/v1/projects/123e4567-e89b-12d3-a456-426614174000/stats?is_active=true" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+  "users": {
+    "total": 45,
+    "active": 38
+  },
+  "api_keys": {
+    "total": 3,
+    "active": 2
+  }
+}
+```
+</ResponseExample>

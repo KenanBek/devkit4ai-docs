@@ -1,5 +1,20 @@
 # Changelog
 
+### v1.2.0 [2025-11-26]
+
+#### Added
+- Added Cloud API documentation for new Project Management endpoints:
+  - `global-stats.mdx` - Get Global Stats across all developer projects
+  - `project-stats.mdx` - Get Project Stats for a specific project
+  - `list-all-users.mdx` - List All Users across all projects
+  - `list-project-users.mdx` - List Project Users for a specific project
+
+#### Changed
+- Updated `docs.json` navigation to include new Project Management API endpoints
+- Updated `cloud-api/generation/list.mdx` with pagination validation (min: 1, max: 100)
+- Updated `cloud-api/generation/public-list.mdx` with pagination validation (min: 1, max: 100)
+- Updated `cloud-api/auth/register.mdx` with `full_name` parameter and token response fields
+
 ### v1.1.0 [2025-11-17]
 
 #### Added

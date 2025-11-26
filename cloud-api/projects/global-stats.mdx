@@ -1,0 +1,96 @@
+---
+title: "Get Global Stats"
+icon: "chart-bar"
+openapi: "GET /api/v1/projects/stats"
+---
+
+Retrieve global statistics across all projects belonging to the authenticated developer. This endpoint provides aggregate counts for projects, users, and API keys.
+
+### Headers
+
+<ParamField header="Authorization" type="string" required>
+  Bearer token for authentication
+</ParamField>
+
+### Query Parameters
+
+<ParamField query="search" type="string">
+  Optional search term to filter statistics
+</ParamField>
+
+<ParamField query="is_active" type="boolean">
+  Filter by active status
+</ParamField>
+
+<ParamField query="project_id" type="string">
+  Filter statistics for a specific project (UUID format)
+</ParamField>
+
+### Response
+
+<ResponseField name="projects" type="object" required>
+  Project statistics
+  <Expandable title="Count Stats">
+    <ResponseField name="total" type="integer" required>
+      Total number of projects
+    </ResponseField>
+    <ResponseField name="active" type="integer" required>
+      Number of active projects
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="users" type="object" required>
+  User statistics across all projects
+  <Expandable title="Count Stats">
+    <ResponseField name="total" type="integer" required>
+      Total number of end users
+    </ResponseField>
+    <ResponseField name="active" type="integer" required>
+      Number of active end users
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="api_keys" type="object" required>
+  API key statistics
+  <Expandable title="Count Stats">
+    <ResponseField name="total" type="integer" required>
+      Total number of API keys
+    </ResponseField>
+    <ResponseField name="active" type="integer" required>
+      Number of active API keys
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl -X GET "https://api.devkit4ai.com/api/v1/projects/stats" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+```
+
+```bash cURL with filters
+curl -X GET "https://api.devkit4ai.com/api/v1/projects/stats?is_active=true" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+  "projects": {
+    "total": 5,
+    "active": 4
+  },
+  "users": {
+    "total": 150,
+    "active": 120
+  },
+  "api_keys": {
+    "total": 10,
+    "active": 8
+  }
+}
+```
+</ResponseExample>

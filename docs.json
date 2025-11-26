@@ -179,6 +179,10 @@
               "cloud-api/projects/get",
               "cloud-api/projects/update",
               "cloud-api/projects/delete",
+              "cloud-api/projects/global-stats",
+              "cloud-api/projects/project-stats",
+              "cloud-api/projects/list-all-users",
+              "cloud-api/projects/list-project-users",
               "cloud-api/projects/create-api-key",
               "cloud-api/projects/list-api-keys",
               "cloud-api/projects/revoke-api-key"
