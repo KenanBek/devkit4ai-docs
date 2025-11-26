@@ -1,6 +1,6 @@
 # Changelog
 
-### v1.0.0 [2025-11-17]
+### v1.1.0 [2025-11-17]
 
 #### Added
 - Added comprehensive "App Configuration" documentation page (`starter-kit/customization/app-config.mdx`) with detailed configuration references and examples
@@ -21,7 +21,7 @@
 - Implemented step-by-step checklist components for branding workflow
 - Organized color customization with Tailwind configuration examples
 
-### v1.1.0 [2025-11-7]
+### v1.0.0 [2025-11-7]
 
 #### Added
 Documentation website for Dev Kit for AI.
