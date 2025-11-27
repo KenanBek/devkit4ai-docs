@@ -4,10 +4,580 @@ description: "Reuse and extend the Radix-powered components that ship with the S
 icon: "puzzle"
 ---
 
-The `components/` directory mirrors the structure in the private `user-app`:
+The Starter Kit includes a comprehensive component library built on Radix UI primitives with Tailwind CSS styling. These components provide a consistent design system and accelerate development of your AI-powered application.
 
-- `components/ui/*` wraps Radix primitives with Tailwind variants for buttons, inputs, sheets, tables, and more.
-- `components/generic/*` provides marketing and layout blocks used across the example pages.
-- `components/project/*` contains header, footer, and pricing components tailored to the project-mode experience.
+## Component Organization
 
-Customization guidance here will include extension tips that remain compatible with the shared class-variance-authority patterns already in the repository.
+The `components/` directory follows a structured organization pattern:
+
+```
+components/
+├── ui/              # Base UI primitives (Radix UI wrappers)
+├── generic/         # Reusable cross-project components
+├── project/         # Project-specific chrome (header, footer)
+├── starter/         # Homepage marketing sections
+├── auth/            # Authentication-related components
+└── devkit/          # Development tooling components
+```
+
+## UI Components (`components/ui/`)
+
+Base UI primitives wrapped from Radix UI with Tailwind styling and class-variance-authority for variants.
+
+### Form Components
+
+**Button** (`button.tsx`)
+```typescript
+import { Button } from "@/components/ui/button";
+
+<Button variant="default">Click me</Button>
+<Button variant="destructive">Delete</Button>
+<Button variant="outline">Cancel</Button>
+<Button variant="ghost">Menu</Button>
+<Button variant="link">Learn more</Button>
+<Button size="sm">Small</Button>
+<Button size="lg">Large</Button>
+```
+
+**Variants:** default, destructive, outline, secondary, ghost, link  
+**Sizes:** default, sm, lg, icon
+
+**Input** (`input.tsx`)
+```typescript
+import { Input } from "@/components/ui/input";
+
+<Input type="email" placeholder="Email" />
+<Input type="password" placeholder="Password" />
+<Input disabled placeholder="Disabled" />
+```
+
+**Textarea** (`textarea.tsx`)
+```typescript
+import { Textarea } from "@/components/ui/textarea";
+
+<Textarea placeholder="Enter your message..." rows={4} />
+<Textarea disabled placeholder="Read-only content" />
+```
+
+**Checkbox** (`checkbox.tsx`)
+```typescript
+import { Checkbox } from "@/components/ui/checkbox";
+
+<Checkbox id="terms" />
+<label htmlFor="terms">Accept terms</label>
+```
+
+**Label** (`label.tsx`)
+```typescript
+import { Label } from "@/components/ui/label";
+
+<Label htmlFor="email">Email Address</Label>
+<Input id="email" type="email" />
+```
+
+**Select** (`select.tsx`)
+```typescript
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+<Select>
+  <SelectTrigger>
+    <SelectValue placeholder="Select option" />
+  </SelectTrigger>
+  <SelectContent>
+    <SelectItem value="option1">Option 1</SelectItem>
+    <SelectItem value="option2">Option 2</SelectItem>
+  </SelectContent>
+</Select>
+```
+
+### Layout Components
+
+**Card** (`card.tsx`)
+```typescript
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter,
+} from "@/components/ui/card";
+
+<Card>
+  <CardHeader>
+    <CardTitle>Card Title</CardTitle>
+    <CardDescription>Card description text</CardDescription>
+  </CardHeader>
+  <CardContent>
+    <p>Card content goes here</p>
+  </CardContent>
+  <CardFooter>
+    <Button>Action</Button>
+  </CardFooter>
+</Card>
+```
+
+**Separator** (`separator.tsx`)
+```typescript
+import { Separator } from "@/components/ui/separator";
+
+<Separator />
+<Separator orientation="vertical" />
+```
+
+**Sheet** (`sheet.tsx`)
+```typescript
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+
+<Sheet>
+  <SheetTrigger>Open</SheetTrigger>
+  <SheetContent>
+    <SheetHeader>
+      <SheetTitle>Sheet Title</SheetTitle>
+      <SheetDescription>Sheet description</SheetDescription>
+    </SheetHeader>
+  </SheetContent>
+</Sheet>
+```
+
+**Tabs** (`tabs.tsx`)
+```typescript
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+<Tabs defaultValue="tab1">
+  <TabsList>
+    <TabsTrigger value="tab1">Tab 1</TabsTrigger>
+    <TabsTrigger value="tab2">Tab 2</TabsTrigger>
+  </TabsList>
+  <TabsContent value="tab1">Content 1</TabsContent>
+  <TabsContent value="tab2">Content 2</TabsContent>
+</Tabs>
+```
+
+### Display Components
+
+**Avatar** (`avatar.tsx`)
+```typescript
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+
+<Avatar>
+  <AvatarImage src="/avatar.jpg" alt="User" />
+  <AvatarFallback>JD</AvatarFallback>
+</Avatar>
+```
+
+**Badge** (`badge.tsx`)
+```typescript
+import { Badge } from "@/components/ui/badge";
+
+<Badge>Default</Badge>
+<Badge variant="secondary">Secondary</Badge>
+<Badge variant="destructive">Error</Badge>
+<Badge variant="outline">Outline</Badge>
+```
+
+**Skeleton** (`skeleton.tsx`)
+```typescript
+import { Skeleton } from "@/components/ui/skeleton";
+
+<Skeleton className="h-4 w-[250px]" />
+<Skeleton className="h-12 w-12 rounded-full" />
+```
+
+**Table** (`table.tsx`)
+```typescript
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+
+<Table>
+  <TableHeader>
+    <TableRow>
+      <TableHead>Name</TableHead>
+      <TableHead>Email</TableHead>
+    </TableRow>
+  </TableHeader>
+  <TableBody>
+    <TableRow>
+      <TableCell>John Doe</TableCell>
+      <TableCell>john@example.com</TableCell>
+    </TableRow>
+  </TableBody>
+</Table>
+```
+
+### Interactive Components
+
+**Dropdown Menu** (`dropdown-menu.tsx`)
+```typescript
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
+<DropdownMenu>
+  <DropdownMenuTrigger>Menu</DropdownMenuTrigger>
+  <DropdownMenuContent>
+    <DropdownMenuItem>Profile</DropdownMenuItem>
+    <DropdownMenuItem>Settings</DropdownMenuItem>
+  </DropdownMenuContent>
+</DropdownMenu>
+```
+
+**Tooltip** (`tooltip.tsx`)
+```typescript
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+
+<TooltipProvider>
+  <Tooltip>
+    <TooltipTrigger>Hover me</TooltipTrigger>
+    <TooltipContent>
+      <p>Tooltip content</p>
+    </TooltipContent>
+  </Tooltip>
+</TooltipProvider>
+```
+
+**Alert Dialog** (`alert-dialog.tsx`)
+```typescript
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+
+<AlertDialog>
+  <AlertDialogTrigger>Delete</AlertDialogTrigger>
+  <AlertDialogContent>
+    <AlertDialogHeader>
+      <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+      <AlertDialogDescription>
+        This action cannot be undone.
+      </AlertDialogDescription>
+    </AlertDialogHeader>
+    <AlertDialogFooter>
+      <AlertDialogCancel>Cancel</AlertDialogCancel>
+      <AlertDialogAction>Continue</AlertDialogAction>
+    </AlertDialogFooter>
+  </AlertDialogContent>
+</AlertDialog>
+```
+
+## Generic Components (`components/generic/`)
+
+Reusable cross-project components designed for portability:
+
+**CodeBlock** (`code-block.tsx`) - Syntax-highlighted code display
+**CategoryGrid** (`category-grid.tsx`) - Grid layout for categories
+**CtaButton** (`cta-button.tsx`) - Call-to-action button
+**FloatingNav** (`floating-nav.tsx`) - Floating navigation bar
+**InfoBox** (`info-box.tsx`) - Information display box
+**PageHeader** (`page-header.tsx`) - Consistent page headers
+**ScrollIndicator** (`scroll-indicator.tsx`) - Scroll progress indicator
+**ThemeToggle** (`theme-toggle.tsx`) - Light/dark mode switcher
+**ToC** (`toc.tsx`) - Table of contents generator
+
+## Project Components (`components/project/`)
+
+Project-specific chrome components:
+
+**Header** (`header.tsx`) - Main navigation header with mobile menu, theme switcher, CTA button
+**Footer** (`footer.tsx`) - Site footer with links and copyright
+**Pricing** (`pricing/`) - Pricing table components
+
+## Shared Components
+
+**FormMessage** (`form-message.tsx`) - Form validation message display
+```typescript
+import FormMessage from "@/components/form-message";
+
+<FormMessage message={{ success: "Saved!", error: null }} />
+<FormMessage message={{ success: null, error: "Invalid input" }} />
+```
+
+**SubmitButton** (`submit-button.tsx`) - Form submit button with loading state
+```typescript
+import { SubmitButton } from "@/components/submit-button";
+
+<form>
+  <SubmitButton>Submit</SubmitButton>
+  <SubmitButton pendingText="Saving...">Save</SubmitButton>
+</form>
+```
+
+**ThemeSwitcher** (`theme-switcher.tsx`) - Theme selection dropdown
+```typescript
+import { ThemeSwitcher } from "@/components/theme-switcher";
+
+<ThemeSwitcher />
+```
+
+## Styling System
+
+### Tailwind CSS
+
+All components use Tailwind utility classes:
+
+```typescript
+<div className="flex items-center gap-4 p-4 rounded-lg border">
+  <Avatar />
+  <div className="flex-1">
+    <p className="font-medium">User Name</p>
+    <p className="text-sm text-muted-foreground">user@example.com</p>
+  </div>
+</div>
+```
+
+### Dark Mode Support
+
+Components automatically support dark mode via `dark:` prefix:
+
+```typescript
+<Card className="bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800">
+  <CardContent className="text-gray-900 dark:text-gray-100">
+    Content with dark mode support
+  </CardContent>
+</Card>
+```
+
+### Class Variance Authority
+
+Component variants managed with `class-variance-authority`:
+
+```typescript
+// button.tsx
+import { cva } from "class-variance-authority";
+
+const buttonVariants = cva(
+  "inline-flex items-center justify-center rounded-md",
+  {
+    variants: {
+      variant: {
+        default: "bg-primary text-primary-foreground hover:bg-primary/90",
+        destructive: "bg-destructive text-destructive-foreground",
+        outline: "border border-input bg-background hover:bg-accent",
+      },
+      size: {
+        default: "h-10 px-4 py-2",
+        sm: "h-9 rounded-md px-3",
+        lg: "h-11 rounded-md px-8",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+    },
+  }
+);
+```
+
+## Utility Functions
+
+### cn() Helper
+
+Conditional class merging utility:
+
+```typescript
+import { cn } from "@/lib/utils";
+
+<div className={cn(
+  "base-classes",
+  condition && "conditional-class",
+  variant === "primary" && "primary-class"
+)}>
+  Content
+</div>
+```
+
+## Component Dependencies
+
+**Radix UI Packages:**
+- @radix-ui/react-alert-dialog
+- @radix-ui/react-avatar
+- @radix-ui/react-checkbox
+- @radix-ui/react-dropdown-menu
+- @radix-ui/react-label
+- @radix-ui/react-select
+- @radix-ui/react-separator
+- @radix-ui/react-slot
+- @radix-ui/react-tabs
+- @radix-ui/react-tooltip
+
+**Styling:**
+- tailwindcss
+- class-variance-authority
+- tailwind-merge
+- clsx
+
+**Icons:**
+- lucide-react
+
+## Customization Guidelines
+
+### Extending Components
+
+Create custom variants by extending existing components:
+
+```typescript
+// Custom button variant
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+
+export function CustomButton({ className, ...props }) {
+  return (
+    <Button
+      className={cn("bg-gradient-to-r from-blue-500 to-purple-600", className)}
+      {...props}
+    />
+  );
+}
+```
+
+### Creating New Components
+
+Follow the established patterns:
+
+```typescript
+// components/ui/custom-component.tsx
+import * as React from "react";
+import { cn } from "@/lib/utils";
+
+export interface CustomComponentProps
+  extends React.HTMLAttributes<HTMLDivElement> {
+  variant?: "default" | "special";
+}
+
+const CustomComponent = React.forwardRef<HTMLDivElement, CustomComponentProps>(
+  ({ className, variant = "default", ...props }, ref) => {
+    return (
+      <div
+        ref={ref}
+        className={cn(
+          "base-styles",
+          variant === "special" && "special-styles",
+          className
+        )}
+        {...props}
+      />
+    );
+  }
+);
+CustomComponent.displayName = "CustomComponent";
+
+export { CustomComponent };
+```
+
+### Theming
+
+Customize colors in `tailwind.config.ts`:
+
+```typescript
+theme: {
+  extend: {
+    colors: {
+      border: "hsl(var(--border))",
+      input: "hsl(var(--input))",
+      ring: "hsl(var(--ring))",
+      background: "hsl(var(--background))",
+      foreground: "hsl(var(--foreground))",
+      primary: {
+        DEFAULT: "hsl(var(--primary))",
+        foreground: "hsl(var(--primary-foreground))",
+      },
+      // ... more colors
+    },
+  },
+}
+```
+
+Define CSS variables in `globals.css`:
+
+```css
+:root {
+  --background: 0 0% 100%;
+  --foreground: 222.2 84% 4.9%;
+  --primary: 142 86% 28%;
+  /* ... more variables */
+}
+
+.dark {
+  --background: 222.2 84% 4.9%;
+  --foreground: 210 40% 98%;
+  --primary: 142 76% 36%;
+  /* ... more variables */
+}
+```
+
+## Best Practices
+
+<Tip>
+Always use the `cn()` utility when combining class names to ensure proper Tailwind class merging.
+</Tip>
+
+**Component Usage:**
+1. Import components from `@/components/ui/*` for base primitives
+2. Use semantic HTML elements where appropriate
+3. Provide accessible labels and ARIA attributes
+4. Test components in both light and dark modes
+5. Keep component props minimal and focused
+
+**Performance:**
+1. Use `React.forwardRef` for components that need refs
+2. Memoize expensive computations with `useMemo`
+3. Avoid inline function definitions in render
+4. Use `React.memo` for pure components
+
+**Accessibility:**
+1. Include proper ARIA labels
+2. Ensure keyboard navigation works
+3. Test with screen readers
+4. Maintain sufficient color contrast
+5. Provide focus indicators
+
+## Related Pages
+
+<CardGroup cols={2}>
+  <Card title="Branding & Styling" icon="paintbrush" href="/starter-kit/customization/branding-styling">
+    Customize colors, fonts, and visual identity
+  </Card>
+  <Card title="Theme Configuration" icon="palette" href="/starter-kit/customization/theme-config">
+    Configure dark mode and theme settings
+  </Card>
+  <Card title="Custom Pages" icon="file-plus" href="/starter-kit/customization/custom-pages">
+    Create new pages using components
+  </Card>
+  <Card title="App Configuration" icon="settings" href="/starter-kit/customization/app-config">
+    Configure app-wide settings
+  </Card>
+</CardGroup>

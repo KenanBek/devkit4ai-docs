@@ -59,7 +59,8 @@
               "starter-kit/features/ai-generation",
               "starter-kit/features/user-dashboard",
               "starter-kit/features/profile-management",
-              "starter-kit/features/project-settings"
+              "starter-kit/features/project-settings",
+              "starter-kit/features/legal-pages"
             ]
           },
           {
@@ -108,6 +109,7 @@
             "group": "Project Management",
             "pages": [
               "cloud-admin/projects/creating-projects",
+              "cloud-admin/projects/project-details",
               "cloud-admin/projects/project-settings",
               "cloud-admin/projects/managing-multiple-projects",
               "cloud-admin/projects/lifecycle"

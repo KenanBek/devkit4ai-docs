@@ -1,11 +1,226 @@
 ---
 title: "Console Statistics"
-description: "Interpret the metrics displayed on the Cloud Admin dashboard."
+description: "Monitor your projects, API keys, and users with real-time dashboard metrics."
 icon: "pie-chart"
 ---
 
-Stats cards on the console home page render counts for projects, API keys, and end users. They rely on the data returned by `fetchProjects()` and forthcoming endpoints that expose user totals.
+The Cloud Admin console dashboard at `/console` displays real-time statistics about your projects, API keys, end users, and system status. These metrics help you monitor platform usage and growth at a glance.
 
-- Counts update in real time because the server actions execute on every request (no caching) until we add streaming updates.
-- Icons and labels align with the design system shared across the Starter Kit, keeping the UX consistent.
-- Documentation here will expand with additional metrics (generation usage, active users) as soon as those widgets ship.
+(((REPLACE_THIS_WITH_IMAGE: console-dashboard-stats-overview.png: Screenshot of console dashboard showing stats cards)))
+
+## Statistics Overview
+
+The dashboard displays four primary statistics cards:
+
+### Projects Count
+
+Shows the total number of projects you've created. This includes both active and inactive projects.
+
+- **Icon**: Folder icon
+- **Data Source**: Fetched from `/api/v1/projects` endpoint
+- **Updates**: Real-time on every page load
+- **Calculation**: Count of all projects owned by your developer account
+
+### API Keys Count
+
+Displays the total number of API keys across all your projects. This helps you track credential distribution.
+
+- **Icon**: Key icon
+- **Data Source**: Aggregated from project API key endpoints
+- **Updates**: Real-time on every page load
+- **Calculation**: Sum of API keys from all projects via `/api/v1/projects/{project_id}/api-keys`
+
+### End Users Count
+
+Shows the total number of end users who have registered through your project applications.
+
+- **Icon**: Users icon
+- **Data Source**: Fetched from `/api/v1/users` endpoint
+- **Updates**: Real-time on every page load
+- **Calculation**: Count of all users associated with your projects
+
+### Status Indicator
+
+Displays the operational status of your account and projects.
+
+- **Icon**: Activity icon
+- **Values**: "Active", "Warning", "Error"
+- **Indication**: Overall health of your developer account and projects
+
+(((REPLACE_THIS_WITH_IMAGE: console-stats-cards-detail.png: Close-up of individual stats cards showing icons, values, and labels)))
+
+## Stats Card Components
+
+Each statistics card follows a consistent design pattern:
+
+```typescript
+interface StatsCardProps {
+  title: string;        // "Projects", "API Keys", "End Users"
+  value: number;        // Numeric count
+  description: string;  // "Total projects created"
+  icon: ReactNode;      // Lucide icon component
+}
+```
+
+The `StatsCard` component displays:
+- Large numeric value (primary metric)
+- Descriptive title
+- Icon visual indicator
+- Supporting description text
+
+## Data Fetching
+
+Statistics are fetched using server actions on every console page load:
+
+```typescript
+// Server actions used
+fetchProjects()        // Returns Project[]
+fetchProjectApiKeys()  // Returns ApiKey[] per project
+fetchUsers()          // Returns User[] (upcoming)
+```
+
+### API Endpoints
+
+**Projects Endpoint:**
+```bash
+GET /api/v1/projects
+Headers:
+  - Authorization: Bearer <jwt_token>
+  - X-User-Role: developer
+  - X-Developer-Key: <developer_key>
+```
+
+**API Keys Endpoint:**
+```bash
+GET /api/v1/projects/{project_id}/api-keys
+Headers:
+  - Authorization: Bearer <jwt_token>
+  - X-User-Role: developer
+  - X-Developer-Key: <developer_key>
+```
+
+**Users Endpoint:**
+```bash
+GET /api/v1/users
+Headers:
+  - Authorization: Bearer <jwt_token>
+  - X-User-Role: developer
+  - X-Developer-Key: <developer_key>
+```
+
+## Real-Time Updates
+
+<Note>
+Statistics update on every page load. No caching is currently implemented, ensuring you always see the latest data.
+</Note>
+
+The current implementation:
+- Executes server actions on every request
+- No client-side caching layer
+- No streaming updates or WebSocket connections
+- Refresh the page to see updated statistics
+
+Future enhancements will include:
+- Automatic refresh intervals
+- Real-time streaming updates via Server-Sent Events
+- Historical trend graphs
+- Time-range filtering
+
+## Understanding Your Metrics
+
+### Projects Growth
+
+Track how many projects you've created over time. A growing project count indicates:
+- Active development of new applications
+- Testing and experimentation
+- Multiple product initiatives
+
+### API Keys Distribution
+
+Monitor API key count to understand:
+- How many unique credentials are in circulation
+- Potential security exposure surface
+- Need for key rotation or consolidation
+
+### User Adoption
+
+End user count reflects:
+- Registration rate through your applications
+- Product adoption and growth
+- Marketing campaign effectiveness
+
+<Tip>
+Compare your end users count across different projects to identify your most successful applications.
+</Tip>
+
+## Additional Dashboard Sections
+
+Beyond statistics cards, the console dashboard includes:
+
+### Getting Started Section
+
+Displays setup guidance for new developers. Automatically hides once you've:
+- Created your first project
+- Generated an API key
+- Deployed a project application
+
+### Quick Actions Section
+
+Provides one-click access to common tasks:
+- Create new project
+- Generate API key
+- View all users
+- Access documentation
+
+(((REPLACE_THIS_WITH_IMAGE: console-quick-actions-section.png: Screenshot of Quick Actions section with action buttons)))
+
+### Recent Activity
+
+<Info>
+Recent activity feed is planned for a future release. It will show recent project updates, API key generation, and user registrations.
+</Info>
+
+## Design System Consistency
+
+Statistics cards use the shared design system from the Starter Kit:
+
+- **Typography**: Consistent font sizes and weights
+- **Icons**: Lucide icon library
+- **Colors**: Tailwind utility classes with dark mode support
+- **Spacing**: Standardized padding and margins
+- **Responsive**: Mobile-first design that adapts to screen size
+
+## Troubleshooting
+
+### Statistics Show Zero
+
+If all statistics show zero values:
+1. Verify your developer key is correctly configured
+2. Check that you're logged in with the correct account
+3. Ensure projects have been created successfully
+4. Review browser console for API errors
+
+### Incorrect Counts
+
+If statistics don't match expectations:
+1. Refresh the page to fetch latest data
+2. Verify RBAC permissions are correctly configured
+3. Check that project associations are properly recorded
+4. Review backend logs for projection errors
+
+## Related Pages
+
+<CardGroup cols={2}>
+  <Card title="Dashboard Overview" icon="layout-dashboard" href="/cloud-admin/dashboard-overview">
+    Complete guide to the console dashboard
+  </Card>
+  <Card title="Quick Actions" icon="bolt" href="/cloud-admin/console/quick-actions">
+    Learn about quick action shortcuts
+  </Card>
+  <Card title="Viewing End Users" icon="users" href="/cloud-admin/users/viewing-end-users">
+    Detailed user management interface
+  </Card>
+  <Card title="Project Management" icon="folder" href="/cloud-admin/projects/creating-projects">
+    Create and manage projects
+  </Card>
+</CardGroup>

@@ -1,13 +1,398 @@
 ---
 title: "Registration and Login"
-description: "See how the Starter Kit delegates auth flows to the Cloud API."
+description: "Implement secure user authentication with role-based registration flows."
 icon: "user-plus"
 ---
 
-The Starter Kit reuses the shared server actions defined in `starter-kit/app/actions.ts`:
+The Starter Kit provides a complete authentication system that delegates to the Cloud API, supporting both end-user and developer registration flows with JWT-based session management.
 
-- `backendLoginAction` posts to `/api/v1/auth/login`, stores JWT cookies, and redirects based on the resolved role.
-- Registration actions remain available for compatibility but, in project mode, redirect users to Cloud Admin for developer sign-up.
-- Error handling and rate-limit messaging mirror the server action implementation, so UI messaging aligns with backend behavior.
+## Authentication Architecture
 
-Upcoming sections document role handling, JWT lifetimes, and guarded routes that depend on these flows.
+The Starter Kit uses server actions defined in `app/actions.ts` to handle all authentication operations:
+
+- **Server-Side Processing**: All auth logic runs on the server to protect sensitive credentials
+- **JWT Token Storage**: Access and refresh tokens stored in secure httpOnly cookies
+- **Role-Based Flows**: Separate registration paths for developers and end users
+- **Automatic Redirects**: Users directed to appropriate dashboards based on their role
+
+(((REPLACE_THIS_WITH_IMAGE: auth-flow-diagram.png: Diagram showing authentication flow from registration to JWT storage to dashboard)))
+
+## Registration Flows
+
+### Unified Registration Endpoint
+
+The Starter Kit uses a unified `/register` page that supports multiple user types:
+
+```typescript
+// Registration form data
+interface RegistrationFormData {
+  email: string;
+  password: string;
+  full_name?: string;
+  role?: "developer" | "end_user"; // Defaults to "developer"
+}
+```
+
+### End-User Registration
+
+End users register through your deployed project-mode application:
+
+1. User navigates to `/register` (or custom registration page)
+2. Submits email, password, and optional full name
+3. `backendRegisterAction()` sends request with `role: "end_user"`
+4. Cloud API creates user account and returns JWT tokens
+5. Tokens automatically stored in httpOnly cookies
+6. User redirected to `/dashboard` as authenticated end user
+
+**Server Action:**
+```typescript
+backendRegisterAction(formData: FormData)
+  -> POST /api/v1/auth/register
+  -> Headers: X-User-Role: end_user, X-Developer-Key, X-Project-ID, X-API-Key
+  -> Response: { user, access_token, refresh_token }
+  -> Stores JWT cookies
+  -> Redirects to /dashboard
+```
+
+(((REPLACE_THIS_WITH_IMAGE: end-user-registration-form.png: Screenshot of end-user registration form)))
+
+### Developer Registration
+
+<Note>
+Developer registration is typically handled through the Cloud Admin console at devkit4ai.com or vibecoding.ad. The Starter Kit includes developer registration support for compatibility but redirects to Cloud Admin in project mode.
+</Note>
+
+Developer registration flow (when enabled):
+
+1. Developer navigates to `/register/developer`
+2. Submits email and password
+3. `backendRegisterAction()` sends request with `role: "developer"`
+4. Cloud API creates developer account with operator key validation
+5. Returns provisioning bundle (developer_key, project_id, api_key)
+6. Redirects to success page displaying credentials
+
+**Server Action:**
+```typescript
+backendRegisterAction(formData: FormData)
+  -> POST /api/v1/auth/register
+  -> Headers: X-User-Role: developer, X-Operator-Key
+  -> Response: { user, access_token, refresh_token, provisioning }
+  -> Stores JWT cookies + provisioning bundle
+  -> Redirects to /register/developer/success
+```
+
+## Login Flow
+
+### Universal Login
+
+The login page handles all user types with role-based redirects:
+
+```typescript
+backendLoginAction(formData: FormData)
+  -> POST /api/v1/auth/login
+  -> Response: { access_token, refresh_token }
+  -> Fetch user: GET /api/v1/auth/me
+  -> Store JWT cookies
+  -> Redirect based on role:
+     - platform_operator -> /portal
+     - developer -> /console
+     - end_user -> /dashboard
+```
+
+**Login Form Features:**
+- Email and password validation
+- Remember return URL for post-login redirect
+- Error message display from query params
+- Link to registration page
+- "Forgot password" support (coming soon)
+
+(((REPLACE_THIS_WITH_IMAGE: login-form-interface.png: Screenshot of login form with email and password fields)))
+
+### Return URL Handling
+
+The login flow preserves the user's intended destination:
+
+```typescript
+// URL: /login?returnUrl=/dashboard/settings
+// After successful login, user redirected to /dashboard/settings
+```
+
+**Security:**
+- Return URLs validated via `sanitizeReturnUrl()` function
+- Only same-origin relative paths allowed
+- Rejects double-slash prefixes to prevent open redirects
+- Maximum 2048 characters to prevent abuse
+
+## JWT Token Management
+
+### Token Storage
+
+Tokens stored in secure httpOnly cookies:
+
+```typescript
+// Access token
+Cookie: devkit4ai-token
+Expiry: 30 minutes
+Flags: httpOnly, secure (production), sameSite=lax
+
+// Refresh token
+Cookie: devkit4ai-refresh-token
+Expiry: 7 days
+Flags: httpOnly, secure (production), sameSite=lax
+```
+
+### Token Lifecycle
+
+1. **Registration/Login**: Both tokens issued and stored
+2. **API Requests**: Access token sent in Authorization header
+3. **Token Expiry**: Access token expires after 30 minutes
+4. **Token Refresh**: Use refresh token to obtain new access token (manual implementation required)
+5. **Logout**: Both cookies deleted, user redirected to login
+
+### Accessing Current User
+
+Server components can fetch the current user:
+
+```typescript
+import { getCurrentUser } from "@/lib/auth-server";
+
+// In Server Component
+const user = await getCurrentUser();
+if (user) {
+  console.log(user.email, user.role, user.is_active);
+}
+```
+
+Client components use React context:
+
+```typescript
+import { useCurrentUser, useIsAuthenticated } from "@/lib/auth-context";
+
+// In Client Component
+const user = useCurrentUser();
+const isAuthenticated = useIsAuthenticated();
+```
+
+## Protected Routes
+
+### Server-Side Protection
+
+Use `requireAuth()` to protect entire pages:
+
+```typescript
+// app/dashboard/page.tsx
+import { requireAuth } from "@/lib/auth-server";
+
+export default async function DashboardPage() {
+  const user = await requireAuth();
+  // Page only renders if authenticated
+  return <div>Welcome {user.email}</div>;
+}
+```
+
+### Role-Based Protection
+
+Restrict access by role:
+
+```typescript
+import { requireRole } from "@/lib/auth-server";
+
+export default async function AdminPage() {
+  const user = await requireRole(["platform_operator", "developer"]);
+  // Only operators and developers can access
+  return <div>Admin Panel</div>;
+}
+```
+
+### Client-Side Protection
+
+Use hooks for conditional rendering:
+
+```typescript
+import { useRequireRole, useHasRole } from "@/lib/auth-context";
+
+function SettingsButton() {
+  const user = useRequireRole(["developer"]);
+  if (!user) return null; // Hide for non-developers
+  
+  return <button>Settings</button>;
+}
+```
+
+## Password Requirements
+
+All passwords must meet these criteria:
+
+- Minimum 8 characters
+- At least one uppercase letter (A-Z)
+- At least one lowercase letter (a-z)
+- At least one digit (0-9)
+
+Validation performed on both client and server:
+
+```typescript
+const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+if (!passwordRegex.test(password)) {
+  return { error: "Password must meet requirements" };
+}
+```
+
+## Role-Based Headers
+
+All API requests include role-specific headers:
+
+**End User Requests:**
+```bash
+X-User-Role: end_user
+X-Developer-Key: <developer_key>
+X-Project-ID: <project_id>
+X-API-Key: <project_api_key>
+Authorization: Bearer <jwt_token>
+```
+
+**Developer Requests:**
+```bash
+X-User-Role: developer
+X-Developer-Key: <developer_key>
+Authorization: Bearer <jwt_token>
+```
+
+## Error Handling
+
+### Registration Errors
+
+Common registration error scenarios:
+
+| Error | Cause | Resolution |
+|-------|-------|------------|
+| "Email already registered" | Duplicate account | Use existing account or password reset |
+| "Invalid password format" | Password doesn't meet requirements | Follow password criteria |
+| "Network error" | API unreachable | Check backend URL configuration |
+| "Deployment mode mismatch" | Wrong mode for registration type | Verify DEVKIT4AI_MODE setting |
+
+### Login Errors
+
+Common login error scenarios:
+
+| Error | Cause | Resolution |
+|-------|-------|------------|
+| "Invalid credentials" | Wrong email/password | Check credentials or reset password |
+| "Account not activated" | Email not verified | Check email for verification link |
+| "Session expired" | JWT token expired | Log in again |
+| "Unauthorized role" | Wrong deployment mode | Verify environment configuration |
+
+## Provisioning Bundle
+
+<Info>
+Provisioning bundles are only used for developer registration. End users do not receive provisioning data.
+</Info>
+
+After developer registration, a provisioning bundle is stored temporarily:
+
+```typescript
+interface ProvisioningData {
+  project_id: string;      // UUID of initial project
+  developer_key: string;   // Developer API key
+  api_key: string;         // Project API key
+}
+```
+
+**Storage:**
+- Stored in httpOnly cookie: `devkit4ai-provisioning`
+- Expiry: 24 hours
+- Consumed once on success page
+
+**Display:**
+The `/register/developer/success` page shows these credentials once. Users must copy them before leaving the page.
+
+(((REPLACE_THIS_WITH_IMAGE: developer-provisioning-credentials.png: Screenshot of provisioning credentials display page)))
+
+## Logout Flow
+
+Sign out action clears all auth state:
+
+```typescript
+import { signOutAction } from "@/app/actions";
+
+// In form or button
+<form action={signOutAction}>
+  <button type="submit">Sign Out</button>
+</form>
+```
+
+**Process:**
+1. Delete `devkit4ai-token` cookie
+2. Delete `devkit4ai-refresh-token` cookie
+3. Delete `devkit4ai-provisioning` cookie (if exists)
+4. Redirect to `/login`
+
+## Security Best Practices
+
+<Warning>
+Never expose JWT tokens or API keys in client-side JavaScript. Always use httpOnly cookies for token storage.
+</Warning>
+
+**Recommendations:**
+1. **Use HTTPS in Production**: Ensure secure flag on cookies
+2. **Implement CSRF Protection**: Use sameSite=lax cookie flag
+3. **Validate Return URLs**: Prevent open redirect vulnerabilities
+4. **Rate Limit Auth Endpoints**: Prevent brute force attacks (backend)
+5. **Monitor Failed Logins**: Track suspicious activity
+6. **Rotate API Keys Regularly**: Minimize exposure window
+
+## Customization
+
+### Custom Registration Fields
+
+Add additional fields to registration form:
+
+```typescript
+// Extend form data
+interface CustomRegistrationData extends RegistrationFormData {
+  company_name?: string;
+  phone_number?: string;
+}
+
+// Update backendRegisterAction to include new fields
+```
+
+### Custom Redirect Logic
+
+Modify post-login redirects:
+
+```typescript
+// lib/auth-server.ts
+function getPostLoginRedirect(role: string): string {
+  switch (role) {
+    case "end_user":
+      return "/app/dashboard";
+    case "developer":
+      return "/developer/projects";
+    default:
+      return "/";
+  }
+}
+```
+
+### Email Verification
+
+<Note>
+Email verification is planned for a future release. The infrastructure is in place with `is_active` flags, but verification emails are not yet sent.
+</Note>
+
+## Related Pages
+
+<CardGroup cols={2}>
+  <Card title="Protected Routes" icon="shield" href="/starter-kit/auth/protected-routes">
+    Secure pages with authentication guards
+  </Card>
+  <Card title="Role-Based Access" icon="users-gear" href="/starter-kit/auth/role-based-access">
+    Implement role-based permissions
+  </Card>
+  <Card title="JWT Flow" icon="key" href="/starter-kit/auth/jwt-flow">
+    Understand token lifecycle
+  </Card>
+  <Card title="User Dashboard" icon="layout-dashboard" href="/starter-kit/features/user-dashboard">
+    Build authenticated user experiences
+  </Card>
+</CardGroup>

@@ -1,5 +1,28 @@
 # Changelog
 
+### v1.3.0 [2025-11-27]
+
+#### Added
+- Added comprehensive Cloud Admin user management documentation (`cloud-admin/users/viewing-end-users.mdx`) covering `/console/users` page with search, filtering, pagination, and user management features
+- Added detailed console statistics documentation (`cloud-admin/console/statistics.mdx`) explaining dashboard metrics, stats cards, data sources, and real-time updates
+- Added extensive registration and login documentation (`starter-kit/auth/registration-login.mdx`) covering unified registration flow, role-based authentication, JWT token management, and security patterns
+- Added project details page documentation (`cloud-admin/projects/project-details.mdx`) covering tabbed interface with Overview, API Keys, Members, and Settings tabs
+- Added comprehensive component library reference (`starter-kit/customization/component-library.mdx`) documenting all Radix UI components including new AlertDialog, Select, Textarea, and Tooltip components with usage examples
+- Added legal pages documentation (`starter-kit/features/legal-pages.mdx`) covering Terms of Service and Privacy Policy templates with customization guidance and compliance checklists
+- Added SEO-friendly image placeholders across all documentation pages with descriptive filenames
+
+#### Changed
+- Updated `docs.json` navigation to include new project details page under Cloud Admin > Project Management
+- Updated `docs.json` navigation to include legal pages documentation under Starter Kit > Features & Capabilities
+- Enhanced all documentation pages with image placeholders using format: `(((REPLACE_THIS_WITH_IMAGE: filename.png: description)))`
+- Improved documentation structure with comprehensive cross-references and related pages sections
+
+#### Documentation Coverage
+- Documented user-app v1.7.0 features: project detail pages, end-user management, AlertDialog/Select/Textarea components
+- Documented user-app v1.6.0 features: role-based registration flows, legal pages (/terms, /privacy), JWT token handling
+- Documented starter-kit v1.6.0-v1.7.0 features: unified registration flow, new UI components, role-specific provisioning
+- Addressed documentation gaps from backend-api v1.3.0-v1.4.0 releases
+
 ### v1.2.0 [2025-11-26]
 
 #### Added

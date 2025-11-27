@@ -1,0 +1,406 @@
+---
+title: "Legal Pages"
+description: "Add terms of service and privacy policy pages to your application."
+icon: "file-contract"
+---
+
+The Starter Kit includes pre-built templates for legal pages required for most SaaS applications: Terms of Service and Privacy Policy. These pages provide a foundation that you should customize with your company's specific terms and policies.
+
+## Available Legal Pages
+
+### Terms of Service
+
+Located at `/terms`, this page outlines the terms and conditions for using your application.
+
+**Access:** `/terms`  
+**Template:** `app/terms/page.tsx`
+
+(((REPLACE_THIS_WITH_IMAGE: terms-of-service-page.png: Screenshot of Terms of Service page)))
+
+**Template Content:**
+- Service description and scope
+- User responsibilities and acceptable use
+- Intellectual property rights
+- Limitation of liability
+- Termination conditions
+- Governing law
+
+<Warning>
+The provided terms template is for reference only and may not be suitable for your specific business. Consult with legal counsel to create terms appropriate for your service.
+</Warning>
+
+### Privacy Policy
+
+Located at `/privacy`, this page explains how you collect, use, and protect user data.
+
+**Access:** `/privacy`  
+**Template:** `app/privacy/page.tsx`
+
+(((REPLACE_THIS_WITH_IMAGE: privacy-policy-page.png: Screenshot of Privacy Policy page)))
+
+**Template Content:**
+- Information collection practices
+- Data usage and processing
+- Cookie policy
+- Third-party services
+- Data security measures
+- User rights (GDPR, CCPA compliance considerations)
+- Contact information for privacy inquiries
+
+<Warning>
+Privacy laws vary by jurisdiction. The template is a starting point but must be reviewed and customized by legal counsel to ensure compliance with applicable laws (GDPR, CCPA, etc.).
+</Warning>
+
+## Page Structure
+
+Both legal pages follow a consistent structure:
+
+```typescript
+// app/terms/page.tsx or app/privacy/page.tsx
+export default function LegalPage() {
+  return (
+    <div className="container mx-auto max-w-4xl py-12 px-4">
+      <h1 className="text-4xl font-bold mb-6">Page Title</h1>
+      <p className="text-muted-foreground mb-8">
+        Last updated: [Date]
+      </p>
+      
+      {/* Legal content sections */}
+      <section className="mb-8">
+        <h2 className="text-2xl font-semibold mb-4">Section Title</h2>
+        <p>Section content...</p>
+      </section>
+      
+      {/* More sections */}
+    </div>
+  );
+}
+```
+
+**Design Features:**
+- Centered container with max width for readability
+- Clear typography hierarchy (H1 → H6)
+- Consistent spacing between sections
+- Muted text for metadata (dates, notes)
+- Responsive layout for mobile devices
+
+## Customization
+
+### Update Company Information
+
+Replace placeholder text with your company details:
+
+```typescript
+// Find and replace:
+"[Your Company Name]" → "Acme Inc."
+"[Your Website]" → "https://acme.com"
+"[Contact Email]" → "legal@acme.com"
+"[Address]" → "123 Main St, City, State, ZIP"
+```
+
+### Update Last Modified Date
+
+Keep the "Last updated" date current:
+
+```typescript
+<p className="text-muted-foreground mb-8">
+  Last updated: November 26, 2025
+</p>
+```
+
+### Add Your Specific Terms
+
+Customize sections based on your service:
+
+```typescript
+// Example: Add AI Usage Terms
+<section className="mb-8">
+  <h2 className="text-2xl font-semibold mb-4">AI Generation Terms</h2>
+  <p>
+    By using our AI image generation features, you agree that:
+  </p>
+  <ul className="list-disc pl-6 space-y-2 mt-4">
+    <li>Generated content is subject to our acceptable use policy</li>
+    <li>You are responsible for the content you generate</li>
+    <li>We reserve the right to refuse generation requests</li>
+  </ul>
+</section>
+```
+
+### Customize Privacy Disclosures
+
+Update data collection practices to match your implementation:
+
+```typescript
+// Example: Specific data collection
+<section className="mb-8">
+  <h2 className="text-2xl font-semibold mb-4">Information We Collect</h2>
+  
+  <h3 className="text-xl font-semibold mb-2 mt-6">Account Information</h3>
+  <p>When you register, we collect:</p>
+  <ul className="list-disc pl-6 space-y-1 mt-2">
+    <li>Email address (required)</li>
+    <li>Full name (optional)</li>
+    <li>Password (hashed and encrypted)</li>
+  </ul>
+  
+  <h3 className="text-xl font-semibold mb-2 mt-6">Usage Data</h3>
+  <p>We automatically collect:</p>
+  <ul className="list-disc pl-6 space-y-1 mt-2">
+    <li>API request timestamps and metadata</li>
+    <li>Generated image metadata (not content)</li>
+    <li>Error logs and performance metrics</li>
+  </ul>
+</section>
+```
+
+## Linking to Legal Pages
+
+### Footer Links
+
+Add legal page links to your footer:
+
+```typescript
+// components/project/footer.tsx
+<footer className="border-t">
+  <div className="container mx-auto py-8 px-4">
+    <div className="flex justify-center gap-6 text-sm">
+      <Link href="/terms" className="hover:underline">
+        Terms of Service
+      </Link>
+      <Link href="/privacy" className="hover:underline">
+        Privacy Policy
+      </Link>
+      <Link href="/contact" className="hover:underline">
+        Contact
+      </Link>
+    </div>
+  </div>
+</footer>
+```
+
+### Registration Form
+
+Reference legal pages in registration forms:
+
+```typescript
+// app/(auth)/register/page.tsx
+<form>
+  {/* Form fields */}
+  
+  <div className="flex items-start gap-2">
+    <Checkbox id="terms" required />
+    <Label htmlFor="terms" className="text-sm">
+      I agree to the{" "}
+      <Link href="/terms" className="underline" target="_blank">
+        Terms of Service
+      </Link>{" "}
+      and{" "}
+      <Link href="/privacy" className="underline" target="_blank">
+        Privacy Policy
+      </Link>
+    </Label>
+  </div>
+  
+  <Button type="submit">Create Account</Button>
+</form>
+```
+
+### Cookie Consent
+
+If using cookies, add consent banner linking to privacy policy:
+
+```typescript
+// components/cookie-consent.tsx
+<div className="fixed bottom-0 left-0 right-0 bg-card border-t p-4">
+  <div className="container mx-auto flex items-center justify-between">
+    <p className="text-sm">
+      We use cookies to improve your experience. See our{" "}
+      <Link href="/privacy" className="underline">Privacy Policy</Link>.
+    </p>
+    <Button size="sm">Accept</Button>
+  </div>
+</div>
+```
+
+## Legal Compliance Checklist
+
+<Note>
+This checklist is for reference only. Consult legal counsel for compliance requirements specific to your jurisdiction and business.
+</Note>
+
+### General Requirements
+
+- [ ] Customize all placeholder text with your company information
+- [ ] Update last modified dates when content changes
+- [ ] Include contact information for legal inquiries
+- [ ] Specify governing law and jurisdiction
+- [ ] Define dispute resolution procedures
+
+### GDPR Compliance (EU)
+
+- [ ] Explain legal basis for data processing
+- [ ] Detail user rights (access, deletion, portability)
+- [ ] Specify data retention periods
+- [ ] Name data protection officer (if applicable)
+- [ ] List data processors and third parties
+- [ ] Explain international data transfers
+
+### CCPA Compliance (California)
+
+- [ ] Explain categories of personal information collected
+- [ ] Describe purposes for collection
+- [ ] Explain third-party data sharing
+- [ ] Provide opt-out mechanisms
+- [ ] Detail consumer rights under CCPA
+
+### COPPA Compliance (Children's Privacy)
+
+- [ ] State minimum age requirements (typically 13+)
+- [ ] Explain parental consent requirements if applicable
+- [ ] Restrict features for users under minimum age
+
+## Maintenance
+
+### Version Control
+
+Track changes to legal documents:
+
+```typescript
+// At top of page
+<p className="text-muted-foreground mb-8">
+  Version 2.1 • Last updated: November 26, 2025
+</p>
+
+// Add version history section
+<section className="mb-8">
+  <h2 className="text-2xl font-semibold mb-4">Version History</h2>
+  <ul className="space-y-2">
+    <li>
+      <strong>Version 2.1</strong> (Nov 26, 2025): Updated AI usage terms
+    </li>
+    <li>
+      <strong>Version 2.0</strong> (Oct 1, 2025): Added GDPR compliance sections
+    </li>
+    <li>
+      <strong>Version 1.0</strong> (Jan 1, 2025): Initial version
+    </li>
+  </ul>
+</section>
+```
+
+### Notification of Changes
+
+Notify users when terms change significantly:
+
+```typescript
+// Display banner for users who accepted old version
+<div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 p-4 mb-8 rounded-lg">
+  <p className="font-semibold mb-2">Terms Updated</p>
+  <p className="text-sm">
+    Our Terms of Service were updated on November 26, 2025. Please review the
+    changes and accept the new terms to continue using the service.
+  </p>
+  <Button size="sm" className="mt-4">Review Changes</Button>
+</div>
+```
+
+### Acceptance Tracking
+
+Store user acceptance of terms versions:
+
+```typescript
+// Example: Track in user profile
+interface UserProfile {
+  email: string;
+  accepted_terms_version: string;  // "2.1"
+  accepted_terms_date: string;      // ISO timestamp
+  accepted_privacy_version: string; // "1.5"
+  accepted_privacy_date: string;    // ISO timestamp
+}
+```
+
+## Styling
+
+Legal pages use consistent styling for readability:
+
+```typescript
+// Typography classes
+<h1 className="text-4xl font-bold mb-6">         // Main title
+<h2 className="text-2xl font-semibold mb-4">     // Section title
+<h3 className="text-xl font-semibold mb-2">      // Subsection title
+<p className="mb-4 leading-relaxed">              // Body text
+<ul className="list-disc pl-6 space-y-2">        // Bullet lists
+<ol className="list-decimal pl-6 space-y-2">     // Numbered lists
+
+// Containers
+<div className="container mx-auto max-w-4xl py-12 px-4">  // Page wrapper
+<section className="mb-8">                                  // Section wrapper
+
+// Special elements
+<blockquote className="border-l-4 pl-4 italic my-4">     // Quotes
+<code className="bg-muted px-2 py-1 rounded">            // Inline code
+```
+
+## Best Practices
+
+<Tip>
+Make legal pages easily accessible from your footer on every page of your application.
+</Tip>
+
+**Content:**
+1. Use clear, plain language where possible
+2. Break long paragraphs into shorter sections
+3. Use bullet points for lists of terms
+4. Bold important terms and conditions
+5. Link to related policies where relevant
+
+**Maintenance:**
+1. Review and update annually at minimum
+2. Track version numbers for all changes
+3. Notify users of material changes
+4. Keep archived versions for reference
+5. Document reasons for significant updates
+
+**Compliance:**
+1. Consult legal counsel before publishing
+2. Include all required disclosures for your jurisdiction
+3. Update when business practices change
+4. Monitor regulatory changes in your markets
+5. Review third-party service agreements
+
+## Additional Resources
+
+### Third-Party Policy Generators
+
+Consider using policy generators as a starting point:
+- Termly (https://termly.io)
+- TermsFeed (https://www.termsfeed.com)
+- FreePrivacyPolicy (https://www.freeprivacypolicy.com)
+
+<Warning>
+Generated policies should be reviewed by legal counsel. Never publish auto-generated policies without legal review.
+</Warning>
+
+### Regulatory Resources
+
+- **GDPR**: https://gdpr.eu
+- **CCPA**: https://oag.ca.gov/privacy/ccpa
+- **COPPA**: https://www.ftc.gov/legal-library/browse/rules/childrens-online-privacy-protection-rule-coppa
+
+## Related Pages
+
+<CardGroup cols={2}>
+  <Card title="App Configuration" icon="settings" href="/starter-kit/customization/app-config">
+    Configure site-wide settings
+  </Card>
+  <Card title="Custom Pages" icon="file-plus" href="/starter-kit/customization/custom-pages">
+    Create additional custom pages
+  </Card>
+  <Card title="Registration & Login" icon="user-plus" href="/starter-kit/auth/registration-login">
+    Link terms acceptance to registration
+  </Card>
+  <Card title="Branding & Styling" icon="paintbrush" href="/starter-kit/customization/branding-styling">
+    Customize page styling
+  </Card>
+</CardGroup>

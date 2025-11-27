@@ -1,11 +1,130 @@
 ---
 title: "Viewing End Users"
-description: "Track the end users associated with each project."
+description: "Track and manage end users across your projects in Cloud Admin."
 icon: "users"
 ---
 
-End users register through project-mode apps, triggering the same `UserWasRegistered` and `UserWasActivated` events as developers. The read models already record project associations, so Cloud Admin will surface them once the console UI lands.
+The Cloud Admin console provides a dedicated end-user management page at `/console/users` where you can view, search, and filter all end users associated with your projects.
 
-- Upcoming views will query dedicated endpoints that expose project-scoped user lists. Those endpoints will rely on the RBAC helpers in `app/system/auth/project_access.py` to ensure developers see only their own data.
-- Until the UI ships, operators can inspect the backing tables directly or build internal monitors against the Cloud API.
-- We will update this page with concrete instructions as soon as the official experience is available.
+(((REPLACE_THIS_WITH_IMAGE: console-users-page-overview.png: Screenshot of /console/users page showing the users table with search and filters)))
+
+## Accessing End User Management
+
+Navigate to the Users section from the console sidebar to access the end-user management interface. This page displays all end users who have registered through your project-mode applications.
+
+## Users Table
+
+The users table displays key information about each end user:
+
+- **Email**: User's registered email address
+- **Full Name**: Display name (if provided during registration)
+- **Role**: User role (typically "end_user" for project users)
+- **Status**: Active or inactive status indicator
+- **Created At**: Registration timestamp
+- **Actions**: Quick action menu for user management
+
+(((REPLACE_THIS_WITH_IMAGE: console-users-table-details.png: Close-up of users table showing column headers and sample user rows)))
+
+## Search and Filtering
+
+### Search by Email
+
+Use the search input at the top of the page to filter users by email address. The search is case-insensitive and updates results in real-time as you type.
+
+```typescript
+// Example: Search query in action
+searchQuery: "user@example.com"
+```
+
+### Filter by Status
+
+Filter users by their account status:
+
+- **All Users**: Show all users regardless of status
+- **Active**: Show only users with active accounts
+- **Inactive**: Show only deactivated users
+
+### Filter by Role
+
+Filter users by their role assignment:
+
+- **All Roles**: Show users with any role
+- **End User**: Show only end users (default for project users)
+- **Developer**: Show only developers (if any were added to projects)
+
+### Clear Filters
+
+Click the "Clear Filters" button to reset all search and filter criteria to their default state.
+
+(((REPLACE_THIS_WITH_IMAGE: console-users-filter-controls.png: Screenshot of filter controls showing status and role dropdowns)))
+
+## Pagination
+
+Navigate through large user lists with pagination controls at the bottom of the table:
+
+- **Previous/Next**: Navigate between pages
+- **Page Indicator**: Shows current page and total pages
+- **Default Page Size**: 20 users per page
+
+## User Data Source
+
+End users register through your deployed project-mode applications. When a user completes registration:
+
+1. The Cloud API triggers `UserWasRegistered` and `UserWasActivated` events
+2. Projectors update the read models with user data and project associations
+3. The console queries `/api/v1/users` endpoint with developer-scoped access
+4. RBAC helpers in `app/system/auth/project_access.py` ensure you only see users from your own projects
+
+## API Integration
+
+The users page fetches data from the Cloud API using server actions:
+
+```typescript
+// Server action: fetchUsers()
+GET /api/v1/users
+Headers:
+  - Authorization: Bearer <jwt_token>
+  - X-User-Role: developer
+  - X-Developer-Key: <developer_key>
+
+Query Parameters:
+  - page: number (default: 1)
+  - limit: number (default: 20)
+  - search: string (optional)
+  - status: "active" | "inactive" (optional)
+  - role: string (optional)
+```
+
+## User Management Actions
+
+<Note>
+User activation and deactivation features are currently in development. The Actions menu in the users table will be enabled in a future release.
+</Note>
+
+Planned actions include:
+- View detailed user profile
+- Deactivate/reactivate user accounts
+- Remove user from project
+- View user activity and generation history
+
+## Best Practices
+
+<Tip>
+Regularly review your end users list to monitor registration patterns and identify any suspicious accounts.
+</Tip>
+
+1. **Monitor Active Users**: Keep track of active vs inactive accounts to understand engagement
+2. **Search Efficiently**: Use the email search to quickly locate specific users
+3. **Filter by Status**: Identify inactive accounts that may need attention
+4. **Project Association**: Remember that users shown are scoped to your projects only
+
+## Related Pages
+
+<CardGroup cols={2}>
+  <Card title="User Analytics" icon="chart-line" href="/cloud-admin/users/user-analytics">
+    View detailed analytics and usage patterns
+  </Card>
+  <Card title="Managing Access" icon="shield" href="/cloud-admin/users/managing-access">
+    Control user access and permissions
+  </Card>
+</CardGroup>

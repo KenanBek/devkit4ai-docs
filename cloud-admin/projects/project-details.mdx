@@ -1,0 +1,321 @@
+---
+title: "Project Details View"
+description: "Manage project settings, API keys, and members from the detailed project page."
+icon: "folder-open"
+---
+
+The project details page at `/console/projects/[projectId]` provides a comprehensive view of a single project with tabbed navigation for managing all project-related resources.
+
+(((REPLACE_THIS_WITH_IMAGE: project-details-page-tabs.png: Screenshot of project details page showing tabbed interface)))
+
+## Accessing Project Details
+
+Click on any project from the Projects list (`/console/projects`) to open its detailed view. The page URL includes the project UUID:
+
+```
+/console/projects/123e4567-e89b-12d3-a456-426614174000
+```
+
+## Tabbed Interface
+
+The project details page organizes information into four main tabs:
+
+### Overview Tab
+
+The Overview tab displays project metadata and key statistics.
+
+(((REPLACE_THIS_WITH_IMAGE: project-overview-tab-stats.png: Screenshot of Overview tab showing project stats)))
+
+**Project Information:**
+- Project name and description
+- Created date and last updated timestamp
+- Project status (Active/Inactive)
+- Project UUID for reference
+
+**Statistics Cards:**
+- **API Keys**: Total number of API keys generated for this project
+- **Members**: Total end users registered through this project
+- **Generations**: Total AI generations requested (if applicable)
+- **Status**: Current project health indicator
+
+### API Keys Tab
+
+Manage project API keys with full CRUD operations.
+
+(((REPLACE_THIS_WITH_IMAGE: project-api-keys-tab-management.png: Screenshot of API Keys tab with key list and generate button)))
+
+**Features:**
+- **View API Keys**: List all API keys with key prefix, name, and creation date
+- **Generate New Key**: Create new API keys with optional names
+- **Copy Key**: One-click copy to clipboard (full key shown only once at generation)
+- **Revoke Key**: Delete API keys to prevent further use
+- **Last Used**: Track when each key was last accessed
+
+**API Key List Columns:**
+- **Key Prefix**: First 8 characters for identification (e.g., `dk_abc123`)
+- **Name**: Optional descriptive name for the key
+- **Created At**: Key generation timestamp
+- **Last Used**: Last API access timestamp
+- **Actions**: Copy and delete options
+
+<Warning>
+Full API keys are only displayed once during generation. Store them securely immediately after creation.
+</Warning>
+
+**Generating a New API Key:**
+1. Click "Generate API Key" button
+2. Enter optional key name in dialog
+3. Click "Generate" to create key
+4. Copy the full key from the success dialog
+5. Store key securely (it won't be shown again)
+
+### Members Tab
+
+View and manage end users associated with this project.
+
+(((REPLACE_THIS_WITH_IMAGE: project-members-tab-filters.png: Screenshot of Members tab with user list and filters)))
+
+**Features:**
+- **Member List**: All end users who registered through this project
+- **Search**: Filter members by email address
+- **Status Filter**: Filter by active/inactive status
+- **Role Filter**: Filter by user role
+- **Pagination**: Navigate through large member lists
+- **Member Details**: View individual member information
+
+**Member List Columns:**
+- **Email**: User's registered email
+- **Full Name**: Display name (if provided)
+- **Role**: User role (typically "end_user")
+- **Status**: Active or inactive indicator
+- **Joined**: Registration date
+- **Actions**: View details, manage access (coming soon)
+
+**Filtering Members:**
+
+Search by email:
+```
+Search input: "user@example.com"
+```
+
+Filter by status:
+- All Members
+- Active Only
+- Inactive Only
+
+Filter by role:
+- All Roles
+- End User
+- Developer (if applicable)
+
+**Pagination:**
+- 20 members per page (default)
+- Previous/Next navigation
+- Page indicator showing current page and total
+
+<Tip>
+Use the search and filters together to quickly locate specific members in large projects.
+</Tip>
+
+### Settings Tab
+
+Configure project settings and manage project lifecycle.
+
+<Frame>
+  <img src="/assets/cloud-admin/projects/project-settings-tab-config.png" alt="Screenshot of Settings tab with configuration options" />
+</Frame>
+
+**General Settings:**
+- **Project Name**: Update project display name
+- **Description**: Modify project description
+- **Status**: Toggle project active/inactive status
+
+**Danger Zone:**
+
+<Warning>
+Actions in the Danger Zone are irreversible. Proceed with caution.
+</Warning>
+
+- **Deactivate Project**: Temporarily disable project (can be reactivated)
+- **Delete Project**: Permanently remove project and all associated data
+
+<Note>
+The Deactivate and Delete buttons are currently disabled while the feature is in development. This functionality will be enabled in a future release.
+</Note>
+
+## Project Statistics
+
+The Overview tab displays real-time statistics fetched from the Cloud API:
+
+**API Keys Count:**
+```typescript
+GET /api/v1/projects/{projectId}/api-keys
+// Returns: Array of ApiKey objects
+// Count: apiKeys.length
+```
+
+**Members Count:**
+```typescript
+GET /api/v1/projects/{projectId}/users
+// Returns: Array of User objects
+// Count: users.length
+```
+
+**Status Indicator:**
+- **Active**: Project is operational and accepting requests
+- **Inactive**: Project is disabled (API keys won't work)
+- **Error**: Configuration or system issues detected
+
+## Data Loading
+
+The project details page uses React Suspense for optimal loading:
+
+```typescript
+<Suspense fallback={<LoadingSpinner />}>
+  <ProjectDetailContent projectId={projectId} />
+</Suspense>
+```
+
+**Loading States:**
+- Initial page load shows skeleton UI
+- Tab switching is instant (data pre-loaded)
+- API key generation shows loading dialog
+- Member list pagination shows inline loading
+
+## Server Actions
+
+The page uses several server actions for data fetching and mutations:
+
+**Fetch Project:**
+```typescript
+fetchProject(projectId: string)
+  -> GET /api/v1/projects/{projectId}
+  -> Returns: Project
+```
+
+**Fetch API Keys:**
+```typescript
+fetchProjectApiKeys(projectId: string)
+  -> GET /api/v1/projects/{projectId}/api-keys
+  -> Returns: ApiKey[]
+```
+
+**Generate API Key:**
+```typescript
+generateApiKeyAction(projectId: string, name?: string)
+  -> POST /api/v1/projects/{projectId}/api-keys
+  -> Body: { name }
+  -> Returns: { id, key, key_prefix, name, created_at }
+```
+
+**Delete API Key:**
+```typescript
+deleteApiKeyAction(projectId: string, keyId: string)
+  -> DELETE /api/v1/projects/{projectId}/api-keys/{keyId}
+  -> Returns: Success confirmation
+```
+
+**Fetch Members:**
+```typescript
+fetchProjectMembers(projectId: string, params: FilterParams)
+  -> GET /api/v1/projects/{projectId}/users
+  -> Query: page, limit, search, status, role
+  -> Returns: { users: User[], total: number }
+```
+
+## Security and Permissions
+
+**Developer-Scoped Access:**
+- Developers can only access their own projects
+- RBAC enforced via `X-Developer-Key` header
+- Project ID validated against developer ownership
+
+**Role Enforcement:**
+- Project details page requires `developer` role
+- `requireRole(['developer'])` enforced in layout
+- Unauthorized users redirected to dashboard
+
+**API Key Security:**
+- Full keys shown only once at generation
+- Key prefixes displayed for identification
+- Hashed keys stored in database (SHA256)
+
+## Navigation
+
+**Breadcrumb Trail:**
+```
+Console > Projects > [Project Name]
+```
+
+**Quick Navigation:**
+- Back to Projects list
+- Jump to specific tab via URL hash
+- Keyboard shortcuts (coming soon)
+
+## Best Practices
+
+<Tip>
+Organize API keys with descriptive names to easily identify their purpose (e.g., "Production App", "Staging Environment").
+</Tip>
+
+**API Key Management:**
+1. Name keys descriptively when generating
+2. Rotate keys periodically for security
+3. Delete unused keys immediately
+4. Monitor "Last Used" timestamps
+5. Use separate keys for different environments
+
+**Member Management:**
+1. Regularly review active members
+2. Use search to locate specific users quickly
+3. Monitor registration patterns for suspicious activity
+4. Keep member lists organized with filters
+
+**Project Settings:**
+1. Keep project name and description up-to-date
+2. Use deactivation to temporarily disable projects
+3. Back up important data before deletion
+4. Document configuration changes
+
+## Troubleshooting
+
+### Project Not Loading
+
+If project details fail to load:
+1. Verify project ID is valid UUID
+2. Check developer key has access to project
+3. Ensure project hasn't been deleted
+4. Review browser console for API errors
+
+### API Keys Not Displaying
+
+If API key list is empty:
+1. Generate a new key to test
+2. Check API key endpoint permissions
+3. Verify project is active
+4. Review backend logs for errors
+
+### Members Not Showing
+
+If members list is empty:
+1. Verify end users have registered through project app
+2. Check project ID is correctly configured in app
+3. Ensure member registration events are processing
+4. Review projector logs for errors
+
+## Related Pages
+
+<CardGroup cols={2}>
+  <Card title="Creating Projects" icon="plus" href="/cloud-admin/projects/creating-projects">
+    Learn how to create new projects
+  </Card>
+  <Card title="Managing API Keys" icon="key" href="/cloud-admin/api-keys/creating-project-keys">
+    Complete guide to API key management
+  </Card>
+  <Card title="Viewing End Users" icon="users" href="/cloud-admin/users/viewing-end-users">
+    Manage end users across all projects
+  </Card>
+  <Card title="Project Settings" icon="settings" href="/cloud-admin/projects/project-settings">
+    Configure project options
+  </Card>
+</CardGroup>
