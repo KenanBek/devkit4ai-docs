@@ -57,13 +57,17 @@ DEVKIT4AI_PROJECT_ID=550e8400-e29b-41d4-a716-446655440000
 
 ### DEVKIT4AI_PROJECT_KEY
 
-**Value:** Your project API key from Cloud Admin (starts with `pk_`)
+**Value:** Your project API key from Cloud Admin (starts with `ak_`)
 
-**Description:** Scopes API requests to your specific project.
+**Description:** Scopes API requests to your specific project. Also referred to as "API Key" in the Cloud Admin interface.
 
 ```bash
-DEVKIT4AI_PROJECT_KEY=pk_abcdef1234567890abcdef1234567890
+DEVKIT4AI_PROJECT_KEY=ak_abc123XYZ789def456ghi012jkl345mn
 ```
+
+<Note>
+API Keys use the `ak_` prefix (not `pk_`). The environment variable is named `DEVKIT4AI_PROJECT_KEY` for clarity about its scope.
+</Note>
 
 ## Optional variables
 
@@ -133,9 +137,9 @@ Create `.env.local` in your project root:
 ```bash .env.local
 DEVKIT4AI_MODE=project
 NEXT_PUBLIC_API_URL=https://api.vibecoding.ad
-DEVKIT4AI_DEVELOPER_KEY=dk_your_key
-DEVKIT4AI_PROJECT_ID=your-uuid
-DEVKIT4AI_PROJECT_KEY=pk_your_key
+DEVKIT4AI_DEVELOPER_KEY=dk_1234567890abcdef1234567890abcdef
+DEVKIT4AI_PROJECT_ID=550e8400-e29b-41d4-a716-446655440000
+DEVKIT4AI_PROJECT_KEY=ak_abc123XYZ789def456ghi012jkl345mn
 ENVIRONMENT=local
 ```
 
@@ -166,9 +170,9 @@ Pass via command line:
 ```bash
 docker run -e DEVKIT4AI_MODE=project \
   -e NEXT_PUBLIC_API_URL=https://api.vibecoding.ad \
-  -e DEVKIT4AI_DEVELOPER_KEY=dk_key \
-  -e DEVKIT4AI_PROJECT_ID=uuid \
-  -e DEVKIT4AI_PROJECT_KEY=pk_key \
+  -e DEVKIT4AI_DEVELOPER_KEY=dk_1234567890abcdef1234567890abcdef \
+  -e DEVKIT4AI_PROJECT_ID=550e8400-e29b-41d4-a716-446655440000 \
+  -e DEVKIT4AI_PROJECT_KEY=ak_abc123XYZ789def456ghi012jkl345mn \
   your-image
 ```
 

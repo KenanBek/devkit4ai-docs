@@ -283,7 +283,8 @@
             "pages": [
               "reference/config/environment-variables",
               "reference/config/deployment-modes",
-              "reference/config/security-settings"
+              "reference/config/security-settings",
+              "reference/api-key-formats"
             ]
           },
           {

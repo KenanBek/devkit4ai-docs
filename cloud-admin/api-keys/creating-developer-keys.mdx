@@ -4,8 +4,58 @@ description: "Issue new developer keys for workspace automation."
 icon: "key"
 ---
 
-Developer keys authenticate console actions and Starter Kit deployments that need elevated access:
+Developer keys authenticate console actions and Starter Kit deployments that need elevated access.
 
-- Keys are hashed with SHA-256 in the database, matching the implementation in `devkit4ai/backend-api/app/features/projects`.
-- Cloud Admin will expose creation flows that call the existing command handlers; until then, you can create keys via the `/api/v1/auth/developer-keys` endpoint, which already returns the full key once.
-- Each key is prefixed with `dk_`—the same format used throughout the platform and referenced in onboarding screens.
+## Key Format
+
+Developer Keys use the following format:
+
+**Prefix:** `dk_` (Developer Key)
+
+**Full format:** `dk_` + 32 URL-safe characters (alphanumeric + `-` + `_`)
+
+**Example:** `dk_abc123XYZ-_789def456ghi012jkl345`
+
+**Total length:** 35 characters (3 character prefix + 32 character key)
+
+## Key Properties
+
+- **Hashing:** Keys are hashed with SHA-256 before storage for security
+- **Prefix storage:** Only the first 8 characters (e.g., `dk_abc12`) are stored in `key_prefix` for identification
+- **One-time display:** The full key is shown once during generation; only the hash is persisted
+- **Developer scoping:** Each key is bound to a specific developer account via `developer_id`
+- **Active status:** Keys can be revoked by setting `is_active` to false
+
+## Environment Variable
+
+In your Starter Kit or Cloud Admin deployment, set the generated key as:
+
+```bash
+DEVKIT4AI_DEVELOPER_KEY=dk_abc123XYZ-_789def456ghi012jkl345
+```
+
+## Generation Flow
+
+1. Cloud Admin UI calls `POST /api/v1/auth/developer-keys` with optional `name` parameter
+2. Backend generates key with `dk_` prefix and 32 random URL-safe characters
+3. Full key is hashed with SHA-256
+4. Hash and prefix (first 8 chars) are stored in the database
+5. Full key is returned in response and displayed once
+6. Key becomes valid immediately for API requests
+
+## Rate Limits
+
+Each developer account is limited to **10 active keys** at a time. Revoke unused keys before generating new ones if you reach this limit.
+
+## Security
+
+<Warning>
+- Store the full key securely - it cannot be retrieved again
+- Never commit keys to version control
+- Rotate keys regularly (every 90 days recommended)
+- Revoke compromised keys immediately
+</Warning>
+
+## API Reference
+
+See the [Developer Keys API endpoint](/cloud-api/auth/developer-keys) for complete request/response details.

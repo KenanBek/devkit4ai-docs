@@ -1,0 +1,377 @@
+---
+title: "API Key Formats"
+sidebarTitle: "Key Formats"
+description: "Complete reference for Developer Keys and API Keys used throughout the platform."
+icon: "key"
+---
+
+Dev Kit for AI uses two distinct key types to authenticate different roles and scopes within the platform. Each key type has a unique prefix, format, and purpose.
+
+## Key Types Overview
+
+<CardGroup cols={2}>
+  <Card title="Developer Keys" icon="user-gear">
+    Authenticate developer console access and manage projects
+  </Card>
+  <Card title="API Keys (Project Keys)" icon="fingerprint">
+    Authenticate end-user access to specific projects
+  </Card>
+</CardGroup>
+
+## Developer Keys
+
+Developer Keys authenticate developers accessing the Cloud Admin console and performing administrative operations.
+
+### Format Specification
+
+**Prefix:** `dk_` (Developer Key)
+
+**Structure:** `dk_` + 32 URL-safe characters
+
+**Character set:** Alphanumeric (a-z, A-Z, 0-9) plus hyphen (`-`) and underscore (`_`)
+
+**Example:** `dk_abc123XYZ-_789def456ghi012jkl345`
+
+**Total length:** 35 characters
+- 3 characters: prefix (`dk_`)
+- 32 characters: random URL-safe string
+
+### Properties
+
+| Property | Value |
+|----------|-------|
+| **Prefix** | `dk_` |
+| **Length** | 35 characters total |
+| **Character set** | `a-zA-Z0-9-_` |
+| **Encoding** | URL-safe |
+| **Hashing** | SHA-256 |
+| **Storage** | Hash + 8-char prefix |
+| **Display format** | `dk_abc12...` |
+| **Scope** | Developer account |
+| **Limit** | 10 active keys per developer |
+
+### Usage
+
+**Environment variable:**
+```bash
+DEVKIT4AI_DEVELOPER_KEY=dk_abc123XYZ-_789def456ghi012jkl345
+```
+
+**HTTP header:**
+```bash
+X-Developer-Key: dk_abc123XYZ-_789def456ghi012jkl345
+```
+
+**Authentication:**
+- Required for console mode deployment
+- Used to create and manage projects
+- Grants access to developer-scoped resources
+- Can be used alongside project keys for elevated operations
+
+### Generation
+
+Developer Keys are generated:
+1. Automatically during developer registration (operator-initiated)
+2. Manually via Cloud Admin console
+3. Via API: `POST /api/v1/auth/developer-keys`
+
+The full key is displayed once at generation. Only the SHA-256 hash and 8-character prefix are stored in the database.
+
+### Security
+
+<Warning>
+- Full key shown only once during generation
+- Cannot be retrieved after initial display
+- Store securely in environment variables
+- Never commit to version control
+- Rotate every 90 days
+</Warning>
+
+## API Keys (Project Keys)
+
+API Keys authenticate end-user access to specific projects. They are also referred to as "Project Keys" in environment variables and some documentation.
+
+### Format Specification
+
+**Prefix:** `ak_` (API Key)
+
+**Structure:** `ak_` + 32 alphanumeric characters
+
+**Character set:** Alphanumeric only (a-z, A-Z, 0-9)
+
+**Example:** `ak_abc123XYZ789def456ghi012jkl345mn`
+
+**Total length:** 35 characters
+- 3 characters: prefix (`ak_`)
+- 32 characters: random alphanumeric string
+
+### Properties
+
+| Property | Value |
+|----------|-------|
+| **Prefix** | `ak_` |
+| **Length** | 35 characters total |
+| **Character set** | `a-zA-Z0-9` |
+| **Encoding** | Alphanumeric |
+| **Hashing** | SHA-256 |
+| **Storage** | Hash + 8-char prefix |
+| **Display format** | `ak_abc12...` |
+| **Scope** | Specific project |
+| **Limit** | Unlimited per project |
+
+### Usage
+
+**Environment variable:**
+```bash
+DEVKIT4AI_PROJECT_KEY=ak_abc123XYZ789def456ghi012jkl345mn
+```
+
+<Note>
+The environment variable name uses `PROJECT_KEY` for clarity, but the actual key prefix is `ak_` (not `pk_`).
+</Note>
+
+**HTTP header:**
+```bash
+X-API-Key: ak_abc123XYZ789def456ghi012jkl345mn
+```
+
+**Authentication:**
+- Required for project mode deployment (Starter Kit)
+- Scopes all API requests to a specific project
+- Used by end-users accessing project resources
+- Validated against `project_id` in requests
+
+### Generation
+
+API Keys are generated:
+1. Automatically during project creation (default key)
+2. Manually via Cloud Admin console
+3. Via API: `POST /api/v1/projects/{project_id}/api-keys`
+
+The full key is displayed once at generation. Only the SHA-256 hash and 8-character prefix are stored in the database.
+
+### Security
+
+<Warning>
+- Full key shown only once during generation
+- Cannot be retrieved after initial display
+- Store securely in environment variables
+- Never commit to version control
+- Rotate every 90 days
+- Revoke immediately if compromised
+</Warning>
+
+## Key Comparison
+
+| Feature | Developer Key (`dk_`) | API Key (`ak_`) |
+|---------|----------------------|-----------------|
+| **Purpose** | Developer console access | End-user project access |
+| **Prefix** | `dk_` | `ak_` |
+| **Character set** | Alphanumeric + `-` + `_` | Alphanumeric only |
+| **Length** | 35 characters | 35 characters |
+| **Scope** | Developer account | Specific project |
+| **Limit** | 10 per developer | Unlimited per project |
+| **Header** | `X-Developer-Key` | `X-API-Key` |
+| **Env var** | `DEVKIT4AI_DEVELOPER_KEY` | `DEVKIT4AI_PROJECT_KEY` |
+| **Used in** | Console mode, operator mode | Project mode |
+
+## Validation Rules
+
+### Length Validation
+
+Both key types must:
+- Be exactly 35 characters long
+- Start with correct prefix (`dk_` or `ak_`)
+- Contain 32 random characters after prefix
+
+### Character Set Validation
+
+**Developer Keys (`dk_`):**
+```regex
+^dk_[a-zA-Z0-9_-]{32}$
+```
+
+**API Keys (`ak_`):**
+```regex
+^ak_[a-zA-Z0-9]{32}$
+```
+
+### Backend Validation
+
+The backend performs these checks:
+1. **Minimum length:** At least 16 characters (during validation)
+2. **Prefix check:** Correct prefix for key type
+3. **Hash lookup:** SHA-256 hash exists in database
+4. **Active status:** Key is marked as active
+5. **Scope validation:** Key matches required scope (developer/project)
+
+## Display Format
+
+Keys are displayed in truncated format for security:
+
+**Full key (shown once):**
+```
+dk_abc123XYZ-_789def456ghi012jkl345
+```
+
+**Displayed format:**
+```
+dk_abc12...
+```
+
+Only the first 8 characters (including prefix) are stored in the `key_prefix` field and shown in user interfaces.
+
+## Storage Architecture
+
+### Database Schema
+
+Both key types follow the same storage pattern:
+
+**DeveloperKey Table:**
+```sql
+CREATE TABLE developer_keys (
+    id UUID PRIMARY KEY,
+    developer_id UUID NOT NULL,
+    key_hash VARCHAR(255) UNIQUE NOT NULL,  -- SHA-256 of full key
+    key_prefix VARCHAR(20),                  -- First 8 chars
+    name VARCHAR(255),
+    is_active BOOLEAN DEFAULT TRUE,
+    last_used_at TIMESTAMP,
+    created_at TIMESTAMP,
+    updated_at TIMESTAMP
+);
+```
+
+**ApiKey Table:**
+```sql
+CREATE TABLE api_keys (
+    id UUID PRIMARY KEY,
+    project_id UUID NOT NULL,
+    key_hash VARCHAR(255) UNIQUE NOT NULL,  -- SHA-256 of full key
+    key_prefix VARCHAR(20),                  -- First 8 chars
+    name VARCHAR(255),
+    is_active BOOLEAN DEFAULT TRUE,
+    last_used_at TIMESTAMP,
+    created_at TIMESTAMP,
+    updated_at TIMESTAMP
+);
+```
+
+### Security Implementation
+
+1. **Generation:** Random cryptographically secure string
+2. **Display:** Full key shown once in API response
+3. **Hashing:** SHA-256 hash computed immediately
+4. **Storage:** Only hash and prefix persisted to database
+5. **Validation:** Incoming keys hashed and compared against stored hash
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Key Management">
+    - Generate separate keys for each environment (dev, staging, production)
+    - Use descriptive names when creating keys
+    - Document which keys are used where
+    - Maintain an inventory of active keys
+  </Accordion>
+  
+  <Accordion title="Security">
+    - Store keys in environment variables, never in code
+    - Use hosting provider secrets management for production
+    - Rotate keys every 90 days as a best practice
+    - Revoke compromised keys immediately
+    - Never log full keys, only prefixes
+  </Accordion>
+  
+  <Accordion title="Deployment">
+    - Set `DEVKIT4AI_DEVELOPER_KEY` for console mode
+    - Set both `DEVKIT4AI_DEVELOPER_KEY` and `DEVKIT4AI_PROJECT_KEY` for project mode
+    - Validate key format before deployment
+    - Test with new keys before revoking old ones
+  </Accordion>
+  
+  <Accordion title="Troubleshooting">
+    - Verify correct prefix (`dk_` vs `ak_`)
+    - Check key length (must be 35 characters)
+    - Confirm key is marked as active in Cloud Admin
+    - Ensure environment variables are loaded correctly
+    - Check that key matches the required scope
+  </Accordion>
+</AccordionGroup>
+
+## Code Examples
+
+### Validating Key Format (TypeScript)
+
+```typescript
+function isValidDeveloperKey(key: string): boolean {
+  return /^dk_[a-zA-Z0-9_-]{32}$/.test(key)
+}
+
+function isValidApiKey(key: string): boolean {
+  return /^ak_[a-zA-Z0-9]{32}$/.test(key)
+}
+
+// Usage
+const devKey = 'dk_abc123XYZ-_789def456ghi012jkl345'
+console.log(isValidDeveloperKey(devKey)) // true
+
+const apiKey = 'ak_abc123XYZ789def456ghi012jkl345mn'
+console.log(isValidApiKey(apiKey)) // true
+```
+
+### Environment Configuration
+
+```bash .env.local
+# Console mode - requires developer key only
+DEVKIT4AI_MODE=console
+DEVKIT4AI_DEVELOPER_KEY=dk_abc123XYZ-_789def456ghi012jkl345
+
+# Project mode - requires all three keys
+DEVKIT4AI_MODE=project
+DEVKIT4AI_DEVELOPER_KEY=dk_abc123XYZ-_789def456ghi012jkl345
+DEVKIT4AI_PROJECT_ID=550e8400-e29b-41d4-a716-446655440000
+DEVKIT4AI_PROJECT_KEY=ak_abc123XYZ789def456ghi012jkl345mn
+```
+
+### Making API Requests
+
+```typescript
+// Developer-scoped request
+const response = await fetch(`${API_URL}/api/v1/projects`, {
+  headers: {
+    'X-Developer-Key': process.env.DEVKIT4AI_DEVELOPER_KEY,
+    'X-User-Role': 'developer'
+  }
+})
+
+// Project-scoped request
+const response = await fetch(`${API_URL}/api/v1/generations`, {
+  headers: {
+    'X-Developer-Key': process.env.DEVKIT4AI_DEVELOPER_KEY,
+    'X-Project-ID': process.env.DEVKIT4AI_PROJECT_ID,
+    'X-API-Key': process.env.DEVKIT4AI_PROJECT_KEY,
+    'X-User-Role': 'end_user'
+  }
+})
+```
+
+## Related Documentation
+
+<CardGroup cols={2}>
+  <Card title="Creating Developer Keys" icon="key" href="/cloud-admin/api-keys/creating-developer-keys">
+    Generate developer keys in Cloud Admin
+  </Card>
+  
+  <Card title="Creating Project Keys" icon="fingerprint" href="/cloud-admin/api-keys/creating-project-keys">
+    Generate API keys for projects
+  </Card>
+  
+  <Card title="Environment Variables" icon="sliders" href="/reference/config/environment-variables">
+    Configure keys in your deployment
+  </Card>
+  
+  <Card title="Security Settings" icon="shield" href="/reference/config/security-settings">
+    Security best practices for keys
+  </Card>
+</CardGroup>
