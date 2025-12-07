@@ -1,19 +1,27 @@
 ---
 title: "Registration and Login"
-description: "Implement secure user authentication with role-based registration flows."
+description: "Implement secure user authentication with role-based registration flows and JWT token management."
 icon: "user-plus"
 ---
 
-The Starter Kit provides a complete authentication system that delegates to the Cloud API, supporting both end-user and developer registration flows with JWT-based session management.
+The Starter Kit provides a complete authentication system that delegates to the Cloud API (https://api.devkit4ai.com), supporting end-user registration and universal login with JWT-based session management.
 
 ## Authentication Architecture
 
 The Starter Kit uses server actions defined in `app/actions.ts` to handle all authentication operations:
 
 - **Server-Side Processing**: All auth logic runs on the server to protect sensitive credentials
-- **JWT Token Storage**: Access and refresh tokens stored in secure httpOnly cookies
-- **Role-Based Flows**: Separate registration paths for developers and end users
-- **Automatic Redirects**: Users directed to appropriate dashboards based on their role
+- **JWT Token Storage**: Access tokens (30 min) and refresh tokens (7 days) stored in secure httpOnly cookies
+- **Role-Based Registration**: End users register via deployed project-mode applications
+- **Universal Login**: Single login flow for all user roles with automatic role-based redirects
+- **Project-Scoped Authentication**: End user requests include X-Project-ID header for project context
+
+**Backend Implementation:**
+- FastAPI endpoint: POST /api/v1/auth/register (role determined from headers)
+- Command: RegisterUserCommand with email, password, role, project_id, full_name
+- Handler: RegisterUserHandler delegates to role-specific registration methods
+- Aggregate: UserActions.register() validates credentials and emits UserWasRegistered event
+- Projector: UserReadModelProjector rebuilds User table from events
 
 (((REPLACE_THIS_WITH_IMAGE: auth-flow-diagram.png: Diagram showing authentication flow from registration to JWT storage to dashboard)))
 
@@ -21,164 +29,634 @@ The Starter Kit uses server actions defined in `app/actions.ts` to handle all au
 
 ### Unified Registration Endpoint
 
-The Starter Kit uses a unified `/register` page that supports multiple user types:
+The backend uses a single `/api/v1/auth/register` endpoint that determines user role from request headers:
 
 ```typescript
-// Registration form data
-interface RegistrationFormData {
-  email: string;
-  password: string;
-  full_name?: string;       // Optional: User's display name
-  role?: "developer" | "end_user"; // Defaults to "developer"
+// Frontend registration form data
+interface UserCreateRequest {
+  email: string;              // EmailStr validation via Pydantic
+  password: string;           // Min 8 chars, validated server-side
+  full_name?: string | null;  // Optional display name
 }
 ```
 
+**Backend Role Resolution:**
+- **X-Operator-Key** header present → Creates DEVELOPER role
+- **X-Developer-Key** + **X-Project-ID** headers present → Creates END_USER role
+- No valid auth headers → Returns 400 error
+
 <Info>
-The `full_name` field allows users to provide a display name that will be shown in the UI, such as personalized dashboard greetings.
+The `full_name` field allows users to provide a display name for personalized UI elements like dashboard greetings.
 </Info>
 
 (((REPLACE_THIS_WITH_IMAGE: registration-form-with-fullname.png: Screenshot of registration form showing email, password, and full name fields)))
 
 ### End-User Registration
 
-End users register through your deployed project-mode application:
+End users register through your deployed project-mode application with project-scoped access:
 
-1. User navigates to `/register` (or custom registration page)
-2. Submits email, password, and optional full name
-3. `backendRegisterAction()` sends request with `role: "end_user"`
-4. Cloud API creates user account and returns JWT tokens
-5. Tokens automatically stored in httpOnly cookies
-6. UsBody: { email, password, full_name?, role: "end_user" }
-  -> Headers: X-User-Role: end_user, X-Developer-Key, X-Project-ID, X-API-Key
-  -> Response: { id, email, full_name?, role, is_active, created_at, project_id, access_token, refresh_token }
-  -> Stores JWT cookies
+**Frontend Flow:**
+1. User navigates to `/register` page
+2. Submits email, password, and optional full_name
+3. `backendRegisterAction()` validates input and constructs request
+4. Server action POSTs to `/api/v1/auth/register` with headers
+5. Backend creates user and returns JWT tokens
+6. Tokens stored in httpOnly cookies
+7. User redirected to `/dashboard`
+
+**Server Action:**
+```typescript
+backendRegisterAction(formData: FormData)
+  -> Validates: email format, password requirements
+  -> POST /api/v1/auth/register
+  -> Body: { email, password, full_name? }
+  -> Headers: 
+     X-Developer-Key: <from DEVKIT4AI_DEVELOPER_KEY>
+     X-Project-ID: <from DEVKIT4AI_PROJECT_ID>
+     X-API-Key: <from DEVKIT4AI_PROJECT_KEY>
+  -> Response: { 
+       id, email, full_name?, role: "end_user", 
+       is_active, created_at, project_id,
+       access_token, refresh_token 
+     }
+  -> Stores JWT tokens in cookies
   -> Redirects to /dashboard
 ```
+
+**Backend Implementation (10-step flow):**
+
+1. **Endpoint Receives Request**: POST /api/v1/auth/register with X-Developer-Key and X-Project-ID headers
+2. **Role Resolution**: `resolve_role_from_headers()` returns UserRole.END_USER based on X-Developer-Key presence
+3. **Project ID Validation**: Parses X-Project-ID as UUID, validates format
+4. **Developer Authentication**: Verifies X-Developer-Key SHA-256 hash against DeveloperKey table
+5. **Project Ownership Check**: Queries Project table to verify developer owns project_id
+6. **Email Availability Check**: `validate_email_availability()` ensures email not taken within project scope
+7. **Command Creation**: Builds RegisterUserCommand with email, password, UserRole.END_USER, project_id, full_name
+8. **Aggregate Registration**: UserActions.register() validates password (min 8 chars, uppercase, lowercase, digit), hashes with bcrypt, emits UserWasRegistered event
+9. **Event Persistence**: EventSourcedRepository saves event to event_store table
+10. **JWT Generation**: Creates access_token (30 min expiry) and refresh_token (7 days) with HS256 algorithm
+11. **Project Assignment**: Handler calls `_assign_user_to_project()` to create ProjectUser record
+12. **Email Verification**: Emits EmailVerificationWasRequested event with 24h token
+13. **Response**: Returns RegistrationResponse with user data, project_id, access_token, refresh_token
 
 **Response Fields:**
 - `full_name`: Optional display name provided during registration
-- `project_id`: UUID of the project the end user belongs to
+- `project_id`: UUID of the project the end user belongs to (required for END_USER)
+- `is_active`: Always false initially, requires email verification
+- `access_token`: JWT with claims: sub (user_id), type ("access"), exp (30 min), project_id
+- `refresh_token`: JWT with claims: sub (user_id), type ("refresh"), exp (7 days)
 
-(((REPLACE_THIS_WITH_IMAGE: end-user-registration-form.png: Screenshot of end-user registration form with full name field
-  -> Response: { user, access_token, refresh_token }
-  -> Stores JWT cookies
-  -> Redirects to /dashboard
+**Database Schema:**
+```sql
+-- users table
+CREATE TABLE users (
+    id UUID PRIMARY KEY,
+    email VARCHAR(255) NOT NULL,
+    full_name VARCHAR(255) NULL,
+    hashed_password VARCHAR(255) NOT NULL,
+    role VARCHAR(50) NOT NULL,  -- 'platform_operator', 'developer', 'end_user'
+    project_id UUID NULL,       -- Only for END_USER
+    is_active BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    -- Unique constraint: email + project_id combination
+    CONSTRAINT unique_email_per_project UNIQUE (email, project_id)
+);
+
+-- Partial unique index for NULL project_id (operators/developers)
+CREATE UNIQUE INDEX unique_email_global_users 
+ON users (email) 
+WHERE project_id IS NULL;
+
+-- project_users table (many-to-many)
+CREATE TABLE project_users (
+    project_id UUID NOT NULL,
+    user_id UUID NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (project_id, user_id)
+);
 ```
 
-(((REPLACE_THIS_WITH_IMAGE: end-user-registration-form.png: Screenshot of end-user registration form)))
+**Email Uniqueness Model:**
+- END_USER emails must be unique within a project (enforced by unique constraint)
+- OPERATOR/DEVELOPER emails must be globally unique (enforced by partial index on NULL project_id)
+- Same email can exist as END_USER in multiple projects
+- END_USER email can coexist with OPERATOR/DEVELOPER email
+
+(((REPLACE_THIS_WITH_IMAGE: end-user-registration-form.png: Screenshot of end-user registration form with full name field)))
 
 ### Developer Registration
 
 <Note>
-Developer registration is typically handled through the Cloud Admin console at devkit4ai.com or vibecoding.ad. The Starter Kit includes developer registration support for compatibility but redirects to Cloud Admin in project mode.
+Developer registration is handled through the Cloud Admin console at devkit4ai.com or vibecoding.ad. The Starter Kit includes developer registration support for compatibility but redirects project mode users to Cloud Admin. In project mode, the developer registration page redirects to `/login`.
 </Note>
 
-Developer registration flow (when enabled):
+Developer registration flow (console/operator modes only):
 
+**Frontend Flow:**
 1. Developer navigates to `/register/developer`
 2. Submits email and password
 3. `backendRegisterAction()` sends request with `role: "developer"`
-4. Cloud API creates developer account with operator key validation
-5. Returns provisioning bundle (developer_key, project_id, api_key)
-6. Redirects to success page displaying credentials
+4. Cloud API validates X-Operator-Key header
+5. Backend creates developer with auto-provisioning
+6. Returns provisioning bundle (project_id, developer_key, api_key)
+7. Stores provisioning in httpOnly cookie (24h TTL)
+8. Redirects to `/register/developer/success?email=<email>`
 
 **Server Action:**
 ```typescript
 backendRegisterAction(formData: FormData)
   -> POST /api/v1/auth/register
-  -> Headers: X-User-Role: developer, X-Operator-Key
-  -> Response: { user, access_token, refresh_token, provisioning }
-  -> Stores JWT cookies + provisioning bundle
+  -> Headers: X-Operator-Key: <from DEVKIT4AI_OPERATOR_KEY>
+  -> Body: { email, password, full_name? }
+  -> Response: { 
+       user, 
+       access_token, 
+       refresh_token,
+       provisioning: { 
+         project_id, 
+         developer_key, 
+         api_key 
+       }
+     }
+  -> Stores JWT tokens in httpOnly cookies
+  -> Stores provisioning bundle in httpOnly cookie
   -> Redirects to /register/developer/success
 ```
+
+**Backend Developer Provisioning:**
+
+When a developer registers, the backend automatically provisions:
+
+1. **Default Project**: Created with name "Default Project"
+2. **API Key**: Generated for the project (prefix `ak_` + 32 URL-safe chars via secrets.token_urlsafe)
+3. **Developer Key**: Generated and linked to project (prefix `ak_` + 32 URL-safe chars, SHA-256 hashed)
+
+**Implementation:**
+```python
+# RegisterUserHandler._create_developer_provisioning()
+async def _create_developer_provisioning(developer_id, email):
+    # Create project
+    create_project_command = CreateProjectCommand(
+        user_id=developer_id,
+        name="Default Project",
+        description="Your default project created automatically"
+    )
+    project_id = await global_commandbus.send(create_project_command)
+    
+    # Generate API key
+    generate_api_key_command = GenerateApiKeyCommand(
+        project_id=project_id,
+        name="Default API Key"
+    )
+    full_api_key, api_key_id = await global_commandbus.send(
+        generate_api_key_command
+    )
+    
+    # Generate developer key
+    generate_developer_key_command = GenerateDeveloperKeyCommand(
+        developer_id=developer_id,
+        name="Default Developer Key"
+    )
+    developer_key_result = await global_commandbus.send(
+        generate_developer_key_command
+    )
+    
+    return project_id, full_api_key, developer_key_result.full_key
+```
+
+**Key Generation:**
+- Format: `ak_` + secrets.token_urlsafe(32) → 46 character string
+- Storage: SHA-256 hash in database, full key shown once
+- Key prefix changed from `dk_` to `ak_` in v1.5.0
+
+(((REPLACE_THIS_WITH_IMAGE: developer-provisioning-credentials.png: Screenshot of provisioning credentials display page)))
 
 ## Login Flow
 
 ### Universal Login
 
-The login page handles all user types with role-based redirects:
+The login page handles all user types with role-based redirects after authentication:
 
+**Frontend Flow:**
 ```typescript
 backendLoginAction(formData: FormData)
+  -> Validates email and password presence
+  -> Sanitizes returnUrl via sanitizeReturnUrl()
   -> POST /api/v1/auth/login
+  -> Headers: X-Project-ID (project mode only)
+  -> Body: { email, password }
   -> Response: { access_token, refresh_token }
-  -> Fetch user: GET /api/v1/auth/me
-  -> Store JWT cookies
-  -> Redirect based on role:
-     - platform_operator -> /portal
-     - developer -> /console
-     - end_user -> /dashboard
+  -> Store JWT tokens in httpOnly cookies
+  -> GET /api/v1/auth/me to fetch user data
+  -> Redirect based on role or returnUrl
+```
+
+**Backend Implementation (10-step flow):**
+
+1. **Endpoint Receives Request**: POST /api/v1/auth/login with optional X-Project-ID header
+2. **Command Creation**: LoginUserCommand with email, password, project_id (if provided)
+3. **User Lookup**: Queries User table by email and project_id (for END_USER) or email only (for OPERATOR/DEVELOPER)
+4. **Password Verification**: Uses bcrypt via `pwd_context.verify(password, user.hashed_password)`
+5. **Active Status Check**: Validates `user.is_active` is True (email verified)
+6. **Aggregate Loading**: Reconstructs UserActions from event stream via `from_events()`
+7. **Login Method**: UserActions.login() emits UserWasLoggedIn event
+8. **Event Persistence**: EventSourcedRepository saves event to event_store
+9. **JWT Generation**: Creates access_token and refresh_token with HS256 algorithm
+10. **Response**: Returns TokenResponse with access_token, refresh_token, token_type
+
+**JWT Token Claims:**
+```python
+# Access token (30 minute expiry)
+{
+  "sub": "user_id",           # User UUID
+  "type": "access",           # Token type
+  "exp": 1733587200,          # Expiration timestamp
+  "project_id": "project_id"  # Only for END_USER
+}
+
+# Refresh token (7 day expiry)
+{
+  "sub": "user_id",
+  "type": "refresh",
+  "exp": 1734192000
+}
+```
+
+**Token Creation:**
+```python
+# app/features/auth/api/endpoints.py
+from jose import jwt
+from datetime import datetime, timedelta
+
+def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
+    to_encode = data.copy()
+    expire = datetime.utcnow() + (expires_delta or timedelta(minutes=30))
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(
+        to_encode, 
+        settings.SECRET_KEY, 
+        algorithm="HS256"
+    )
+    return encoded_jwt
 ```
 
 **Login Form Features:**
 - Email and password validation
-- Remember return URL for post-login redirect
+- Return URL preservation with security validation
 - Error message display from query params
 - Link to registration page
-- "Forgot password" support (coming soon)
+- 10 second timeout protection via AbortController
+
+**Role-Based Redirects:**
+```typescript
+// After successful login, user redirected based on role:
+platform_operator -> /portal
+developer        -> /console
+end_user         -> /dashboard
+// Or to sanitized returnUrl if provided
+```
 
 (((REPLACE_THIS_WITH_IMAGE: login-form-interface.png: Screenshot of login form with email and password fields)))
 
+### Project-Scoped Authentication
+
+**End User Login Requirements:**
+
+End users must provide project context for authentication:
+
+```bash
+# Frontend sends X-Project-ID in project mode
+POST /api/v1/auth/login
+Headers:
+  Content-Type: application/json
+  X-Project-ID: 550e8400-e29b-41d4-a716-446655440000
+
+Body:
+{
+  "email": "user@example.com",
+  "password": "SecurePass123"
+}
+```
+
+**Backend User Lookup:**
+```python
+# For END_USER with X-Project-ID
+user = db.query(User).filter(
+    User.email == email,
+    User.project_id == project_id,
+    User.role == UserRole.END_USER
+).first()
+
+# For OPERATOR/DEVELOPER without X-Project-ID
+user = db.query(User).filter(
+    User.email == email,
+    User.project_id.is_(None),
+    User.role.in_([UserRole.PLATFORM_OPERATOR, UserRole.DEVELOPER])
+).first()
+```
+
+**Why Project Scoping?**
+- Enables same email to exist as END_USER in multiple projects
+- Isolates user namespaces per project
+- Developer A's end users cannot access Developer B's project
+- JWT access tokens for END_USER include `project_id` claim
+
+<Info>
+The `X-Project-ID` header is crucial for end user authentication. It ensures all requests are scoped to the correct project context. Without it, end user login will fail.
+</Info>
+
 ### Return URL Handling
 
-The login flow preserves the user's intended destination:
+The login flow preserves the user's intended destination with security validation:
 
 ```typescript
 // URL: /login?returnUrl=/dashboard/settings
 // After successful login, user redirected to /dashboard/settings
+
+// lib/return-url.ts
+export function sanitizeReturnUrl(value: string | null): string | null {
+  if (!value) return null;
+  
+  // URL-decode with fallback
+  let decoded: string;
+  try {
+    decoded = decodeURIComponent(value);
+  } catch {
+    decoded = value;
+  }
+  
+  // Only allow same-origin relative paths
+  if (!decoded.startsWith('/')) return null;
+  
+  // Reject double-slash prefixes (open redirect)
+  if (decoded.startsWith('//')) return null;
+  
+  // Reject backslashes or control characters
+  if (/[\\\x00-\x1f]/.test(decoded)) return null;
+  
+  // Reject overly long values
+  if (decoded.length > 2048) return null;
+  
+  return decoded;
+}
 ```
 
-**Security:**
-- Return URLs validated via `sanitizeReturnUrl()` function
+**Security Rules:**
 - Only same-origin relative paths allowed
-- Rejects double-slash prefixes to prevent open redirects
-- Maximum 2048 characters to prevent abuse
+- Must start with single forward slash `/`
+- Rejects `//` prefix (prevents open redirects to external sites)
+- Rejects backslashes and control characters
+- Maximum 2048 characters
+- URL-decoded before validation
 
 ## JWT Token Management
 
 ### Token Storage
 
-Tokens stored in secure httpOnly cookies:
+Tokens stored in secure httpOnly cookies with protocol-based security:
 
 ```typescript
 // Access token
 Cookie: devkit4ai-token
+Value: <JWT_STRING>
 Expiry: 30 minutes
-Flags: httpOnly, secure (production), sameSite=lax
+Flags: httpOnly, secure (HTTPS only), sameSite=lax, path=/
 
 // Refresh token
-Cookie: devkit4ai-refresh-token
+Cookie: devkit4ai-refresh-token  
+Value: <JWT_STRING>
 Expiry: 7 days
-Flags: httpOnly, secure (production), sameSite=lax
+Flags: httpOnly, secure (HTTPS only), sameSite=lax, path=/
 ```
+
+**Security Implementation:**
+```typescript
+// lib/auth-server.ts
+async function storeTokensInCookies(tokens: TokenResponse) {
+  const cookieStore = await cookies();
+  const headerStore = await headers();
+  
+  // Detect HTTPS via x-forwarded-proto header
+  const forwardedProto = headerStore.get("x-forwarded-proto");
+  const host = headerStore.get("host") ?? "";
+  const isLocalHost = host.startsWith("localhost") || 
+                      host.startsWith("127.0.0.1");
+  const useSecure = forwardedProto === "https" && !isLocalHost;
+  
+  // Access token (30 minutes)
+  cookieStore.set("devkit4ai-token", tokens.access_token, {
+    httpOnly: true,
+    secure: useSecure,
+    sameSite: "lax",
+    path: "/",
+    maxAge: 30 * 60, // 30 minutes in seconds
+  });
+  
+  // Refresh token (7 days)
+  if (tokens.refresh_token) {
+    cookieStore.set("devkit4ai-refresh-token", tokens.refresh_token, {
+      httpOnly: true,
+      secure: useSecure,
+      sameSite: "lax",
+      path: "/",
+      maxAge: 7 * 24 * 60 * 60, // 7 days in seconds
+    });
+  }
+}
+```
+
+**httpOnly Cookie Benefits:**
+- Not accessible via JavaScript (prevents XSS attacks)
+- Automatically sent with requests to same origin
+- Protected from client-side tampering
+- Server-side only access via `cookies()` from next/headers
 
 ### Token Lifecycle
 
-1. **Registration/Login**: Both tokens issued and stored
-2. **API Requests**: Access token sent in Authorization header
-3. **Token Expiry**: Access token expires after 30 minutes
-4. **Token Refresh**: Use refresh token to obtain new access token (manual implementation required)
-5. **Logout**: Both cookies deleted, user redirected to login
+**1. Registration/Login:**
+- Backend generates both tokens with HS256 algorithm
+- Frontend stores in httpOnly cookies via `storeTokensInCookies()`
+- Cookies sent automatically with subsequent requests
+
+**2. API Requests:**
+```typescript
+// Server Component or Server Action
+import { cookies } from "next/headers";
+
+async function fetchProtectedData() {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("devkit4ai-token")?.value;
+  
+  const response = await fetch(`${backendApiUrl}/api/v1/protected`, {
+    headers: {
+      "Authorization": `Bearer ${token}`,
+      "X-Project-ID": projectId, // For END_USER
+    },
+  });
+}
+```
+
+**3. Token Expiry:**
+- Access token expires after 30 minutes (JWT `exp` claim)
+- Backend returns 401 Unauthorized for expired tokens
+- Frontend must use refresh token to obtain new access token
+
+**4. Token Refresh (Manual Implementation Required):**
+```typescript
+// Not implemented by default - example pattern
+async function refreshAccessToken() {
+  const cookieStore = await cookies();
+  const refreshToken = cookieStore.get("devkit4ai-refresh-token")?.value;
+  
+  const response = await fetch(`${backendApiUrl}/api/v1/auth/refresh`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ refresh_token: refreshToken }),
+  });
+  
+  const { access_token } = await response.json();
+  
+  // Store new access token
+  cookieStore.set("devkit4ai-token", access_token, {
+    httpOnly: true,
+    secure: true,
+    sameSite: "lax",
+    maxAge: 30 * 60,
+  });
+}
+```
+
+**5. Logout:**
+```typescript
+// app/actions.ts
+export const signOutAction = async () => {
+  await clearTokensFromCookies();
+  return redirect("/login");
+};
+
+async function clearTokensFromCookies() {
+  const cookieStore = await cookies();
+  cookieStore.delete("devkit4ai-token");
+  cookieStore.delete("devkit4ai-refresh-token");
+  cookieStore.delete("devkit4ai-provisioning"); // Developer provisioning
+}
+```
 
 ### Accessing Current User
 
-Server components can fetch the current user:
-
+**Server Components:**
 ```typescript
-import { getCurrentUser } from full_name, user.role, user.project_id);
+// app/dashboard/page.tsx
+import { getCurrentUser, requireAuth } from "@/lib/auth-server";
+
+// Option 1: Get user or null
+export default async function DashboardPage() {
+  const user = await getCurrentUser();
+  
+  if (!user) {
+    return <div>Not authenticated</div>;
+  }
+  
+  return <div>Welcome {user.full_name || user.email}!</div>;
+}
+
+// Option 2: Require authentication (redirects if not authenticated)
+export default async function ProtectedPage() {
+  const user = await requireAuth();
+  // Page only renders if authenticated
+  
+  return <div>Hello {user.full_name}!</div>;
+}
+```
+
+**getCurrentUser() Implementation:**
+```typescript
+// lib/auth-server.ts
+import { cache } from "react";
+
+export const getCurrentUser = cache(async (): Promise<UserWithRole | null> => {
+  const token = await getAccessToken();
+  if (!token) return null;
+  
+  const backendApiUrl = process.env.NEXT_PUBLIC_API_URL;
+  if (!backendApiUrl) return null;
+  
+  // 10 second timeout protection
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000);
+  
+  try {
+    const response = await fetch(`${backendApiUrl}/api/v1/auth/me`, {
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Cache-Control": "no-cache",
+      },
+      cache: "no-store",
+      signal: controller.signal,
+    });
+    
+    clearTimeout(timeoutId);
+    
+    if (!response.ok) return null;
+    
+    const data = await response.json();
+    
+    // Validate response structure
+    if (!data?.id || !data?.email || !data?.role) return null;
+    
+    // Validate role value
+    const validRoles = ["platform_operator", "developer", "end_user"];
+    if (!validRoles.includes(data.role)) return null;
+    
+    return data as UserWithRole;
+  } catch {
+    clearTimeout(timeoutId);
+    return null;
+  }
+});
+```
+
+**React Cache Benefits:**
+- Caches result per-request to avoid redundant API calls
+- Multiple calls to `getCurrentUser()` in same request cycle return same data
+- Cache automatically invalidated between requests
+- Fresh user data fetched on each new page load
+
+**Client Components:**
+```typescript
+// components/user-menu.tsx
+"use client";
+
+import { useCurrentUser, useIsAuthenticated } from "@/lib/auth-context";
+
+export function UserMenu() {
+  const user = useCurrentUser();
+  const isAuthenticated = useIsAuthenticated();
+  
+  if (!isAuthenticated) {
+    return <LoginButton />;
+  }
+  
+  return (
+    <div>
+      <Avatar>{user?.email[0]}</Avatar>
+      <span>{user?.full_name || user?.email}</span>
+      {user?.project_id && <Badge>Project User</Badge>}
+    </div>
+  );
 }
 ```
 
 **User Data Structure:**
 ```typescript
 interface UserWithRole {
-  id: string;               // User UUID
-  email: string;            // User email address
-  full_name?: string;       // Optional display name
+  id: string;                 // User UUID
+  email: string;              // User email address
+  full_name?: string | null;  // Optional display name
   role: "platform_operator" | "developer" | "end_user";
-  is_active: boolean;       // Email verification status
-  created_at: string;       // ISO 8601 timestamp
-  project_id?: string;      // UUID (only for end_user role)
+  is_active: boolean;         // Email verification status
+  created_at: string;         // ISO 8601 timestamp
+  project_id?: string | null; // UUID (only for end_user role)
 }
 ```
 
@@ -186,25 +664,9 @@ interface UserWithRole {
 The `project_id` field is only present for end users and identifies which project they belong to. Developers and operators do not have a `project_id`.
 </Note>
 
-Client components use React context:
-
-```typescript
-import { useCurrentUser, useIsAuthenticated } from "@/lib/auth-context";
-
-// In Client Component
-const user = useCurrentUser();
-const isAuthenticated = useIsAuthenticated();
-
-// Access user fields
-if (user) {
-  console.log(user.full_name);  // Display name
-  console.log(user.project_id); // Project UUID (end users only)
-}
-```
-
 ### Personalized Greetings
 
-Use `full_name` for personalized UI:
+Use `full_name` for personalized UI elements:
 
 ```typescript
 // app/dashboard/page.tsx
@@ -213,10 +675,17 @@ import { requireAuth } from "@/lib/auth-server";
 export default async function DashboardPage() {
   const user = await requireAuth();
   
+  const greeting = user.full_name 
+    ? `Welcome, ${user.full_name}!` 
+    : "Welcome!";
+  
   return (
     <div>
-      <h1>Welcome{user.full_name ? `, ${user.full_name}` : ""}!</h1>
-      <p>Your email: {user.email}</p>
+      <h1>{greeting}</h1>
+      <p>Email: {user.email}</p>
+      {user.project_id && (
+        <p>Project ID: {user.project_id}</p>
+      )}
     </div>
   );
 }
@@ -226,18 +695,14 @@ export default async function DashboardPage() {
 - With `full_name`: "Welcome, Sarah Johnson!"
 - Without `full_name`: "Welcome!"
 
-(((REPLACE_THIS_WITH_IMAGE: dashboard-personalized-greeting.png: Screenshot of dashboard showing personalized greeting with user's full name)))ort { useCurrentUser, useIsAuthenticated } from "@/lib/auth-context";
-
-// In Client Component
-const user = useCurrentUser();
-const isAuthenticated = useIsAuthenticated();
+(((REPLACE_THIS_WITH_IMAGE: dashboard-personalized-greeting.png: Screenshot of dashboard showing personalized greeting with user's full name)))
 ```
 
 ## Protected Routes
 
 ### Server-Side Protection
 
-Use `requireAuth()` to protect entire pages:
+Use `requireAuth()` to protect entire pages with automatic redirect to login:
 
 ```typescript
 // app/dashboard/page.tsx
@@ -246,212 +711,786 @@ import { requireAuth } from "@/lib/auth-server";
 export default async function DashboardPage() {
   const user = await requireAuth();
   // Page only renders if authenticated
+  // Unauthenticated users redirected to /login?returnUrl=/dashboard
+  
   return <div>Welcome {user.email}</div>;
 }
 ```
 
-### Role-Based Prak_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-X-Project-ID: 550e8400-e29b-41d4-a716-446655440000
-X-API-Key: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-Authorization: Bearer <jwt_token>
+**requireAuth() Implementation:**
+```typescript
+// lib/auth-server.ts
+export async function requireAuth(): Promise<UserWithRole> {
+  const user = await getCurrentUser();
+  
+  if (!user) {
+    // Get current path for return URL
+    const currentPath = await getCurrentPath();
+    const safeReturnUrl = sanitizeReturnUrl(currentPath);
+    
+    // Redirect to login with return URL
+    const loginUrl = safeReturnUrl 
+      ? `/login?returnUrl=${encodeURIComponent(safeReturnUrl)}`
+      : "/login";
+    
+    redirect(loginUrl);
+  }
+  
+  // Check if account is activated
+  if (!user.is_active) {
+    redirect("/verify-email");
+  }
+  
+  return user;
+}
 ```
 
-<Info>
-The `X-Project-ID` header is crucial for end user authentication. It ensures all requests are scoped to the correct project context. JWT tokens for end users also contain the `project_id` claim for server-side authorization.
-</Info>typescript
-import { requireRak_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-Authorization: Bearer <jwt_token>
-```
+**getCurrentPath() Fallback Chain:**
+1. `x-invoke-path` header (Next.js edge runtime)
+2. `x-pathname` header (custom header from middleware)
+3. `x-url` header (parse pathname and search)
+4. `referer` header (parse pathname and search)
+5. Default: `/`
 
-<Note>
-Developer keys changed from `dk_` prefix to `ak_` prefix in v1.5.0. The format is `ak_` + 32 URL-safe characters.
-</Note>ort default async function AdminPage() {
+### Role-Based Protection
+
+Use `requireRole()` to enforce role-based access control:
+
+```typescript
+// app/console/page.tsx
+import { requireRole } from "@/lib/auth-server";
+
+export default async function ConsolePanel() {
   const user = await requireRole(["platform_operator", "developer"]);
   // Only operators and developers can access
-  return <div>Admin Panel</div>;
+  // Other roles redirected to their default dashboard
+  
+  return <div>Console Dashboard</div>;
+}
+```
+
+**requireRole() Implementation:**
+```typescript
+// lib/auth-server.ts
+export async function requireRole(
+  allowedRoles: Array<"platform_operator" | "developer" | "end_user">
+): Promise<UserWithRole> {
+  const user = await requireAuth(); // First ensure authenticated
+  
+  if (!allowedRoles.includes(user.role)) {
+    // Redirect to role-based dashboard if unauthorized
+    const dashboardPath = getRoleBasedRedirect(user.role);
+    redirect(dashboardPath);
+  }
+  
+  return user;
+}
+
+function getRoleBasedRedirect(role: string): string {
+  switch (role) {
+    case "platform_operator":
+      return "/portal";
+    case "developer":
+      return "/console";
+    case "end_user":
+      return "/dashboard";
+    default:
+      return "/dashboard";
+  }
 }
 ```
 
 ### Client-Side Protection
 
-Use hooks for conditional rendering:
+Use hooks for conditional rendering without redirects:
 
 ```typescript
+// components/settings-button.tsx
+"use client";
+
 import { useRequireRole, useHasRole } from "@/lib/auth-context";
 
+// Option 1: useRequireRole (returns user or null)
 function SettingsButton() {
   const user = useRequireRole(["developer"]);
+  
   if (!user) return null; // Hide for non-developers
   
   return <button>Settings</button>;
 }
+
+// Option 2: useHasRole (returns boolean)
+function AdminPanel() {
+  const hasAccess = useHasRole(["platform_operator"]);
+  
+  if (!hasAccess) {
+    return <div>Access Denied</div>;
+  }
+  
+  return <div>Admin Panel Content</div>;
+}
+```
+
+**Auth Context Hooks:**
+```typescript
+// lib/auth-context.tsx
+import { useContext } from "react";
+
+export function useAuth(): AuthContextValue {
+  return useContext(AuthContext);
+}
+
+export function useCurrentUser(): UserWithRole | null {
+  const { user } = useAuth();
+  return user;
+}
+
+export function useIsAuthenticated(): boolean {
+  const { user } = useAuth();
+  return user !== null;
+}
+
+export function useRequireRole(
+  allowedRoles: Array<"platform_operator" | "developer" | "end_user">
+): UserWithRole | null {
+  const user = useCurrentUser();
+  if (!user) return null;
+  return allowedRoles.includes(user.role) ? user : null;
+}
+
+export function useHasRole(
+  allowedRoles: Array<"platform_operator" | "developer" | "end_user">
+): boolean {
+  const user = useCurrentUser();
+  if (!user) return false;
+  return allowedRoles.includes(user.role);
+}
+```
+
+<Warning>
+Client-side hooks DO NOT redirect users. They only return null or false for unauthorized access. Use server-side `requireAuth()` or `requireRole()` for page-level protection with automatic redirects.
+</Warning>
 ```
 
 ## Password Requirements
 
-All passwords must meet these criteria:
+All passwords must meet these criteria enforced server-side by the UserActions aggregate:
 
 - Minimum 8 characters
 - At least one uppercase letter (A-Z)
 - At least one lowercase letter (a-z)
 - At least one digit (0-9)
 
-Validation performed on both client and server:
+**Backend Validation:**
+```python
+# app/features/auth/actions.py - UserActions.register()
+def register(email, password, user_id, role, project_id=None, full_name=None):
+    # Validate password length
+    if len(password) < 8:
+        raise ValueError("Password must be at least 8 characters long")
+    
+    # Check for uppercase letter
+    if not any(c.isupper() for c in password):
+        raise ValueError(
+            "Password must contain at least one uppercase letter"
+        )
+    
+    # Check for lowercase letter
+    if not any(c.islower() for c in password):
+        raise ValueError(
+            "Password must contain at least one lowercase letter"
+        )
+    
+    # Check for digit
+    if not any(c.isdigit() for c in password):
+        raise ValueError("Password must contain at least one digit")
+    
+    # Hash password with bcrypt
+    hashed_password = pwd_context.hash(password)
+```
 
+**Frontend Validation:**
 ```typescript
+// app/actions.ts - backendRegisterAction()
 const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+
 if (!passwordRegex.test(password)) {
-  return { error: "Password must meet requirements" };
+  return { 
+    success: false,
+    error: "Password must be at least 8 characters with uppercase, lowercase, and digit" 
+  };
 }
 ```
 
+**Password Hashing:**
+- Algorithm: bcrypt via passlib.context.CryptContext
+- Work factor: Default bcrypt rounds (2^12 iterations)
+- Stored in `users.hashed_password` column (VARCHAR 255)
+- Never logged or returned in API responses
+
 ## Role-Based Headers
 
-All API requests include role-specific headers:
+All API requests include role-specific headers for authentication and authorization:
 
-**End User Requests:**
+**End User Requests (Project Mode):**
 ```bash
-X-User-Role: end_user
-X-Developer-Key: <developer_key>
-X-Project-ID: <project_id>
-X-API-Key: <project_api_key>
-Authorization: Bearer <jwt_token>
+POST /api/v1/protected-endpoint
+Headers:
+  Content-Type: application/json
+  Authorization: Bearer <jwt_access_token>
+  X-Developer-Key: ak_abc123XYZ-_789def456ghi012jkl345
+  X-Project-ID: 550e8400-e29b-41d4-a716-446655440000
+  X-API-Key: ak_xyz789ABC-_123ghi456jkl789mno012
 ```
 
-**Developer Requests:**
+**Developer Requests (Console Mode):**
 ```bash
-X-User-Role: developer
-X-Developer-Key: <developer_key>
-Authorization: Bearer <jwt_token>
+POST /api/v1/projects
+Headers:
+  Content-Type: application/json
+  Authorization: Bearer <jwt_access_token>
+  X-Developer-Key: ak_abc123XYZ-_789def456ghi012jkl345
 ```
+
+**Platform Operator Requests:**
+```bash
+POST /api/v1/admin/users
+Headers:
+  Content-Type: application/json
+  Authorization: Bearer <jwt_access_token>
+  X-Operator-Key: <operator_key_from_settings>
+```
+
+**Header Resolution:**
+```typescript
+// lib/deployment-mode.ts - hydrateDeploymentMode()
+function resolveHeaders(mode, secrets) {
+  const headers: Record<string, string> = {};
+  
+  if (mode === "operator") {
+    if (secrets.operatorKey) {
+      headers["X-Operator-Key"] = secrets.operatorKey;
+    }
+  } else if (mode === "console") {
+    if (secrets.developerKey) {
+      headers["X-Developer-Key"] = secrets.developerKey;
+    }
+  } else if (mode === "project") {
+    if (secrets.developerKey) {
+      headers["X-Developer-Key"] = secrets.developerKey;
+    }
+    if (secrets.projectId) {
+      headers["X-Project-ID"] = secrets.projectId;
+    }
+    if (secrets.projectKey) {
+      headers["X-API-Key"] = secrets.projectKey;
+    }
+  }
+  
+  return headers;
+}
+```
+
+<Note>
+Developer keys and API keys changed from `dk_` prefix to `ak_` prefix in v1.5.0. The format is `ak_` + 32 URL-safe characters generated by `secrets.token_urlsafe(32)`.
+</Note>
 
 ## Error Handling
 
 ### Registration Errors
 
-Common registration error scenarios:
+Common registration error scenarios with backend triggering conditions:
 
-| Error | Cause | Resolution |
-|-------|-------|------------|
-| "Email already registered" | Duplicate account | Use existing account or password reset |
-| "Invalid password format" | Password doesn't meet requirements | Follow password criteria |
-| "Network error" | API unreachable | Check backend URL configuration |
-| "Deployment mode mismatch" | Wrong mode for registration type | Verify DEVKIT4AI_MODE setting |
+| Error | HTTP Status | Cause | Backend Condition | Resolution |
+|-------|-------------|-------|-------------------|------------|
+| "Email already registered" | 409 Conflict | Duplicate account | `validate_email_availability()` finds existing user with same email+project_id | Use existing account or contact support |
+| "End user registration requires a developer key and project context" | 400 Bad Request | Missing developer key | X-Developer-Key header not present for END_USER | Configure DEVKIT4AI_DEVELOPER_KEY |
+| "X-Project-ID header is required for END_USER registration" | 400 Bad Request | Missing project ID | X-Project-ID header not present when X-Developer-Key provided | Configure DEVKIT4AI_PROJECT_ID |
+| "Invalid X-Project-ID format. Must be a valid UUID." | 400 Bad Request | Malformed project ID | `uuid.UUID(project_id_header)` raises ValueError | Fix project ID format in env vars |
+| "Project not found or you don't have permission to add users to it" | 403 Forbidden | Invalid project ownership | Project query with developer_id + project_id returns None | Verify project belongs to developer |
+| "Password must be at least 8 characters long" | 500 Internal | Weak password | `len(password) < 8` in UserActions.register() | Use stronger password |
+| "Password must contain at least one uppercase letter" | 500 Internal | Missing uppercase | `not any(c.isupper() for c in password)` | Add uppercase letter |
+| "Password must contain at least one lowercase letter" | 500 Internal | Missing lowercase | `not any(c.islower() for c in password)` | Add lowercase letter |
+| "Password must contain at least one digit" | 500 Internal | Missing digit | `not any(c.isdigit() for c in password)` | Add digit |
+| "Invalid email format" | 500 Internal | Bad email | Email missing '@' or len < 5 in aggregate | Fix email format |
+| "Network error" | N/A | API unreachable | Fetch throws network exception | Check NEXT_PUBLIC_API_URL |
+| "Registration timed out" | N/A | Request timeout | AbortController timeout after 10 seconds | Check backend availability |
+| "Too many registration attempts" | 429 Too Many Requests | Rate limiting | Backend rate limiter triggered | Wait and retry |
+| "Operator key is not configured" | N/A | Missing operator key | DEVKIT4AI_OPERATOR_KEY not set for developer registration | Configure operator key |
+| "Provisioning data is missing" | N/A | Incomplete provisioning | Developer registration response missing project_id/developer_key/api_key | Contact platform support |
 
 ### Login Errors
 
-Common login error scenarios:
+Common login error scenarios with backend triggering conditions:
 
-| Error | Cause | Resolution |
-|-------|-------|------------|
-| "Invalid credentials" | Wrong email/password | Check credentials or reset password |
-| "Account not activated" | Email not verified | Check email for verification link |
-| "Session expired" | JWT token expired | Log in again |
-| "Unauthorized role" | Wrong deployment mode | Verify environment configuration |
+| Error | HTTP Status | Cause | Backend Condition | Resolution |
+|-------|-------------|-------|-------------------|------------|
+| "Invalid credentials" | 401 Unauthorized | Wrong email/password | `pwd_context.verify()` returns False | Check credentials or reset password |
+| "Account not activated. Please check your email for the verification link." | 401 Unauthorized | Email not verified | `user.is_active == False` | Check email for verification |
+| "Session expired" | 401 Unauthorized | JWT token expired | JWT `exp` claim < current time | Log in again |
+| "Request timeout" | N/A | Request timeout | AbortController timeout after 10 seconds | Check backend availability |
+| "Email and password are required" | N/A | Missing credentials | email or password is empty | Provide both fields |
+| "Application is not properly configured" | N/A | Missing backend URL | NEXT_PUBLIC_API_URL not set | Configure backend URL |
+| User not found | 401 Unauthorized | Email doesn't exist | User query by email+project_id returns None | Check email or register |
+| Project context missing | 401 Unauthorized | Missing X-Project-ID for END_USER | END_USER login without X-Project-ID header | Configure project ID in project mode |
+
+**Error Response Structure:**
+```json
+{
+  "detail": "Error message describing the issue"
+}
+```
+
+### Frontend Error Handling
+
+```typescript
+// app/actions.ts
+export async function backendRegisterAction(formData: FormData) {
+  try {
+    const response = await fetch(url, { method: "POST", ... });
+    
+    if (!response.ok) {
+      const errorPayload = await response.json().catch(() => null);
+      
+      // Handle specific HTTP status codes
+      if (response.status === 429) {
+        return {
+          success: false,
+          error: "Too many registration attempts. Please try again later.",
+        };
+      }
+      
+      if (response.status === 409) {
+        return {
+          success: false,
+          error: "An account already exists for this email.",
+        };
+      }
+      
+      if (response.status === 400) {
+        const detail = errorPayload?.detail ?? "Registration failed.";
+        return { success: false, error: detail };
+      }
+      
+      if (response.status >= 500) {
+        return {
+          success: false,
+          error: "Unexpected server error. Please try again.",
+        };
+      }
+      
+      return {
+        success: false,
+        error: errorPayload?.detail ?? "Registration failed. Please try again.",
+      };
+    }
+    
+    // Success path...
+  } catch (networkError) {
+    if (networkError instanceof Error && networkError.name === "AbortError") {
+      return {
+        success: false,
+        error: "Registration timed out. Please try again.",
+      };
+    }
+    
+    return {
+      success: false,
+      error: "Unable to reach the registration service. Please retry shortly.",
+    };
+  }
+}
+```
 
 ## Provisioning Bundle
 
 <Info>
-Provisioning bundles are only used for developer registration. End users do not receive provisioning data.
+Provisioning bundles are only used for developer registration in console/operator modes. End users do not receive provisioning data. In project mode (Starter Kit), developer registration is disabled and redirects to Cloud Admin.
 </Info>
 
-After developer registration, a provisioning bundle is stored temporarily:
+After developer registration, a provisioning bundle is stored temporarily in an httpOnly cookie:
 
 ```typescript
 interface ProvisioningData {
-  project_id: string;      // UUID of initial project
-  d
-
-**Using Full Name in Forms:**
-
-The built-in registration form supports `full_name`:
-
-```typescript
-// app/(auth)/register/page.tsx
-<form action={backendRegisterAction}>
-  <Input name="email" type="email" required />
-  <Input name="password" type="password" required />
-  <Input name="full_name" placeholder="Your Name (Optional)" />
-  <button type="submit">Register</button>
-</form>
-```
-
-(((REPLACE_THIS_WITH_IMAGE: registration-form-fullname-field.png: Close-up screenshot of full name input field in registration form)))eveloper_key: string;   // Developer API key
-  api_key: string;         // Project API key
+  project_id: string;      // UUID of auto-created default project
+  developer_key: string;   // Full developer key (ak_...)
+  api_key: string;         // Full API key for project (ak_...)
 }
 ```
 
-**Storage:**
-- Stored in httpOnly cookie: `devkit4ai-provisioning`
-- Expiry: 24 hours
-- Consumed once on success page
+**Storage Implementation:**
+```typescript
+// lib/provisioning-store.ts
+export async function storeProvisioningBundle(
+  bundle: ProvisioningData
+): Promise<void> {
+  // Validate all fields present
+  if (!bundle.project_id || !bundle.api_key || !bundle.developer_key) {
+    throw new Error("Invalid bundle: missing fields");
+  }
+  
+  // Serialize with timestamp
+  const storedBundle = {
+    ...bundle,
+    recorded_at: new Date().toISOString(),
+  };
+  
+  // Store in httpOnly cookie
+  const cookieStore = await cookies();
+  const useSecure = await shouldUseSecureCookies();
+  
+  cookieStore.set("devkit4ai-provisioning", JSON.stringify(storedBundle), {
+    httpOnly: true,
+    secure: useSecure,
+    sameSite: "lax",
+    path: "/",
+    maxAge: 60 * 60 * 24, // 24 hours
+  });
+}
+```
 
-**Display:**
-The `/register/developer/success` page shows these credentials once. Users must copy them before leaving the page.
+**Cookie Security:**
+- Name: `devkit4ai-provisioning`
+- Expiry: 24 hours (86400 seconds)
+- Flags: httpOnly (not accessible to JavaScript), secure (HTTPS only), sameSite=lax
+- Path: `/` (accessible to all routes)
+
+**Display on Success Page:**
+
+The `/register/developer/success` page shows these credentials once using `consumeProvisioningBundle()`:
+
+```typescript
+// app/(auth)/register/developer/success/page.tsx
+export default async function DeveloperSuccessPage() {
+  const bundle = await consumeProvisioningBundle();
+  
+  if (!bundle) {
+    redirect("/login");
+  }
+  
+  return (
+    <div>
+      <h1>Registration Successful!</h1>
+      <p>Copy these credentials - they won't be shown again:</p>
+      
+      <div>
+        <label>Project ID:</label>
+        <code>{bundle.project_id}</code>
+      </div>
+      
+      <div>
+        <label>Developer Key:</label>
+        <code>{bundle.developer_key}</code>
+      </div>
+      
+      <div>
+        <label>API Key:</label>
+        <code>{bundle.api_key}</code>
+      </div>
+    </div>
+  );
+}
+```
+
+**One-Time Visibility:**
+```typescript
+// lib/provisioning-store.ts
+export async function consumeProvisioningBundle(): Promise<ProvisioningData | null> {
+  const cookieStore = await cookies();
+  const cookie = cookieStore.get("devkit4ai-provisioning");
+  
+  if (!cookie?.value) return null;
+  
+  const bundle = deserializeBundle(cookie.value);
+  
+  // Delete cookie immediately (atomic read-and-delete)
+  cookieStore.delete("devkit4ai-provisioning");
+  
+  return toProvisioningData(bundle);
+}
+```
+
+<Warning>
+Users must copy provisioning credentials before leaving the success page. The cookie is deleted after first read and credentials cannot be recovered.
+</Warning>
 
 (((REPLACE_THIS_WITH_IMAGE: developer-provisioning-credentials.png: Screenshot of provisioning credentials display page)))
 
 ## Logout Flow
 
-Sign out action clears all auth state:
+Sign out action clears all auth state and provisioning data:
 
 ```typescript
-import { signOutAction } from "@/app/actions";
+// app/actions.ts
+export const signOutAction = async () => {
+  await clearTokensFromCookies();
+  return redirect("/login");
+};
 
-// In form or button
-<form action={signOutAction}>
-  <button type="submit">Sign Out</button>
-</form>
+async function clearTokensFromCookies() {
+  const cookieStore = await cookies();
+  
+  // Delete JWT tokens
+  cookieStore.delete("devkit4ai-token");
+  cookieStore.delete("devkit4ai-refresh-token");
+  
+  // Delete provisioning bundle if exists
+  cookieStore.delete("devkit4ai-provisioning");
+}
 ```
 
-**Process:**
-1. Delete `devkit4ai-token` cookie
-2. Delete `devkit4ai-refresh-token` cookie
-3. Delete `devkit4ai-provisioning` cookie (if exists)
-4. Redirect to `/login`
+**Logout Process:**
+1. Server action `signOutAction()` called from form
+2. `clearTokensFromCookies()` deletes all auth cookies
+3. User redirected to `/login` page
+4. No backend API call required (stateless JWT tokens)
+
+**Usage in Component:**
+```typescript
+// components/user-menu.tsx
+export function UserMenu() {
+  return (
+    <form action={signOutAction}>
+      <button type="submit">Sign Out</button>
+    </form>
+  );
+}
+```
+
+**What Gets Cleared:**
+- `devkit4ai-token`: JWT access token
+- `devkit4ai-refresh-token`: JWT refresh token
+- `devkit4ai-provisioning`: Developer provisioning credentials (if present)
+
+<Note>
+JWT tokens are stateless, so no backend invalidation is required. Clearing cookies on client side immediately revokes access. The backend cannot track or revoke issued tokens before expiration.
+</Note>
 
 ## Security Best Practices
 
 <Warning>
-Never expose JWT tokens or API keys in client-side JavaScript. Always use httpOnly cookies for token storage.
+Never expose JWT tokens or API keys in client-side JavaScript. Always use httpOnly cookies for token storage and server-side environment variables for API keys.
 </Warning>
 
-**Recommendations:**
-1. **Use HTTPS in Production**: Ensure secure flag on cookies
-2. **Implement CSRF Protection**: Use sameSite=lax cookie flag
-3. **Validate Return URLs**: Prevent open redirect vulnerabilities
-4. **Rate Limit Auth Endpoints**: Prevent brute force attacks (backend)
-5. **Monitor Failed Logins**: Track suspicious activity
-6. **Rotate API Keys Regularly**: Minimize exposure window
+**Authentication Security:**
+
+1. **httpOnly Cookies for Token Storage**
+   - Prevents XSS attacks (JavaScript cannot access tokens)
+   - Automatically sent with same-origin requests
+   - Protected from client-side tampering
+   - Implementation: All JWT tokens stored in httpOnly cookies via Next.js `cookies()` API
+
+2. **CSRF Protection via SameSite**
+   - All cookies use `sameSite: "lax"` flag
+   - Prevents cross-site request forgery attacks
+   - Cookies not sent with cross-origin POST requests
+   - Implementation: Set in cookie options for all auth cookies
+
+3. **Return URL Validation**
+   - Sanitize return URLs via `sanitizeReturnUrl()` function
+   - Only allow same-origin relative paths starting with `/`
+   - Reject double-slash prefixes `//` (open redirect vulnerability)
+   - Maximum 2048 characters to prevent abuse
+   - Implementation: lib/return-url.ts with URL decoding and validation
+
+4. **Request Timeout Protection**
+   - All fetch requests use AbortController with 10 second timeout
+   - Prevents hanging requests and resource exhaustion
+   - Implementation: AUTH_REQUEST_TIMEOUT constant in app/actions.ts
+
+5. **Password Hashing with bcrypt**
+   - bcrypt work factor: 2^12 iterations (secure default)
+   - Passwords never logged or returned in responses
+   - Salt automatically generated per password
+   - Implementation: passlib.context.CryptContext in backend
+
+6. **Environment Variable Security**
+   - API keys stored in server-side environment variables only
+   - Never exposed in client-side JavaScript or HTML
+   - Next.js NEXT_PUBLIC_ prefix only for non-sensitive URLs
+   - Implementation: .env.local file with strict access control
+
+**Event Sourcing Security:**
+
+7. **Immutable Event Log**
+   - All user actions recorded as immutable events in event_store table
+   - Audit trail: UserWasRegistered, UserWasLoggedIn, DeveloperKeyWasGenerated
+   - Events never modified or deleted
+   - Implementation: EventSourcedRepository with append-only writes
+
+8. **Project-Scoped Access Control**
+   - END_USER queries always include project_id filter
+   - Email uniqueness enforced per project
+   - Project ownership validated before user creation
+   - Implementation: Database unique constraint + backend validation
+
+**Operational Security:**
+
+9. **Rate Limit Auth Endpoints** (Backend Responsibility)
+   - Prevent brute force attacks on login
+   - Limit registration attempts per IP
+   - Return 429 Too Many Requests status
+   - Implementation: FastAPI rate limiting middleware (if configured)
+
+10. **Monitor Failed Logins** (Backend Responsibility)
+    - Track suspicious activity patterns
+    - Log failed authentication attempts
+    - Alert on repeated failures from same IP
+    - Implementation: Backend logging with UserWasLoggedIn event
+
+11. **Rotate API Keys Regularly**
+    - Minimize exposure window if keys compromised
+    - Developer can revoke and regenerate keys via console
+    - Maximum 10 developer keys per developer (MAX_DEVELOPER_KEYS_PER_DEVELOPER)
+    - Implementation: Backend developer keys management endpoints
+
+12. **Email Verification Required**
+    - New accounts start with `is_active: false`
+    - EmailVerificationWasRequested event emitted on registration
+    - 24 hour verification token expiry
+    - Implementation: Backend email verification flow (verification emails not yet sent)
 
 ## Customization
 
 ### Custom Registration Fields
 
-Add additional fields to registration form:
+Add additional fields to registration form beyond email, password, and full_name:
 
+**Step 1: Extend Backend Request Model**
+```python
+# backend-api/app/features/auth/api/payloads.py
+class UserCreateRequest(BaseModel):
+    email: EmailStr
+    password: str = Field(..., min_length=8)
+    full_name: Optional[str] = None
+    company_name: Optional[str] = None  # New field
+    phone_number: Optional[str] = None  # New field
+```
+
+**Step 2: Update Database Schema**
+```sql
+ALTER TABLE users ADD COLUMN company_name VARCHAR(255) NULL;
+ALTER TABLE users ADD COLUMN phone_number VARCHAR(50) NULL;
+```
+
+**Step 3: Update UserWasRegistered Event**
+```python
+# backend-api/app/features/auth/events/user_was_registered.py
+class UserWasRegistered(DomainEvent):
+    def __init__(
+        self,
+        user_id: UUID,
+        email: str,
+        hashed_password: str,
+        role: str,
+        project_id: Optional[UUID] = None,
+        full_name: Optional[str] = None,
+        company_name: Optional[str] = None,  # New field
+        phone_number: Optional[str] = None,  # New field
+        **kwargs,
+    ):
+        data = {
+            "user_id": str(user_id),
+            "email": email,
+            "hashed_password": hashed_password,
+            "role": role,
+        }
+        
+        if full_name is not None:
+            data["full_name"] = full_name
+        if company_name is not None:
+            data["company_name"] = company_name
+        if phone_number is not None:
+            data["phone_number"] = phone_number
+```
+
+**Step 4: Update Frontend Form**
 ```typescript
-// Extend form data
-interface CustomRegistrationData extends RegistrationFormData {
-  company_name?: string;
-  phone_number?: string;
-}
+// app/(auth)/register/page.tsx
+<form action={backendRegisterAction}>
+  <Input name="email" type="email" required />
+  <Input name="password" type="password" required />
+  <Input name="full_name" placeholder="Full Name (Optional)" />
+  <Input name="company_name" placeholder="Company (Optional)" />
+  <Input name="phone_number" placeholder="Phone (Optional)" />
+  <button type="submit">Register</button>
+</form>
+```
 
-// Update backendRegisterAction to include new fields
+**Step 5: Update Server Action**
+```typescript
+// app/actions.ts
+export async function backendRegisterAction(formData: FormData) {
+  const email = formData.get("email")?.toString();
+  const password = formData.get("password")?.toString();
+  const fullName = formData.get("full_name")?.toString() || null;
+  const companyName = formData.get("company_name")?.toString() || null;
+  const phoneNumber = formData.get("phone_number")?.toString() || null;
+  
+  // Include in POST body
+  const body = {
+    email,
+    password,
+    ...(fullName && { full_name: fullName }),
+    ...(companyName && { company_name: companyName }),
+    ...(phoneNumber && { phone_number: phoneNumber }),
+  };
+  
+  const response = await fetch(url, {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
 ```
 
 ### Custom Redirect Logic
 
-Modify post-login redirects:
+Modify post-login redirects based on custom business logic:
 
+**Backend Role Resolution:**
+```python
+# backend-api/app/features/auth/api/endpoints.py
+def get_post_login_redirect(user: User) -> str:
+    if user.role == UserRole.PLATFORM_OPERATOR:
+        return "/portal"
+    elif user.role == UserRole.DEVELOPER:
+        # Custom logic: check onboarding status
+        if user.onboarding_completed:
+            return "/console/dashboard"
+        else:
+            return "/console/onboarding"
+    elif user.role == UserRole.END_USER:
+        # Custom logic: check user preferences
+        if user.preferred_dashboard:
+            return f"/dashboard/{user.preferred_dashboard}"
+        else:
+            return "/dashboard"
+    else:
+        return "/"
+```
+
+**Frontend Custom Redirects:**
 ```typescript
 // lib/auth-server.ts
-function getPostLoginRedirect(role: string): string {
+function getRoleBasedRedirect(role: string, user: UserWithRole): string {
   switch (role) {
-    case "end_user":
-      return "/app/dashboard";
+    case "platform_operator":
+      return "/portal";
+      
     case "developer":
-      return "/developer/projects";
+      // Custom logic: redirect based on project count
+      if (user.project_count === 0) {
+        return "/console/welcome";
+      }
+      return "/console/projects";
+      
+    case "end_user":
+      // Custom logic: redirect based on user metadata
+      if (user.is_first_login) {
+        return "/dashboard/welcome";
+      }
+      return "/dashboard";
+      
     default:
       return "/";
   }
@@ -461,8 +1500,27 @@ function getPostLoginRedirect(role: string): string {
 ### Email Verification
 
 <Note>
-Email verification is planned for a future release. The infrastructure is in place with `is_active` flags, but verification emails are not yet sent.
+Email verification infrastructure is in place with `is_active` flags and EmailVerificationWasRequested events, but verification emails are not yet sent. This feature is planned for a future release.
 </Note>
+
+**Current Implementation:**
+- All new users registered with `is_active: false`
+- EmailVerificationWasRequested event emitted with 24h token
+- Verification tokens stored in users table
+- Manual activation required (update `is_active` in database)
+
+**Planned Email Verification Flow:**
+1. User registers → Backend emits EmailVerificationWasRequested event
+2. Email service (future) sends verification email with link
+3. User clicks link → GET /api/v1/auth/verify-email?token=...
+4. Backend validates token → Updates `is_active: true` → Emits UserWasActivated event
+5. User can now log in successfully
+
+**Current Workaround (Development):**
+```sql
+-- Manually activate user in database
+UPDATE users SET is_active = true WHERE email = 'user@example.com';
+```
 
 ## Related Pages
 

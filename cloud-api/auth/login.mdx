@@ -6,6 +6,8 @@ openapi: "POST /api/v1/auth/login"
 
 Authenticate a user and receive access and refresh tokens. Supports both global login (for developers and operators) and project-scoped login (for end users).
 
+## Request
+
 ### Body
 
 <ParamField body="email" type="string" required>
@@ -13,26 +15,40 @@ Authenticate a user and receive access and refresh tokens. Supports both global 
 </ParamField>
 
 <ParamField body="password" type="string" required>
-  User's password
+  User's password (minimum 8 characters)
 </ParamField>
 
 ### Headers
 
 <ParamField header="X-Project-ID" type="string">
-  JWT access token for API authentication (30-minute expiry)
+  **Required for end users only.** Project UUID for project-scoped authentication. Developers and operators do not provide this header.
+</ParamField>
+
+<ParamField header="Content-Type" type="string" required>
+  Must be `application/json`
+</ParamField>
+
+## Response
+
+### Success Response (200 OK)
+
+<ResponseField name="access_token" type="string">
+  JWT access token for API authentication. Expires in 30 minutes (configurable via `ACCESS_TOKEN_EXPIRE_MINUTES`). Contains claims: `sub` (user_id), `type` ("access"), `exp` (expiration), and `project_id` (for end users only).
 </ResponseField>
 
 <ResponseField name="refresh_token" type="string">
-  Refresh token to obtain new access tokens (7-day expiry)
+  Refresh token to obtain new access tokens. Expires in 7 days. Contains claims: `sub` (user_id), `type` ("refresh"), `exp` (expiration), and `project_id` (for end users only).
 </ResponseField>
 
 <ResponseField name="token_type" type="string">
-  Token type (typically "bearer")
+  Token type (always "bearer")
 </ResponseField>
 
 ## Example Requests
 
 ### End User Login (Project-Scoped)
+
+End users must provide `X-Project-ID` header to authenticate within their specific project context:
 
 ```bash
 curl -X POST https://api.vibecoding.ad/api/v1/auth/login \
@@ -45,6 +61,8 @@ curl -X POST https://api.vibecoding.ad/api/v1/auth/login \
 ```
 
 ### Developer/Operator Login (Global)
+
+Developers and operators authenticate globally without project context:
 
 ```bash
 curl -X POST https://api.vibecoding.ad/api/v1/auth/login \
@@ -65,6 +83,28 @@ curl -X POST https://api.vibecoding.ad/api/v1/auth/login \
 }
 ```
 
+## Backend Implementation Flow
+
+1. **Header Validation**: Extract optional `X-Project-ID` header and validate UUID format
+2. **Command Creation**: `LoginUserCommand` created with email, password, and optional project_id
+3. **User Lookup**:
+   - If `project_id` provided: `UserService.get_user_by_email_and_project()` queries for end user
+   - If no `project_id`: `UserService.get_user_id_by_email()` queries for operator/developer
+4. **Role Validation**: For project-scoped login, validates user role is END_USER
+5. **Aggregate Load**: `LoginUserHandler` loads user aggregate from event store via `repository.get_by_id_or_raise()`
+6. **Password Verification**: `UserActions.login()` validates:
+   - Hashed password exists
+   - Password matches via `pwd_context.verify()` (bcrypt)
+   - Raises `ValueError("Invalid password")` if verification fails
+7. **Event Emission**: `UserWasLoggedIn` event raised with user_id and email
+8. **Event Persistence**: Event saved to event store and published to PubSub
+9. **Token Generation**:
+   - Access token: 30 minutes expiry, contains `sub`, `type: "access"`, `exp`, and `project_id` (for end users)
+   - Refresh token: 7 days expiry, contains `sub`, `type: "refresh"`, `exp`, and `project_id` (for end users)
+   - Algorithm: HS256
+   - Secret: `settings.SECRET_KEY`
+10. **Response**: Returns `TokenResponse` with both tokens and type "bearer"
+
 ## Token Usage
 
 ### Access Token
@@ -77,13 +117,19 @@ curl https://api.vibecoding.ad/api/v1/auth/me \
 ```
 
 **Properties:**
-- Expires after 30 minutes
-- Contains user ID, email, role, and project_id (for end users)
-- Must be refreshed using refresh token when expired
+- **Expiry**: 30 minutes (configurable via `settings.ACCESS_TOKEN_EXPIRE_MINUTES`)
+- **Algorithm**: HS256
+- **Claims**:
+  - `sub`: User ID (UUID string)
+  - `type`: "access"
+  - `exp`: Expiration timestamp
+  - `project_id`: Project UUID (included only for end users)
+- **Purpose**: Authenticate API requests
+- **Validation**: Via `get_current_user()` dependency using `jwt.decode()`
 
 ### Refresh Token
 
-Use the refresh token to obtain a new access token:
+Use the refresh token to obtain a new access token via `/api/v1/auth/refresh`:
 
 ```bash
 curl -X POST https://api.vibecoding.ad/api/v1/auth/refresh \
@@ -92,48 +138,100 @@ curl -X POST https://api.vibecoding.ad/api/v1/auth/refresh \
 ```
 
 **Properties:**
-- Expires after 7 days
-- Should be stored securely (httpOnly cookies recommended)
-- Single-use pattern recommended for security
+- **Expiry**: 7 days
+- **Algorithm**: HS256
+- **Claims**:
+  - `sub`: User ID (UUID string)
+  - `type`: "refresh"
+  - `exp`: Expiration timestamp
+  - `project_id`: Project UUID (included only for end users)
+- **Storage**: httpOnly cookies recommended
+- **Security**: Single-use pattern recommended
 
 ## Project-Scoped Authentication
 
-End users are authenticated within the context of a specific project:
+End users are authenticated within the context of a specific project using the `X-Project-ID` header:
 
-1. **Registration**: End user registered with `X-Project-ID` header
-2. **Database**: User record includes `project_id` field
-3. **Login**: Must provide same `X-Project-ID` header
-4. **JWT Token**: Contains `project_id` claim for authorization
-5. **API Access**: All requests scoped to user's project
+### Authentication Flow
 
-### Email Uniqueness
+1. **Registration**: End user registered with `X-Project-ID` header, user record includes `project_id` field in database
+2. **Login Request**: Must provide same `X-Project-ID` header matching registered project
+3. **User Lookup**: Backend queries `users` table filtering by email AND project_id:
+   ```python
+   UserService.get_user_by_email_and_project(email, project_id)
+   ```
+4. **Role Validation**: Verifies user role is END_USER (raises ValueError if not)
+5. **JWT Token**: Generated with `project_id` claim for authorization
+6. **API Access**: All subsequent requests scoped to user's project via JWT `project_id` claim
 
-The same email can exist as:
-- End user in Project A
-- End user in Project B
-- Developer (global namespace)
+### Email Uniqueness Model
 
-The system uses `X-Project-ID` header during login to determine which account to authenticate.
+The same email can exist as multiple user types due to project scoping:
+
+| User Type | Project ID | Namespace |
+|-----------|------------|-----------|
+| End user in Project A | UUID | Project A |
+| End user in Project B | UUID | Project B |
+| Developer | NULL | Global |
+| Operator | NULL | Global |
+
+**Database Implementation:**
+- Unique constraint: `email + project_id` (allows same email across different projects)
+- Partial unique index: Allows NULL `project_id` for operators/developers with same email as end users
+- Query logic uses `X-Project-ID` header to determine which account to authenticate
+
+### Project ID Validation
+
+**Format Requirements:**
+- Must be valid UUID format
+- Validated via `uuid.UUID(project_id_header)` in endpoint
+- Returns 400 Bad Request with message "Invalid X-Project-ID format. Must be a valid UUID." if invalid
+
+**Missing Project ID:**
+- End users attempting global login (without `X-Project-ID`) will fail with "Invalid email or password"
+- System performs user lookup that requires project_id match, preventing cross-project access
 
 ## Error Responses
 
-### Invalid Credentials
+### Invalid Credentials (401 Unauthorized)
+
+Returned when email or password is incorrect, or user not found:
 
 ```json
 {
-  "detail": "Invalid email or password"
+  "detail": "Incorrect email or password"
 }
 ```
 
-### Missing Project ID (End User)
+**Triggered by:**
+- `ValueError("Invalid email or password")` from `LoginUserHandler`
+- `ValueError("Invalid password")` from `UserActions.login()` when bcrypt verification fails
+- User not found in database lookup
+
+**Headers:**
+```json
+{
+  "WWW-Authenticate": "Bearer"
+}
+```
+
+### Account Not Activated (400 Bad Request)
+
+Returned when user exists but hasn't verified their email:
 
 ```json
 {
-  "detail": "X-Project-ID header is required for end user login"
+  "detail": "Account not activated"
 }
 ```
 
-### Invalid Project ID Format
+**Triggered by:**
+- `ValueError` containing "not active" from aggregate validation
+- User `is_active` field is false
+
+### Invalid Project ID Format (400 Bad Request)
+
+Returned when `X-Project-ID` header is provided but not a valid UUID:
 
 ```json
 {
@@ -141,13 +239,24 @@ The system uses `X-Project-ID` header during login to determine which account to
 }
 ```
 
-### Inactive Account
+**Triggered by:**
+- `uuid.UUID(project_id_header)` raises `ValueError` in endpoint
+- Example invalid values: "not-a-uuid", "123", ""
+
+### Internal Server Error (500)
+
+Returned for unexpected errors during login:
 
 ```json
 {
-  "detail": "Account is not active. Please verify your email."
+  "detail": "Login failed: <error_message>"
 }
 ```
+
+**Common Causes:**
+- Database connection failures
+- Event store persistence errors
+- JWT encoding failures
 
 ## Security Best Practices
 
@@ -155,13 +264,65 @@ The system uses `X-Project-ID` header during login to determine which account to
 Always store tokens securely using httpOnly cookies. Never store tokens in localStorage or sessionStorage to prevent XSS attacks.
 </Warning>
 
-**Recommendations:**
+**Implementation Recommendations:**
 
 1. **Token Storage**: Use httpOnly cookies with secure flag in production
+   - Frontend: `storeTokensInCookies()` helper sets cookies with `httpOnly: true`, `secure: <protocol-based>`, `sameSite: 'lax'`
+   - Cookie names: `devkit4ai-token` (access), `devkit4ai-refresh-token` (refresh)
+   - Expiry: Matches token expiry (30 min for access, 7 days for refresh)
+
 2. **HTTPS Only**: Always use HTTPS in production to protect tokens in transit
+   - Secure flag automatically enabled when protocol is HTTPS
+   - Local development (localhost) excluded from secure requirement
+
 3. **Token Refresh**: Implement automatic token refresh before expiry
+   - Access token expires in 30 minutes
+   - Refresh endpoint: `POST /api/v1/auth/refresh`
+   - Client should refresh ~5 minutes before expiry
+
 4. **Logout**: Clear both access and refresh tokens on logout
+   - Delete cookies: `clearTokensFromCookies()` helper
+   - Backend doesn't maintain session state (stateless JWT)
+
 5. **Rate Limiting**: Implement rate limiting to prevent brute force attacks
+   - Recommended: 5 attempts per 15 minutes per IP
+   - Consider CAPTCHA after 3 failed attempts
+
+6. **Password Security**:
+   - Backend uses bcrypt for password hashing via `pwd_context.verify()`
+   - Minimum 8 characters enforced during registration
+   - Recommend requiring uppercase, lowercase, and digit
+
+7. **Error Messages**: Generic "Incorrect email or password" to prevent user enumeration
+   - Same message for invalid email, invalid password, or inactive account in some cases
+   - Don't reveal whether email exists in system
+
+## Event Sourcing
+
+Login operations emit domain events for audit trail and analytics:
+
+**Event Type:** `UserWasLoggedIn`
+
+**Event Data:**
+```python
+{
+    "user_id": str(UUID),
+    "email": str,
+    "aggregate_id": str(UUID),
+    "event_type": "UserWasLoggedIn",
+    "timestamp": datetime
+}
+```
+
+**Event Flow:**
+1. Event raised in `UserActions.login()` aggregate method
+2. Persisted to `event_store` table via `EventSourcedRepository`
+3. Published to PubSub (Redis or in-memory)
+4. Can be consumed by subscribers for:
+   - Login analytics
+   - Security monitoring
+   - Audit logging
+   - User behavior tracking
 
 ## Related Pages
 
@@ -179,15 +340,3 @@ Always store tokens securely using httpOnly cookies. Never store tokens in local
     Understanding token lifecycle
   </Card>
 </CardGroup>
-
-<ResponseField name="access_token" type="string">
-  JWT access token for API authentication
-</ResponseField>
-
-<ResponseField name="refresh_token" type="string">
-  Refresh token to obtain new access tokens
-</ResponseField>
-
-<ResponseField name="token_type" type="string">
-  Token type (typically "bearer")
-</ResponseField>

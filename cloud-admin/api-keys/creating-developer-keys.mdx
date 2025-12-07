@@ -12,25 +12,26 @@ Developer keys authenticate console actions and Starter Kit deployments that nee
 
 Developer Keys use the following format:
 
-**Prefix:** `ak_` (API Key)
+**Prefix:** `dk_` (Developer Key)
 
-**Full format:** `ak_` + 32 URL-safe characters (alphanumeric + `-` + `_`)
+**Full format:** `dk_` + 32 URL-safe characters (generated using Python's `secrets.token_urlsafe(32)`)
 
-**Example:** `ak_abc123XYZ-_789def456ghi012jkl345`
+**Example:** `dk_abc123XYZ-_789def456ghi012jkl345`
 
 **Total length:** 35 characters (3 character prefix + 32 character key)
 
 <Note>
-Developer keys previously used the `dk_` prefix. The new `ak_` prefix was introduced in v1.5.0 to better reflect their purpose as API authentication keys.
+The `dk_` prefix is generated in the backend using `secrets.token_urlsafe(32)` for cryptographically strong randomness.
 </Note>
 
 ## Key Properties
 
-- **Hashing:** Keys are hashed with SHA-256 before storage for security
-- **Prefix storage:** Only the first 8 characters (e.g., `dk_abc12`) are stored in `key_prefix` for identification
+- **Hashing:** Keys are hashed with SHA-256 before storage for security (`hashlib.sha256`)
+- **Prefix storage:** First 8 characters + "..." stored in `key_prefix` for identification (e.g., `dk_abc12...`)
 - **One-time display:** The full key is shown once during generation; only the hash is persisted
-- **Developer scoping:** Each key is bound to a specific developer account via `developer_id`
+- **Developer scoping:** Each key is bound to a specific developer account via `developer_id` (UUID)
 - **Active status:** Keys can be revoked by setting `is_active` to false
+- **Database model:** Stored in `developer_keys` table with columns: `id`, `developer_id`, `key_hash`, `key_prefix`, `name`, `is_active`, `last_used_at`, `created_at`, `updated_at`
 
 ## Managing Developer Keys
 
@@ -49,20 +50,119 @@ Navigate to **Developer Keys** from the Cloud Admin console sidebar:
 <Steps>
   <Step title="Open Generation Dialog">
     Click the **Generate Key** button in the top right corner
-  <Key Management Actions
+  </Step>
+  
+  <Step title="Enter Key Name">
+    Enter an optional descriptive name (max 255 characters) like "Production API" or "Staging Environment" to help identify the key's purpose
+  </Step>
+  
+  <Step title="Generate and Copy">
+    Click **Generate** and immediately copy the full key. **This is your only chance to see the complete key!**
+  </Step>
+  
+  <Step title="Store Securely">
+    Save the key in your environment variables or secret management system
+  </Step>
+</Steps>
+
+(((REPLACE_THIS_WITH_IMAGE: console-generate-developer-key-dialog.png: Dialog showing name input field and generate button)))
+
+(((REPLACE_THIS_WITH_IMAGE: console-developer-key-created-success.png: Success message showing full key with copy button)))
+
+### Backend Implementation Flow
+
+1. Frontend calls `POST /api/v1/auth/developer-keys` with optional `name` parameter
+2. Backend validates developer role via `validate_developer_role()`
+3. `GenerateDeveloperKeyCommand` is sent to command bus with `developer_id`, `name`, and `max_keys=10`
+4. `GenerateDeveloperKeyHandler` loads user aggregate from event store
+5. `UserActions.generate_developer_key()` validates:
+   - User role is DEVELOPER
+   - Active key count < 10 (raises ValueError if limit reached)
+6. `DeveloperKey.generate_developer_key()` static method generates:
+   - `key_suffix = secrets.token_urlsafe(32)`
+   - `full_key = f"dk_{key_suffix}"`
+   - `key_hash = hashlib.sha256(full_key.encode("utf-8")).hexdigest()`
+   - `key_prefix = full_key[:8] + "..."`
+7. `DeveloperKeyWasGenerated` event is raised with `developer_key_id`, `developer_id`, `key_hash`, `key_prefix`, `name`
+8. Event is persisted to event store
+9. `UserReadModel` projector handles event and creates `DeveloperKey` record in database
+10. Full key is returned in `DeveloperKeyCreatedResponse` (only time it's available)
+11. Key becomes valid immediately for API requests
 
 ### Viewing Key Details
 
 Each key in the list displays:
-- **Name**: Descriptive label you provided
-- **Key Prefix**: First 8 characters (e.g., `ak_abc12`) for identification
-- **Created**: When the key was generated
-- **Last Used**: Most recent authentication timestamp (or "Never used")
+- **Name**: Descriptive label you provided (or null)
+- **Key Prefix**: First 8 characters + "..." (e.g., `dk_abc12...`) for identification
+- **Created**: ISO 8601 timestamp when the key was generated
+- **Last Used**: Most recent authentication timestamp (or null if "Never used")
+- **Active Status**: Boolean flag (`is_active`)
 - **Actions**: Revoke button
 
 ### Revoking a Developer Key
 
-<WaUse Cases
+To revoke a key:
+
+1. Locate the key in the Developer Keys list
+2. Click the **Revoke** button in the Actions column
+3. Confirm the revocation in the dialog
+4. The key is immediately deactivated
+
+(((REPLACE_THIS_WITH_IMAGE: console-revoke-developer-key-confirm.png: Confirmation dialog for key revocation)))
+
+<Tip>
+Before revoking a key, check the **Last Used** timestamp to ensure it's not actively in use.
+</Tip>
+
+#### Backend Revocation Flow
+
+1. Frontend calls `DELETE /api/v1/auth/developer-keys/{key_id}` with JWT token
+2. Backend validates:
+   - Developer role via `validate_developer_role()`
+   - Key exists and belongs to current developer via database query
+   - Returns 404 if key not found or doesn't belong to developer
+3. `RevokeDeveloperKeyCommand` is sent to command bus with `developer_id` and `developer_key_id`
+4. `RevokeDeveloperKeyHandler` loads user aggregate from event store
+5. `UserActions.revoke_developer_key()` validates:
+   - Key exists in aggregate's `developer_keys` dict (raises ValueError if not found)
+   - Key is not already revoked (raises ValueError if already revoked)
+6. `DeveloperKeyWasRevoked` event is raised with `developer_key_id` and `developer_id`
+7. Event is persisted to event store
+8. `UserReadModel` projector handles event and sets `is_active=False` on `DeveloperKey` record
+9. Endpoint returns 204 No Content on success
+10. Future authentication attempts with revoked key fail
+
+## Key Limits
+
+Each developer account is limited to **10 active keys** at a time.
+
+### Limit Enforcement
+
+The limit is enforced in `UserActions.generate_developer_key()`:
+- Counts active keys: `sum(1 for is_active in self.developer_keys.values() if is_active)`
+- Raises `ValueError` with message if `active_key_count >= max_keys`
+- Error message: "Maximum number of developer keys (10) reached. Please revoke an existing key before creating a new one."
+- Constant defined in `app/features/auth/api/endpoints.py`: `MAX_DEVELOPER_KEYS_PER_DEVELOPER = 10`
+
+When you reach the limit:
+- The **Generate Key** button displays "Limit Reached (10/10)"
+- Backend returns 400 Bad Request with error message
+- Revoke unused keys before creating new ones
+- Consider which keys are no longer needed by checking last usage dates
+
+(((REPLACE_THIS_WITH_IMAGE: console-developer-keys-limit-reached.png: Generate button disabled with limit message)))
+
+### Managing Key Limits
+
+Best practices for staying within limits:
+
+1. **Regular Audits**: Review your keys monthly and revoke unused ones
+2. **Descriptive Names**: Use clear names to identify key purposes
+3. **Environment-Based**: Use one key per environment (dev, staging, prod)
+4. **Application-Based**: Separate keys for different applications or services
+5. **Team Member Keys**: Individual keys for team members who need API access
+
+## Use Cases
 
 ### Local Development
 
@@ -70,7 +170,7 @@ Use a development-specific key for local testing:
 
 ```bash
 # .env.local
-DEVKIT4AI_DEVELOPER_KEY=ak_dev_environment_key_here
+DEVKIT4AI_DEVELOPER_KEY=dk_dev_environment_key_here
 ```
 
 ### CI/CD Pipelines
@@ -79,7 +179,7 @@ Create a dedicated key for automated deployments:
 
 ```bash
 # GitHub Actions Secret
-DEVKIT4AI_DEVELOPER_KEY=ak_cicd_pipeline_key_here
+DEVKIT4AI_DEVELOPER_KEY=dk_cicd_pipeline_key_here
 ```
 
 ### Team Member Access
@@ -96,14 +196,65 @@ Separate keys for each environment:
 
 ```bash
 # Production
-DEVKIT4AI_DEVELOPER_KEY=ak_production_key_here
+DEVKIT4AI_DEVELOPER_KEY=dk_production_key_here
 
 # Staging
-DEVKIT4AI_DEVELOPER_KEY=ak_staging_key_here
+DEVKIT4AI_DEVELOPER_KEY=dk_staging_key_here
 
 # Development
-DEVKIT4AI_DEVELOPER_KEY=ak_development_key_here
+DEVKIT4AI_DEVELOPER_KEY=dk_development_key_here
 ```
+
+## Environment Variable
+
+In your Starter Kit or Cloud Admin deployment, set the generated key as:
+
+```bash
+DEVKIT4AI_DEVELOPER_KEY=dk_abc123XYZ-_789def456ghi012jkl345
+```
+
+## Database Schema
+
+Developer keys are stored in the `developer_keys` table:
+
+```sql
+CREATE TABLE developer_keys (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    developer_id UUID NOT NULL,
+    key_hash VARCHAR(255) NOT NULL UNIQUE,
+    key_prefix VARCHAR(20) NOT NULL,
+    name VARCHAR(255),
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    last_used_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE
+);
+
+CREATE INDEX ix_developer_keys_developer_id ON developer_keys(developer_id);
+```
+
+**Relationships:**
+- No foreign key constraints (event-sourced architecture pattern)
+- Relationship defined in SQLAlchemy: `developer = relationship("User", primaryjoin="foreign(DeveloperKey.developer_id)==User.id")`
+
+## Security
+
+<Warning>
+- Store the full key securely - it cannot be retrieved again
+- Never commit keys to version control
+- Rotate keys regularly (every 90 days recommended)
+- Revoke compromised keys immediately
+- Full key only returned in `DeveloperKeyCreatedResponse` during creation
+- Subsequent API calls return `DeveloperKeyResponse` without full key
+</Warning>
+
+### Security Implementation
+
+- **Hashing algorithm**: SHA-256 (`hashlib.sha256`)
+- **Random generation**: `secrets.token_urlsafe(32)` (cryptographically strong)
+- **Storage**: Only hash and prefix stored in database, never plain text
+- **Validation**: Via `app/system/auth/rbac.py::validate_developer_key()`
+- **Request state**: Validated key attaches `developer_id` and `developer_key_id` to `request.state`
 
 ## API Reference
 
@@ -125,86 +276,3 @@ See the [Developer Keys API endpoint](/cloud-api/auth/developer-keys) for comple
     Key rotation strategies
   </Card>
 </CardGroup>
-
-To revoke a key:
-
-1. Locate the key in the Developer Keys list
-2. Click the **Revoke** button in the Actions column
-3. Confirm the revocation in the dialog
-4. The key is immediately deactivated
-
-(((REPLACE_THIS_WITH_IMAGE: console-revoke-developer-key-confirm.png: Confirmation dialog for key revocation)))
-
-<Tip>
-Before revoking a key, check the **Last Used** timestamp to ensure it's not actively in use.
-</Tip>
-
-## Key Limits
-
-Each developer account is limited to **10 active keys** at a time. 
-
-When you reach the limit:
-- The **Generate Key** button displays "Limit Reached (10/10)"
-- Revoke unused keys before creating new ones
-- Consider which keys are no longer needed by checking last usage dates
-
-(((REPLACE_THIS_WITH_IMAGE: console-developer-keys-limit-reached.png: Generate button disabled with limit message)))
-
-### Managing Key Limits
-
-Best practices for staying within limits:
-
-1. **Regular Audits**: Review your keys monthly and revoke unused ones
-2. **Descriptive Names**: Use clear names to identify key purposes
-3. **Environment-Based**: Use one key per environment (dev, staging, prod)
-4. **Application-Based**: Separate keys for different applications or services
-5. **Team Member Keys**: Individual keys for team members who need API access
-    Enter a descriptive name like "Production API" or "Staging Environment" to help identify the key's purpose
-  </Step>
-  
-  <Step title="Generate and Copy">
-    Click **Generate** and immediately copy the full key. **This is your only chance to see the complete key!**
-  </Step>
-  
-  <Step title="Store Securely">
-    Save the key in your environment variables or secret management system
-  </Step>
-</Steps>
-
-(((REPLACE_THIS_WITH_IMAGE: console-generate-developer-key-dialog.png: Dialog showing name input field and generate button)))
-
-(((REPLACE_THIS_WITH_IMAGE: console-developer-key-created-success.png: Success message showing full key with copy button)))
-
-## Environment Variable
-
-In your Starter Kit or Cloud Admin deployment, set the generated key as:
-
-```bash
-DEVKIT4AI_DEVELOPER_KEY=ak_abc123XYZ-_789def456ghi012jkl345
-```
-
-## Generation Flow
-
-1. Cloud Admin UI calls `POST /api/v1/auth/developer-keys` with optional `name` parameter
-2. Backend generates key with `ak_` prefix and 32 random URL-safe characters
-3. Full key is hashed with SHA-256
-4. Hash and prefix (first 8 chars) are stored in the database
-5. Full key is returned in response and displayed once
-6. Key becomes valid immediately for API requests
-
-## Rate Limits
-
-Each developer account is limited to **10 active keys** at a time. Revoke unused keys before generating new ones if you reach this limit.
-
-## Security
-
-<Warning>
-- Store the full key securely - it cannot be retrieved again
-- Never commit keys to version control
-- Rotate keys regularly (every 90 days recommended)
-- Revoke compromised keys immediately
-</Warning>
-
-## API Reference
-
-See the [Developer Keys API endpoint](/cloud-api/auth/developer-keys) for complete request/response details.
