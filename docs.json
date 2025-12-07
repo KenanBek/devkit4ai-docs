@@ -169,6 +169,8 @@
               "cloud-api/auth/login",
               "cloud-api/auth/me",
               "cloud-api/auth/refresh",
+              "cloud-api/auth/check-email",
+              "cloud-api/auth/developer-keys",
               "cloud-api/auth/verify-email",
               "cloud-api/auth/request-verification"
             ]

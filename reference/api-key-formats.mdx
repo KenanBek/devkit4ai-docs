@@ -22,31 +22,35 @@ Dev Kit for AI uses two distinct key types to authenticate different roles and s
 
 Developer Keys authenticate developers accessing the Cloud Admin console and performing administrative operations.
 
+<Note>
+Developer Keys changed from `dk_` prefix to `ak_` prefix in **v1.5.0**. The new format improves consistency across key types.
+</Note>
+
 ### Format Specification
 
-**Prefix:** `dk_` (Developer Key)
+**Prefix:** `ak_` (API Key)
 
-**Structure:** `dk_` + 32 URL-safe characters
+**Structure:** `ak_` + 32 URL-safe characters
 
 **Character set:** Alphanumeric (a-z, A-Z, 0-9) plus hyphen (`-`) and underscore (`_`)
 
-**Example:** `dk_abc123XYZ-_789def456ghi012jkl345`
+**Example:** `ak_abc123XYZ-_789def456ghi012jkl345`
 
 **Total length:** 35 characters
-- 3 characters: prefix (`dk_`)
+- 3 characters: prefix (`ak_`)
 - 32 characters: random URL-safe string
 
 ### Properties
 
 | Property | Value |
 |----------|-------|
-| **Prefix** | `dk_` |
+| **Prefix** | `ak_` |
 | **Length** | 35 characters total |
 | **Character set** | `a-zA-Z0-9-_` |
 | **Encoding** | URL-safe |
 | **Hashing** | SHA-256 |
 | **Storage** | Hash + 8-char prefix |
-| **Display format** | `dk_abc12...` |
+| **Display format** | `ak_abc12...` |
 | **Scope** | Developer account |
 | **Limit** | 10 active keys per developer |
 
@@ -54,12 +58,12 @@ Developer Keys authenticate developers accessing the Cloud Admin console and per
 
 **Environment variable:**
 ```bash
-DEVKIT4AI_DEVELOPER_KEY=dk_abc123XYZ-_789def456ghi012jkl345
+DEVKIT4AI_DEVELOPER_KEY=ak_abc123XYZ-_789def456ghi012jkl345
 ```
 
 **HTTP header:**
 ```bash
-X-Developer-Key: dk_abc123XYZ-_789def456ghi012jkl345
+X-Developer-Key: ak_abc123XYZ-_789def456ghi012jkl345
 ```
 
 **Authentication:**
@@ -91,19 +95,23 @@ The full key is displayed once at generation. Only the SHA-256 hash and 8-charac
 
 API Keys authenticate end-user access to specific projects. They are also referred to as "Project Keys" in environment variables and some documentation.
 
+<Warning>
+**Important:** Both Developer Keys and Project Keys now use the `ak_` prefix as of v1.5.0. The key type is distinguished by its scope (developer account vs specific project), not by prefix.
+</Warning>
+
 ### Format Specification
 
 **Prefix:** `ak_` (API Key)
 
-**Structure:** `ak_` + 32 alphanumeric characters
+**Structure:** `ak_` + 32 URL-safe characters
 
-**Character set:** Alphanumeric only (a-z, A-Z, 0-9)
+**Character set:** Alphanumeric (a-z, A-Z, 0-9) plus hyphen (`-`) and underscore (`_`)
 
-**Example:** `ak_abc123XYZ789def456ghi012jkl345mn`
+**Example:** `ak_def456ABC-_012ghi789jkl345mno678`
 
 **Total length:** 35 characters
 - 3 characters: prefix (`ak_`)
-- 32 characters: random alphanumeric string
+- 32 characters: random URL-safe string
 
 ### Properties
 
@@ -111,11 +119,11 @@ API Keys authenticate end-user access to specific projects. They are also referr
 |----------|-------|
 | **Prefix** | `ak_` |
 | **Length** | 35 characters total |
-| **Character set** | `a-zA-Z0-9` |
-| **Encoding** | Alphanumeric |
+| **Character set** | `a-zA-Z0-9-_` |
+| **Encoding** | URL-safe |
 | **Hashing** | SHA-256 |
 | **Storage** | Hash + 8-char prefix |
-| **Display format** | `ak_abc12...` |
+| **Display format** | `ak_def45...` |
 | **Scope** | Specific project |
 | **Limit** | Unlimited per project |
 
@@ -123,16 +131,16 @@ API Keys authenticate end-user access to specific projects. They are also referr
 
 **Environment variable:**
 ```bash
-DEVKIT4AI_PROJECT_KEY=ak_abc123XYZ789def456ghi012jkl345mn
+DEVKIT4AI_PROJECT_KEY=ak_def456ABC-_012ghi789jkl345mno678
 ```
 
 <Note>
-The environment variable name uses `PROJECT_KEY` for clarity, but the actual key prefix is `ak_` (not `pk_`).
+The environment variable name uses `PROJECT_KEY` for clarity. Both Developer Keys and Project Keys use the `ak_` prefix as of v1.5.0, distinguished only by their scope.
 </Note>
 
 **HTTP header:**
 ```bash
-X-API-Key: ak_abc123XYZ789def456ghi012jkl345mn
+X-API-Key: ak_def456ABC-_012ghi789jkl345mno678
 ```
 
 **Authentication:**
@@ -163,17 +171,21 @@ The full key is displayed once at generation. Only the SHA-256 hash and 8-charac
 
 ## Key Comparison
 
-| Feature | Developer Key (`dk_`) | API Key (`ak_`) |
+| Feature | Developer Key (`ak_`) | API Key (`ak_`) |
 |---------|----------------------|-----------------|
 | **Purpose** | Developer console access | End-user project access |
-| **Prefix** | `dk_` | `ak_` |
-| **Character set** | Alphanumeric + `-` + `_` | Alphanumeric only |
+| **Prefix** | `ak_` | `ak_` |
+| **Character set** | Alphanumeric + `-` + `_` | Alphanumeric + `-` + `_` |
 | **Length** | 35 characters | 35 characters |
 | **Scope** | Developer account | Specific project |
 | **Limit** | 10 per developer | Unlimited per project |
 | **Header** | `X-Developer-Key` | `X-API-Key` |
 | **Env var** | `DEVKIT4AI_DEVELOPER_KEY` | `DEVKIT4AI_PROJECT_KEY` |
 | **Used in** | Console mode, operator mode | Project mode |
+
+<Info>
+Both key types now use identical format (`ak_` prefix + 32 URL-safe characters). The distinction is in their scope and usage, not their format.
+</Info>
 
 ## Validation Rules
 
@@ -186,15 +198,19 @@ Both key types must:
 
 ### Character Set Validation
 
-**Developer Keys (`dk_`):**
+**Developer Keys (`ak_`):**
 ```regex
-^dk_[a-zA-Z0-9_-]{32}$
+^ak_[a-zA-Z0-9_-]{32}$
 ```
 
 **API Keys (`ak_`):**
 ```regex
-^ak_[a-zA-Z0-9]{32}$
+^ak_[a-zA-Z0-9_-]{32}$
 ```
+
+<Note>
+Both key types use identical validation regex as of v1.5.0. The system distinguishes key types by their database associations (developer_id vs project_id), not by format differences.
+</Note>
 
 ### Backend Validation
 
@@ -211,12 +227,12 @@ Keys are displayed in truncated format for security:
 
 **Full key (shown once):**
 ```
-dk_abc123XYZ-_789def456ghi012jkl345
+ak_abc123XYZ-_789def456ghi012jkl345
 ```
 
 **Displayed format:**
 ```
-dk_abc12...
+ak_abc12...
 ```
 
 Only the first 8 characters (including prefix) are stored in the `key_prefix` field and shown in user interfaces.
@@ -304,34 +320,34 @@ CREATE TABLE api_keys (
 ### Validating Key Format (TypeScript)
 
 ```typescript
-function isValidDeveloperKey(key: string): boolean {
-  return /^dk_[a-zA-Z0-9_-]{32}$/.test(key)
-}
-
 function isValidApiKey(key: string): boolean {
-  return /^ak_[a-zA-Z0-9]{32}$/.test(key)
+  return /^ak_[a-zA-Z0-9_-]{32}$/.test(key)
 }
 
-// Usage
-const devKey = 'dk_abc123XYZ-_789def456ghi012jkl345'
-console.log(isValidDeveloperKey(devKey)) // true
+// Usage for both Developer Keys and Project Keys
+const devKey = 'ak_abc123XYZ-_789def456ghi012jkl345'
+console.log(isValidApiKey(devKey)) // true
 
-const apiKey = 'ak_abc123XYZ789def456ghi012jkl345mn'
-console.log(isValidApiKey(apiKey)) // true
+const projectKey = 'ak_def456ABC-_012ghi789jkl345mno678'
+console.log(isValidApiKey(projectKey)) // true
 ```
+
+<Note>
+Since v1.5.0, both Developer Keys and Project Keys use the same format validation. Scope differentiation happens at the database level, not format level.
+</Note>
 
 ### Environment Configuration
 
 ```bash .env.local
 # Console mode - requires developer key only
 DEVKIT4AI_MODE=console
-DEVKIT4AI_DEVELOPER_KEY=dk_abc123XYZ-_789def456ghi012jkl345
+DEVKIT4AI_DEVELOPER_KEY=ak_abc123XYZ-_789def456ghi012jkl345
 
 # Project mode - requires all three keys
 DEVKIT4AI_MODE=project
-DEVKIT4AI_DEVELOPER_KEY=dk_abc123XYZ-_789def456ghi012jkl345
+DEVKIT4AI_DEVELOPER_KEY=ak_abc123XYZ-_789def456ghi012jkl345
 DEVKIT4AI_PROJECT_ID=550e8400-e29b-41d4-a716-446655440000
-DEVKIT4AI_PROJECT_KEY=ak_abc123XYZ789def456ghi012jkl345mn
+DEVKIT4AI_PROJECT_KEY=ak_def456ABC-_012ghi789jkl345mno678
 ```
 
 ### Making API Requests

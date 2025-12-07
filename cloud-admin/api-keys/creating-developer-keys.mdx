@@ -4,19 +4,25 @@ description: "Issue new developer keys for workspace automation."
 icon: "key"
 ---
 
-Developer keys authenticate console actions and Starter Kit deployments that need elevated access.
+Developer keys authenticate console actions and Starter Kit deployments that need elevated access. You can create multiple keys for different environments, applications, or team members.
+
+(((REPLACE_THIS_WITH_IMAGE: console-developer-keys-overview.png: Cloud Admin developer keys management page showing list of keys)))
 
 ## Key Format
 
 Developer Keys use the following format:
 
-**Prefix:** `dk_` (Developer Key)
+**Prefix:** `ak_` (API Key)
 
-**Full format:** `dk_` + 32 URL-safe characters (alphanumeric + `-` + `_`)
+**Full format:** `ak_` + 32 URL-safe characters (alphanumeric + `-` + `_`)
 
-**Example:** `dk_abc123XYZ-_789def456ghi012jkl345`
+**Example:** `ak_abc123XYZ-_789def456ghi012jkl345`
 
 **Total length:** 35 characters (3 character prefix + 32 character key)
+
+<Note>
+Developer keys previously used the `dk_` prefix. The new `ak_` prefix was introduced in v1.5.0 to better reflect their purpose as API authentication keys.
+</Note>
 
 ## Key Properties
 
@@ -26,18 +32,161 @@ Developer Keys use the following format:
 - **Developer scoping:** Each key is bound to a specific developer account via `developer_id`
 - **Active status:** Keys can be revoked by setting `is_active` to false
 
+## Managing Developer Keys
+
+### Accessing the Developer Keys Page
+
+Navigate to **Developer Keys** from the Cloud Admin console sidebar:
+
+1. Log in to Cloud Admin at [devkit4ai.com/console](https://devkit4ai.com/console) or [vibecoding.ad/console](https://vibecoding.ad/console)
+2. Click **Developer Keys** in the left sidebar
+3. View your existing keys and their usage statistics
+
+(((REPLACE_THIS_WITH_IMAGE: console-developer-keys-list.png: Developer keys list showing name, prefix, created date, and last used columns)))
+
+### Creating a New Developer Key
+
+<Steps>
+  <Step title="Open Generation Dialog">
+    Click the **Generate Key** button in the top right corner
+  <Key Management Actions
+
+### Viewing Key Details
+
+Each key in the list displays:
+- **Name**: Descriptive label you provided
+- **Key Prefix**: First 8 characters (e.g., `ak_abc12`) for identification
+- **Created**: When the key was generated
+- **Last Used**: Most recent authentication timestamp (or "Never used")
+- **Actions**: Revoke button
+
+### Revoking a Developer Key
+
+<WaUse Cases
+
+### Local Development
+
+Use a development-specific key for local testing:
+
+```bash
+# .env.local
+DEVKIT4AI_DEVELOPER_KEY=ak_dev_environment_key_here
+```
+
+### CI/CD Pipelines
+
+Create a dedicated key for automated deployments:
+
+```bash
+# GitHub Actions Secret
+DEVKIT4AI_DEVELOPER_KEY=ak_cicd_pipeline_key_here
+```
+
+### Team Member Access
+
+Issue individual keys for team members working with the API:
+
+- **Frontend Developer**: Key for Starter Kit development
+- **Backend Developer**: Key for API integration testing
+- **DevOps Engineer**: Key for deployment automation
+
+### Multi-Environment Setup
+
+Separate keys for each environment:
+
+```bash
+# Production
+DEVKIT4AI_DEVELOPER_KEY=ak_production_key_here
+
+# Staging
+DEVKIT4AI_DEVELOPER_KEY=ak_staging_key_here
+
+# Development
+DEVKIT4AI_DEVELOPER_KEY=ak_development_key_here
+```
+
+## API Reference
+
+See the [Developer Keys API endpoint](/cloud-api/auth/developer-keys) for complete request/response details.
+
+## Related Pages
+
+<CardGroup cols={2}>
+  <Card title="Developer Keys API" icon="code" href="/cloud-api/auth/developer-keys">
+    API documentation for key management
+  </Card>
+  <Card title="Project API Keys" icon="folder-key" href="/cloud-admin/api-keys/creating-project-keys">
+    Managing project-scoped keys
+  </Card>
+  <Card title="Security Practices" icon="shield" href="/cloud-admin/api-keys/security-practices">
+    Best practices for key security
+  </Card>
+  <Card title="Rotating Keys" icon="arrows-rotate" href="/cloud-admin/api-keys/revoking-rotating">
+    Key rotation strategies
+  </Card>
+</CardGroup>
+
+To revoke a key:
+
+1. Locate the key in the Developer Keys list
+2. Click the **Revoke** button in the Actions column
+3. Confirm the revocation in the dialog
+4. The key is immediately deactivated
+
+(((REPLACE_THIS_WITH_IMAGE: console-revoke-developer-key-confirm.png: Confirmation dialog for key revocation)))
+
+<Tip>
+Before revoking a key, check the **Last Used** timestamp to ensure it's not actively in use.
+</Tip>
+
+## Key Limits
+
+Each developer account is limited to **10 active keys** at a time. 
+
+When you reach the limit:
+- The **Generate Key** button displays "Limit Reached (10/10)"
+- Revoke unused keys before creating new ones
+- Consider which keys are no longer needed by checking last usage dates
+
+(((REPLACE_THIS_WITH_IMAGE: console-developer-keys-limit-reached.png: Generate button disabled with limit message)))
+
+### Managing Key Limits
+
+Best practices for staying within limits:
+
+1. **Regular Audits**: Review your keys monthly and revoke unused ones
+2. **Descriptive Names**: Use clear names to identify key purposes
+3. **Environment-Based**: Use one key per environment (dev, staging, prod)
+4. **Application-Based**: Separate keys for different applications or services
+5. **Team Member Keys**: Individual keys for team members who need API access
+    Enter a descriptive name like "Production API" or "Staging Environment" to help identify the key's purpose
+  </Step>
+  
+  <Step title="Generate and Copy">
+    Click **Generate** and immediately copy the full key. **This is your only chance to see the complete key!**
+  </Step>
+  
+  <Step title="Store Securely">
+    Save the key in your environment variables or secret management system
+  </Step>
+</Steps>
+
+(((REPLACE_THIS_WITH_IMAGE: console-generate-developer-key-dialog.png: Dialog showing name input field and generate button)))
+
+(((REPLACE_THIS_WITH_IMAGE: console-developer-key-created-success.png: Success message showing full key with copy button)))
+
 ## Environment Variable
 
 In your Starter Kit or Cloud Admin deployment, set the generated key as:
 
 ```bash
-DEVKIT4AI_DEVELOPER_KEY=dk_abc123XYZ-_789def456ghi012jkl345
+DEVKIT4AI_DEVELOPER_KEY=ak_abc123XYZ-_789def456ghi012jkl345
 ```
 
 ## Generation Flow
 
 1. Cloud Admin UI calls `POST /api/v1/auth/developer-keys` with optional `name` parameter
-2. Backend generates key with `dk_` prefix and 32 random URL-safe characters
+2. Backend generates key with `ak_` prefix and 32 random URL-safe characters
 3. Full key is hashed with SHA-256
 4. Hash and prefix (first 8 chars) are stored in the database
 5. Full key is returned in response and displayed once

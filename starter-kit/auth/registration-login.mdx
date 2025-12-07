@@ -28,10 +28,16 @@ The Starter Kit uses a unified `/register` page that supports multiple user type
 interface RegistrationFormData {
   email: string;
   password: string;
-  full_name?: string;
+  full_name?: string;       // Optional: User's display name
   role?: "developer" | "end_user"; // Defaults to "developer"
 }
 ```
+
+<Info>
+The `full_name` field allows users to provide a display name that will be shown in the UI, such as personalized dashboard greetings.
+</Info>
+
+(((REPLACE_THIS_WITH_IMAGE: registration-form-with-fullname.png: Screenshot of registration form showing email, password, and full name fields)))
 
 ### End-User Registration
 
@@ -42,13 +48,18 @@ End users register through your deployed project-mode application:
 3. `backendRegisterAction()` sends request with `role: "end_user"`
 4. Cloud API creates user account and returns JWT tokens
 5. Tokens automatically stored in httpOnly cookies
-6. User redirected to `/dashboard` as authenticated end user
-
-**Server Action:**
-```typescript
-backendRegisterAction(formData: FormData)
-  -> POST /api/v1/auth/register
+6. UsBody: { email, password, full_name?, role: "end_user" }
   -> Headers: X-User-Role: end_user, X-Developer-Key, X-Project-ID, X-API-Key
+  -> Response: { id, email, full_name?, role, is_active, created_at, project_id, access_token, refresh_token }
+  -> Stores JWT cookies
+  -> Redirects to /dashboard
+```
+
+**Response Fields:**
+- `full_name`: Optional display name provided during registration
+- `project_id`: UUID of the project the end user belongs to
+
+(((REPLACE_THIS_WITH_IMAGE: end-user-registration-form.png: Screenshot of end-user registration form with full name field
   -> Response: { user, access_token, refresh_token }
   -> Stores JWT cookies
   -> Redirects to /dashboard
@@ -154,19 +165,68 @@ Flags: httpOnly, secure (production), sameSite=lax
 Server components can fetch the current user:
 
 ```typescript
-import { getCurrentUser } from "@/lib/auth-server";
-
-// In Server Component
-const user = await getCurrentUser();
-if (user) {
-  console.log(user.email, user.role, user.is_active);
+import { getCurrentUser } from full_name, user.role, user.project_id);
 }
 ```
+
+**User Data Structure:**
+```typescript
+interface UserWithRole {
+  id: string;               // User UUID
+  email: string;            // User email address
+  full_name?: string;       // Optional display name
+  role: "platform_operator" | "developer" | "end_user";
+  is_active: boolean;       // Email verification status
+  created_at: string;       // ISO 8601 timestamp
+  project_id?: string;      // UUID (only for end_user role)
+}
+```
+
+<Note>
+The `project_id` field is only present for end users and identifies which project they belong to. Developers and operators do not have a `project_id`.
+</Note>
 
 Client components use React context:
 
 ```typescript
 import { useCurrentUser, useIsAuthenticated } from "@/lib/auth-context";
+
+// In Client Component
+const user = useCurrentUser();
+const isAuthenticated = useIsAuthenticated();
+
+// Access user fields
+if (user) {
+  console.log(user.full_name);  // Display name
+  console.log(user.project_id); // Project UUID (end users only)
+}
+```
+
+### Personalized Greetings
+
+Use `full_name` for personalized UI:
+
+```typescript
+// app/dashboard/page.tsx
+import { requireAuth } from "@/lib/auth-server";
+
+export default async function DashboardPage() {
+  const user = await requireAuth();
+  
+  return (
+    <div>
+      <h1>Welcome{user.full_name ? `, ${user.full_name}` : ""}!</h1>
+      <p>Your email: {user.email}</p>
+    </div>
+  );
+}
+```
+
+**Output Examples:**
+- With `full_name`: "Welcome, Sarah Johnson!"
+- Without `full_name`: "Welcome!"
+
+(((REPLACE_THIS_WITH_IMAGE: dashboard-personalized-greeting.png: Screenshot of dashboard showing personalized greeting with user's full name)))ort { useCurrentUser, useIsAuthenticated } from "@/lib/auth-context";
 
 // In Client Component
 const user = useCurrentUser();
@@ -190,14 +250,22 @@ export default async function DashboardPage() {
 }
 ```
 
-### Role-Based Protection
+### Role-Based Prak_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+X-Project-ID: 550e8400-e29b-41d4-a716-446655440000
+X-API-Key: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+Authorization: Bearer <jwt_token>
+```
 
-Restrict access by role:
+<Info>
+The `X-Project-ID` header is crucial for end user authentication. It ensures all requests are scoped to the correct project context. JWT tokens for end users also contain the `project_id` claim for server-side authorization.
+</Info>typescript
+import { requireRak_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+Authorization: Bearer <jwt_token>
+```
 
-```typescript
-import { requireRole } from "@/lib/auth-server";
-
-export default async function AdminPage() {
+<Note>
+Developer keys changed from `dk_` prefix to `ak_` prefix in v1.5.0. The format is `ak_` + 32 URL-safe characters.
+</Note>ort default async function AdminPage() {
   const user = await requireRole(["platform_operator", "developer"]);
   // Only operators and developers can access
   return <div>Admin Panel</div>;
@@ -292,7 +360,23 @@ After developer registration, a provisioning bundle is stored temporarily:
 ```typescript
 interface ProvisioningData {
   project_id: string;      // UUID of initial project
-  developer_key: string;   // Developer API key
+  d
+
+**Using Full Name in Forms:**
+
+The built-in registration form supports `full_name`:
+
+```typescript
+// app/(auth)/register/page.tsx
+<form action={backendRegisterAction}>
+  <Input name="email" type="email" required />
+  <Input name="password" type="password" required />
+  <Input name="full_name" placeholder="Your Name (Optional)" />
+  <button type="submit">Register</button>
+</form>
+```
+
+(((REPLACE_THIS_WITH_IMAGE: registration-form-fullname-field.png: Close-up screenshot of full name input field in registration form)))eveloper_key: string;   // Developer API key
   api_key: string;         // Project API key
 }
 ```

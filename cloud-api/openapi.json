@@ -3,7 +3,7 @@
     "info": {
         "title": "Dev Kit for AI API",
         "description": "API for Dev Kit for AI: Developer Toolkit for AI-Powered Web Applications",
-        "version": "1.4.0"
+        "version": "1.5.0"
     },
     "servers": [
         {
@@ -341,6 +341,124 @@
                                 "schema": {}
                             }
                         }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/developer-keys": {
+            "get": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "List Developer Keys",
+                "description": "List all developer keys for the current developer user.",
+                "operationId": "list_developer_keys_api_v1_auth_developer_keys_get",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "items": {
+                                        "$ref": "#/components/schemas/DeveloperKeyResponse"
+                                    },
+                                    "type": "array",
+                                    "title": "Response List Developer Keys Api V1 Auth Developer Keys Get"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "OAuth2PasswordBearer": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Create Developer Key",
+                "description": "Create a new developer key for the current developer user.\n\nMaximum of 10 active developer keys per developer.",
+                "operationId": "create_developer_key_api_v1_auth_developer_keys_post",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/DeveloperKeyCreateRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "201": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DeveloperKeyCreatedResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "OAuth2PasswordBearer": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/auth/developer-keys/{key_id}": {
+            "delete": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Revoke Developer Key",
+                "description": "Revoke a developer key.",
+                "operationId": "revoke_developer_key_api_v1_auth_developer_keys__key_id__delete",
+                "security": [
+                    {
+                        "OAuth2PasswordBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "key_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "title": "Key Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Successful Response"
                     },
                     "422": {
                         "description": "Validation Error",
@@ -1863,6 +1981,129 @@
                 ],
                 "title": "DetailedHealthCheckResponse"
             },
+            "DeveloperKeyCreateRequest": {
+                "properties": {
+                    "name": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "maxLength": 255
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Name"
+                    }
+                },
+                "type": "object",
+                "title": "DeveloperKeyCreateRequest",
+                "description": "Request payload for creating a new developer key"
+            },
+            "DeveloperKeyCreatedResponse": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Id"
+                    },
+                    "name": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Name"
+                    },
+                    "key": {
+                        "type": "string",
+                        "title": "Key"
+                    },
+                    "key_prefix": {
+                        "type": "string",
+                        "title": "Key Prefix"
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "title": "Is Active"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Created At"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "id",
+                    "name",
+                    "key",
+                    "key_prefix",
+                    "is_active",
+                    "created_at"
+                ],
+                "title": "DeveloperKeyCreatedResponse",
+                "description": "Response payload for newly created developer key (includes full key)"
+            },
+            "DeveloperKeyResponse": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Id"
+                    },
+                    "name": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Name"
+                    },
+                    "key_prefix": {
+                        "type": "string",
+                        "title": "Key Prefix"
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "title": "Is Active"
+                    },
+                    "last_used_at": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "date-time"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Last Used At"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Created At"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "id",
+                    "name",
+                    "key_prefix",
+                    "is_active",
+                    "last_used_at",
+                    "created_at"
+                ],
+                "title": "DeveloperKeyResponse",
+                "description": "Response payload for developer key (without full key)"
+            },
             "DeveloperUserResponse": {
                 "properties": {
                     "id": {
@@ -2580,6 +2821,17 @@
                         "type": "string",
                         "title": "Email"
                     },
+                    "full_name": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Full Name"
+                    },
                     "role": {
                         "type": "string",
                         "title": "Role"
@@ -2592,6 +2844,18 @@
                         "type": "string",
                         "format": "date-time",
                         "title": "Created At"
+                    },
+                    "project_id": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "uuid"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Project Id"
                     },
                     "provisioning": {
                         "anyOf": [
@@ -2857,6 +3121,17 @@
                         "type": "string",
                         "title": "Email"
                     },
+                    "full_name": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Full Name"
+                    },
                     "role": {
                         "type": "string",
                         "title": "Role"
@@ -2869,6 +3144,18 @@
                         "type": "string",
                         "format": "date-time",
                         "title": "Created At"
+                    },
+                    "project_id": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "uuid"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Project Id"
                     }
                 },
                 "type": "object",

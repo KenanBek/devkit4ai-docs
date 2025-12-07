@@ -4,19 +4,181 @@ icon: "right-to-bracket"
 openapi: "POST /api/v1/auth/login"
 ---
 
-Authenticate a user and receive access and refresh tokens.
+Authenticate a user and receive access and refresh tokens. Supports both global login (for developers and operators) and project-scoped login (for end users).
 
 ### Body
 
-<ParamField body="username" type="string" required>
-  User's email address (username)
+<ParamField body="email" type="string" required>
+  User's email address
 </ParamField>
 
 <ParamField body="password" type="string" required>
   User's password
 </ParamField>
 
+### Headers
+
+<ParamField header="X-Project-ID" type="string">
+  JWT access token for API authentication (30-minute expiry)
+</ResponseField>
+
+<ResponseField name="refresh_token" type="string">
+  Refresh token to obtain new access tokens (7-day expiry)
+</ResponseField>
+
+<ResponseField name="token_type" type="string">
+  Token type (typically "bearer")
+</ResponseField>
+
+## Example Requests
+
+### End User Login (Project-Scoped)
+
+```bash
+curl -X POST https://api.vibecoding.ad/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -H "X-Project-ID: 550e8400-e29b-41d4-a716-446655440000" \
+  -d '{
+    "email": "user@example.com",
+    "password": "SecurePass123"
+  }'
+```
+
+### Developer/Operator Login (Global)
+
+```bash
+curl -X POST https://api.vibecoding.ad/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "developer@example.com",
+    "password": "SecurePass123"
+  }'
+```
+
 ### Response
+
+```json
+{
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "token_type": "bearer"
+}
+```
+
+## Token Usage
+
+### Access Token
+
+Use the access token in the `Authorization` header for subsequent API requests:
+
+```bash
+curl https://api.vibecoding.ad/api/v1/auth/me \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+```
+
+**Properties:**
+- Expires after 30 minutes
+- Contains user ID, email, role, and project_id (for end users)
+- Must be refreshed using refresh token when expired
+
+### Refresh Token
+
+Use the refresh token to obtain a new access token:
+
+```bash
+curl -X POST https://api.vibecoding.ad/api/v1/auth/refresh \
+  -H "Content-Type: application/json" \
+  -d '{"refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."}'
+```
+
+**Properties:**
+- Expires after 7 days
+- Should be stored securely (httpOnly cookies recommended)
+- Single-use pattern recommended for security
+
+## Project-Scoped Authentication
+
+End users are authenticated within the context of a specific project:
+
+1. **Registration**: End user registered with `X-Project-ID` header
+2. **Database**: User record includes `project_id` field
+3. **Login**: Must provide same `X-Project-ID` header
+4. **JWT Token**: Contains `project_id` claim for authorization
+5. **API Access**: All requests scoped to user's project
+
+### Email Uniqueness
+
+The same email can exist as:
+- End user in Project A
+- End user in Project B
+- Developer (global namespace)
+
+The system uses `X-Project-ID` header during login to determine which account to authenticate.
+
+## Error Responses
+
+### Invalid Credentials
+
+```json
+{
+  "detail": "Invalid email or password"
+}
+```
+
+### Missing Project ID (End User)
+
+```json
+{
+  "detail": "X-Project-ID header is required for end user login"
+}
+```
+
+### Invalid Project ID Format
+
+```json
+{
+  "detail": "Invalid X-Project-ID format. Must be a valid UUID."
+}
+```
+
+### Inactive Account
+
+```json
+{
+  "detail": "Account is not active. Please verify your email."
+}
+```
+
+## Security Best Practices
+
+<Warning>
+Always store tokens securely using httpOnly cookies. Never store tokens in localStorage or sessionStorage to prevent XSS attacks.
+</Warning>
+
+**Recommendations:**
+
+1. **Token Storage**: Use httpOnly cookies with secure flag in production
+2. **HTTPS Only**: Always use HTTPS in production to protect tokens in transit
+3. **Token Refresh**: Implement automatic token refresh before expiry
+4. **Logout**: Clear both access and refresh tokens on logout
+5. **Rate Limiting**: Implement rate limiting to prevent brute force attacks
+
+## Related Pages
+
+<CardGroup cols={2}>
+  <Card title="Register" icon="user-plus" href="/cloud-api/auth/register">
+    Create new user account
+  </Card>
+  <Card title="Get Current User" icon="user" href="/cloud-api/auth/me">
+    Retrieve authenticated user details
+  </Card>
+  <Card title="Refresh Token" icon="arrows-rotate" href="/cloud-api/auth/refresh">
+    Obtain new access token
+  </Card>
+  <Card title="JWT Flow" icon="key" href="/starter-kit/auth/jwt-flow">
+    Understanding token lifecycle
+  </Card>
+</CardGroup>
 
 <ResponseField name="access_token" type="string">
   JWT access token for API authentication

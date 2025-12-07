@@ -1,0 +1,346 @@
+---
+title: "Developer Keys"
+description: "Manage multiple developer keys for API authentication"
+icon: "key"
+---
+
+Developer keys authenticate API requests to the Cloud API with developer-level permissions. Each developer can create up to 10 active keys for different applications, environments, or team members.
+
+## Create Developer Key
+
+Create a new developer key for API authentication.
+
+### Endpoint
+
+```
+POST /api/v1/auth/developer-keys
+```
+
+### Authentication
+
+Requires valid JWT token with `developer` role.
+
+### Headers
+
+<ParamField header="Authorization" type="string" required>
+  Bearer JWT access token
+</ParamField>
+
+<ParamField header="X-User-Role" type="string" required>
+  Must be "developer"
+</ParamField>
+
+<ParamField header="X-Developer-Key" type="string" required>
+  Existing developer key for authentication
+</ParamField>
+
+### Request Body
+
+<ParamField body="name" type="string">
+  Optional descriptive name for the key (e.g., "Production API", "Staging Environment")
+</ParamField>
+
+### Response
+
+<ResponseField name="id" type="string">
+  Unique identifier for the developer key (UUID)
+</ResponseField>
+
+<ResponseField name="name" type="string">
+  Descriptive name for the key
+</ResponseField>
+
+<ResponseField name="key" type="string">
+  **Full developer key - shown only once!** Format: `ak_` + 32 URL-safe characters
+</ResponseField>
+
+<ResponseField name="key_prefix" type="string">
+  First 8 characters of the key for identification (e.g., `ak_abc12`)
+</ResponseField>
+
+<ResponseField name="is_active" type="boolean">
+  Key status (always `true` for new keys)
+</ResponseField>
+
+<ResponseField name="created_at" type="string">
+  ISO 8601 timestamp of key creation
+</ResponseField>
+
+<Warning>
+The full key is only returned in the creation response. Store it securely - it cannot be retrieved again.
+</Warning>
+
+### Example Request
+
+```bash
+curl -X POST https://api.vibecoding.ad/api/v1/auth/developer-keys \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "X-User-Role: developer" \
+  -H "X-Developer-Key: ak_existing_key_here" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Production API"}'
+```
+
+### Example Response
+
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "name": "Production API",
+  "key": "ak_abc123XYZ-_789def456ghi012jkl345",
+  "key_prefix": "ak_abc12",
+  "is_active": true,
+  "created_at": "2025-12-07T10:30:00Z"
+}
+```
+
+(((REPLACE_THIS_WITH_IMAGE: developer-key-created-response.png: Screenshot showing successful developer key creation with full key highlighted)))
+
+---
+
+## List Developer Keys
+
+Retrieve all active developer keys for the authenticated developer.
+
+### Endpoint
+
+```
+GET /api/v1/auth/developer-keys
+```
+
+### Authentication
+
+Requires valid JWT token with `developer` role.
+
+### Headers
+
+<ParamField header="Authorization" type="string" required>
+  Bearer JWT access token
+</ParamField>
+
+<ParamField header="X-User-Role" type="string" required>
+  Must be "developer"
+</ParamField>
+
+<ParamField header="X-Developer-Key" type="string" required>
+  Existing developer key for authentication
+</ParamField>
+
+### Response
+
+Returns an array of developer key objects (without full keys):
+
+<ResponseField name="[].id" type="string">
+  Unique identifier for the developer key
+</ResponseField>
+
+<ResponseField name="[].name" type="string">
+  Descriptive name for the key
+</ResponseField>
+
+<ResponseField name="[].key_prefix" type="string">
+  First 8 characters for identification (e.g., `ak_abc12`)
+</ResponseField>
+
+<ResponseField name="[].is_active" type="boolean">
+  Key status (only active keys returned)
+</ResponseField>
+
+<ResponseField name="[].last_used_at" type="string">
+  ISO 8601 timestamp of last usage (null if never used)
+</ResponseField>
+
+<ResponseField name="[].created_at" type="string">
+  ISO 8601 timestamp of key creation
+</ResponseField>
+
+### Example Request
+
+```bash
+curl -X GET https://api.vibecoding.ad/api/v1/auth/developer-keys \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "X-User-Role: developer" \
+  -H "X-Developer-Key: ak_existing_key_here"
+```
+
+### Example Response
+
+```json
+[
+  {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "name": "Production API",
+    "key_prefix": "ak_abc12",
+    "is_active": true,
+    "last_used_at": "2025-12-07T09:15:00Z",
+    "created_at": "2025-12-01T10:30:00Z"
+  },
+  {
+    "id": "660e8400-e29b-41d4-a716-446655440001",
+    "name": "Staging Environment",
+    "key_prefix": "ak_xyz78",
+    "is_active": true,
+    "last_used_at": null,
+    "created_at": "2025-12-05T14:20:00Z"
+  }
+]
+```
+
+---
+
+## Revoke Developer Key
+
+Revoke an active developer key. Revoked keys cannot be used for API authentication.
+
+### Endpoint
+
+```
+DELETE /api/v1/auth/developer-keys/{key_id}
+```
+
+### Authentication
+
+Requires valid JWT token with `developer` role.
+
+### Headers
+
+<ParamField header="Authorization" type="string" required>
+  Bearer JWT access token
+</ParamField>
+
+<ParamField header="X-User-Role" type="string" required>
+  Must be "developer"
+</ParamField>
+
+<ParamField header="X-Developer-Key" type="string" required>
+  Existing developer key for authentication (different from the one being revoked)
+</ParamField>
+
+### Path Parameters
+
+<ParamField path="key_id" type="string" required>
+  UUID of the developer key to revoke
+</ParamField>
+
+### Response
+
+Returns `204 No Content` on success.
+
+### Error Responses
+
+- `400 Bad Request` - Key is already revoked
+- `403 Forbidden` - Key does not belong to the authenticated developer
+- `404 Not Found` - Key does not exist
+
+### Example Request
+
+```bash
+curl -X DELETE https://api.vibecoding.ad/api/v1/auth/developer-keys/550e8400-e29b-41d4-a716-446655440000 \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "X-User-Role: developer" \
+  -H "X-Developer-Key: ak_existing_key_here"
+```
+
+<Note>
+You cannot revoke the developer key you're currently using for authentication. Use a different active key to revoke others.
+</Note>
+
+---
+
+## Key Format
+
+Developer keys use the following format:
+
+**Prefix:** `ak_` (API Key - formerly `dk_` for Developer Key)
+
+**Structure:** `ak_` + 32 URL-safe characters (alphanumeric + `-` + `_`)
+
+**Example:** `ak_abc123XYZ-_789def456ghi012jkl345`
+
+**Total Length:** 35 characters (3-char prefix + 32-char key)
+
+### Security Properties
+
+- **SHA-256 Hashing**: Keys are hashed before storage
+- **Prefix Storage**: Only first 8 characters stored as `key_prefix` for identification
+- **One-Time Display**: Full key shown only during creation
+- **Developer Scoping**: Each key tied to specific developer account
+- **Revocation**: Keys can be deactivated via DELETE endpoint
+
+---
+
+## Key Limits
+
+<Warning>
+Each developer account can have a maximum of **10 active developer keys**. Revoke unused keys before creating new ones if you reach this limit.
+</Warning>
+
+Attempting to create an 11th key returns:
+
+```json
+{
+  "detail": "Maximum number of developer keys (10) reached. Please revoke unused keys."
+}
+```
+
+### Best Practices
+
+1. **Name Your Keys**: Use descriptive names for easy identification
+2. **Rotate Regularly**: Create new keys and revoke old ones every 90 days
+3. **Environment Separation**: Use different keys for production, staging, development
+4. **Immediate Revocation**: Revoke compromised keys immediately
+5. **Secure Storage**: Store keys in environment variables, never in code
+
+---
+
+## Usage Examples
+
+### Use in Cloud Admin Console
+
+Set your developer key in environment variables:
+
+```bash
+DEVKIT4AI_DEVELOPER_KEY=ak_abc123XYZ-_789def456ghi012jkl345
+```
+
+### Use in Starter Kit Deployment
+
+Configure project-mode environment:
+
+```bash
+DEVKIT4AI_DEVELOPER_KEY=ak_abc123XYZ-_789def456ghi012jkl345
+DEVKIT4AI_PROJECT_ID=550e8400-e29b-41d4-a716-446655440000
+DEVKIT4AI_PROJECT_KEY=<your_project_api_key>
+```
+
+### Use in API Requests
+
+Include in request headers:
+
+```bash
+curl -X POST https://api.vibecoding.ad/api/v1/auth/register \
+  -H "X-Developer-Key: ak_abc123XYZ-_789def456ghi012jkl345" \
+  -H "X-User-Role: end_user" \
+  -H "X-Project-ID: 550e8400-e29b-41d4-a716-446655440000" \
+  -H "Content-Type: application/json" \
+  -d '{"email": "user@example.com", "password": "SecurePass123"}'
+```
+
+---
+
+## Related Pages
+
+<CardGroup cols={2}>
+  <Card title="Creating Developer Keys" icon="plus" href="/cloud-admin/api-keys/creating-developer-keys">
+    Step-by-step guide for Cloud Admin UI
+  </Card>
+  <Card title="API Key Security" icon="shield" href="/cloud-admin/api-keys/security-practices">
+    Best practices for key management
+  </Card>
+  <Card title="Project API Keys" icon="folder-key" href="/cloud-admin/api-keys/creating-project-keys">
+    Managing project-scoped API keys
+  </Card>
+  <Card title="Environment Config" icon="gear" href="/reference/config/environment-variables">
+    Environment variable reference
+  </Card>
+</CardGroup>
