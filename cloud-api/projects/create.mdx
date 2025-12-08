@@ -4,26 +4,420 @@ icon: "folder-plus"
 openapi: "POST /api/v1/projects/"
 ---
 
-Create a new project for the authenticated user.
+Create a new project for your AI-powered application. Projects serve as containers for end users, API keys, and generation requests. Each developer can create multiple projects for different applications or environments.
 
-### Headers
+## Authentication
+
+Requires valid JWT token with `developer` role.
+
+## Headers
 
 <ParamField header="Authorization" type="string" required>
-  Bearer token for authentication
+  Bearer JWT access token obtained from login
 </ParamField>
 
-### Body
+<ParamField header="X-User-Role" type="string" required>
+  Must be set to `developer`
+</ParamField>
+
+<ParamField header="X-Developer-Key" type="string" required>
+  Active developer key for authentication
+</ParamField>
+
+<ParamField header="Content-Type" type="string" required>
+  Must be `application/json`
+</ParamField>
+
+## Request Body
 
 <ParamField body="name" type="string" required>
-  Project name
+  Project name (3-100 characters). Should be descriptive and unique among your projects.
+  
+  Examples: "Production API", "My SaaS App", "Customer Portal", "E-Commerce Platform"
 </ParamField>
 
 <ParamField body="description" type="string">
-  Project description (optional)
+  Detailed project description (optional, max 500 characters). Describe the project's purpose, target users, or key features.
+  
+  Example: "AI-powered image generation platform for e-commerce product photography"
 </ParamField>
 
-### Response
+## Response
 
 <ResponseField name="id" type="string">
-  Newly created project's unique identifier
+  Unique UUID identifier for the newly created project
 </ResponseField>
+
+<ResponseField name="name" type="string">
+  Project name as provided
+</ResponseField>
+
+<ResponseField name="description" type="string" nullable>
+  Project description (null if not provided)
+</ResponseField>
+
+<ResponseField name="owner_id" type="string">
+  UUID of the developer who created the project (your user ID)
+</ResponseField>
+
+<ResponseField name="is_active" type="boolean">
+  Project status - always `true` for newly created projects
+</ResponseField>
+
+<ResponseField name="created_at" type="string">
+  ISO 8601 timestamp when the project was created
+</ResponseField>
+
+<ResponseField name="updated_at" type="string" nullable>
+  ISO 8601 timestamp of last update (null for new projects)
+</ResponseField>
+
+## Example Request
+
+```bash
+curl -X POST https://api.vibecoding.ad/api/v1/projects/ \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
+  -H "X-User-Role: developer" \
+  -H "X-Developer-Key: ak_abc123XYZ-_789def456ghi012jkl345" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "My SaaS Application",
+    "description": "AI-powered content generation platform for marketing teams"
+  }'
+```
+
+## Example Response
+
+```json
+{
+  "id": "770e8400-e29b-41d4-a716-446655440002",
+  "name": "My SaaS Application",
+  "description": "AI-powered content generation platform for marketing teams",
+  "owner_id": "550e8400-e29b-41d4-a716-446655440000",
+  "is_active": true,
+  "created_at": "2025-12-08T11:00:00Z",
+  "updated_at": null
+}
+```
+
+## Next Steps After Creation
+
+After creating a project, you should:
+
+1. **Generate Project API Keys** via [Create API Key](/cloud-api/projects/create-api-key)
+2. **Configure Starter Kit** with your project credentials
+3. **Register End Users** via [Register](/cloud-api/auth/register) endpoint
+4. **Monitor Usage** via [Project Stats](/cloud-api/projects/project-stats)
+
+(((REPLACE_THIS_WITH_IMAGE: cloud-api-project-setup-workflow.png: Step-by-step diagram showing project creation, API key generation, Starter Kit configuration, and user registration)))
+
+## Use Cases
+
+### Multi-Environment Setup
+
+Create separate projects for each environment:
+
+```typescript
+async function setupEnvironments(
+  jwtToken: string,
+  developerKey: string
+) {
+  const environments = [
+    {
+      name: 'Production - My SaaS App',
+      description: 'Production environment for live users'
+    },
+    {
+      name: 'Staging - My SaaS App',
+      description: 'Staging environment for QA and testing'
+    },
+    {
+      name: 'Development - My SaaS App',
+      description: 'Development environment for feature testing'
+    }
+  ];
+  
+  const projects = [];
+  
+  for (const env of environments) {
+    const response = await fetch(
+      'https://api.vibecoding.ad/api/v1/projects/',
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${jwtToken}`,
+          'X-User-Role': 'developer',
+          'X-Developer-Key': developerKey,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(env)
+      }
+    );
+    
+    const project = await response.json();
+    projects.push(project);
+    
+    console.log(`✓ Created ${env.name}: ${project.id}`);
+  }
+  
+  return projects;
+}
+```
+
+### Multi-Product Portfolio
+
+Manage multiple applications under one developer account:
+
+```typescript
+interface ProductConfig {
+  name: string;
+  description: string;
+  domain: string;
+}
+
+async function createProductProjects(products: ProductConfig[]) {
+  const createdProjects = [];
+  
+  for (const product of products) {
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${jwtToken}`,
+        'X-User-Role': 'developer',
+        'X-Developer-Key': developerKey,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        name: product.name,
+        description: `${product.description} - Deployed at ${product.domain}`
+      })
+    });
+    
+    const project = await response.json();
+    createdProjects.push({
+      ...project,
+      domain: product.domain
+    });
+  }
+  
+  return createdProjects;
+}
+
+// Usage
+const products = [
+  {
+    name: 'AI Photo Editor',
+    description: 'AI-powered photo editing platform',
+    domain: 'photoeditor.example.com'
+  },
+  {
+    name: 'Content Generator',
+    description: 'AI content generation tool',
+    domain: 'content.example.com'
+  }
+];
+
+await createProductProjects(products);
+```
+
+### Client Project Management
+
+Create projects for individual clients:
+
+```typescript
+async function onboardNewClient(
+  clientName: string,
+  clientEmail: string,
+  jwtToken: string,
+  developerKey: string
+) {
+  // Step 1: Create project
+  const projectResponse = await fetch(
+    'https://api.vibecoding.ad/api/v1/projects/',
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${jwtToken}`,
+        'X-User-Role': 'developer',
+        'X-Developer-Key': developerKey,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        name: `${clientName} - Client Project`,
+        description: `Dedicated project for ${clientName} (${clientEmail})`
+      })
+    }
+  );
+  
+  const project = await projectResponse.json();
+  
+  // Step 2: Generate API key for client
+  const keyResponse = await fetch(
+    `https://api.vibecoding.ad/api/v1/projects/${project.id}/api-keys`,
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${jwtToken}`,
+        'X-User-Role': 'developer',
+        'X-Developer-Key': developerKey,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        name: `${clientName} Production Key`
+      })
+    }
+  );
+  
+  const apiKey = await keyResponse.json();
+  
+  // Return client credentials
+  return {
+    clientName,
+    projectId: project.id,
+    projectName: project.name,
+    apiKey: apiKey.key,
+    setupInstructions: `
+      Configure your application with:
+      DEVKIT4AI_PROJECT_ID=${project.id}
+      DEVKIT4AI_PROJECT_KEY=${apiKey.key}
+    `
+  };
+}
+```
+
+## Project Limits
+
+<Note>
+Free tier developers can create up to **5 active projects**. Upgrade to Cloud Starter or Cloud Premium for unlimited projects.
+</Note>
+
+### Tier Limits
+
+| Tier | Max Projects | End Users per Project | API Keys per Project |
+|------|--------------|----------------------|---------------------|
+| Free Starter | 5 | 100 | 3 |
+| Cloud Starter | 20 | 10,000 | 10 |
+| Cloud Premium | Unlimited | Unlimited | Unlimited |
+
+## Best Practices
+
+### Naming Conventions
+
+✅ **Do:**
+- Use descriptive names: "Production - E-Commerce Platform"
+- Include environment: "Staging - Mobile App"
+- Mention client/product: "Acme Corp - Customer Portal"
+- Keep names under 50 characters for display purposes
+
+❌ **Don't:**
+- Use generic names: "Project 1", "Test", "New Project"
+- Include sensitive data: API keys, passwords, internal IDs
+- Use special characters that break URLs: `#`, `?`, `&`
+
+### Organization Strategies
+
+**By Environment:**
+```
+Production - My App
+Staging - My App
+Development - My App
+```
+
+**By Client:**
+```
+Acme Corp - Production
+Widget Inc - Production
+StartupXYZ - Beta
+```
+
+**By Product:**
+```
+Photo Editor Pro
+Content Generator
+Marketing Automation
+```
+
+### Security Considerations
+
+1. **Principle of Least Privilege**: Create separate projects for different trust levels
+2. **Environment Isolation**: Never share API keys between production and development
+3. **Client Separation**: Each client should have their own isolated project
+4. **Audit Trail**: Use descriptive names and descriptions for tracking
+5. **Regular Cleanup**: Deactivate or delete unused projects
+
+## Error Responses
+
+### Invalid Project Name (422)
+
+```json
+{
+  "detail": [
+    {
+      "loc": ["body", "name"],
+      "msg": "ensure this value has at least 3 characters",
+      "type": "value_error.any_str.min_length"
+    }
+  ]
+}
+```
+
+### Description Too Long (422)
+
+```json
+{
+  "detail": [
+    {
+      "loc": ["body", "description"],
+      "msg": "ensure this value has at most 500 characters",
+      "type": "value_error.any_str.max_length"
+    }
+  ]
+}
+```
+
+### Project Limit Reached (403)
+
+```json
+{
+  "detail": "Maximum number of projects reached for your subscription tier. Upgrade to create more projects."
+}
+```
+
+### Unauthorized (401)
+
+```json
+{
+  "detail": "Could not validate credentials"
+}
+```
+
+### Insufficient Permissions (403)
+
+```json
+{
+  "detail": "Insufficient permissions. Developer role required."
+}
+```
+
+## Related Pages
+
+<CardGroup cols={2}>
+  <Card title="List Projects" icon="list" href="/cloud-api/projects/list">
+    View all your projects
+  </Card>
+  <Card title="Update Project" icon="pen" href="/cloud-api/projects/update">
+    Modify project details
+  </Card>
+  <Card title="Create API Key" icon="key" href="/cloud-api/projects/create-api-key">
+    Generate project API keys
+  </Card>
+  <Card title="Project Stats" icon="chart-line" href="/cloud-api/projects/project-stats">
+    Monitor project usage
+  </Card>
+  <Card title="Cloud Admin Guide" icon="browser" href="/cloud-admin/projects/creating-projects">
+    Create via web interface
+  </Card>
+  <Card title="Quick Start" icon="bolt" href="/cloud-api/quickstart">
+    Complete project setup tutorial
+  </Card>
+</CardGroup>

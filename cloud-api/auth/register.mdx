@@ -182,21 +182,27 @@ Email uniqueness rules vary by role:
 - **End Users**: Email must be unique within the project (same email can exist in different projects)
 - **Developers/Operators**: Email must be globally unique
 
-Check email availability before registration using [Check Email API](/cloud-api/auth/check-email).
+(((REPLACE_THIS_WITH_IMAGE: cloud-api-registration-flow-diagram.png: Diagram showing registration flow for developers and end users with role determination based on headers)))
 
 ## Related Pages
 
 <CardGroup cols={2}>
-  <Card title="Check Email" icon="envelope-circle-check" href="/cloud-api/auth/check-email">
-    Validate email availability
-  </Card>
   <Card title="Login" icon="right-to-bracket" href="/cloud-api/auth/login">
     Authenticate existing users
   </Card>
-  <Card title="Developer Keys" icon="key" href="/cloud-api/auth/developer-keys">
+  <Card title="Verify Email" icon="envelope-circle-check" href="/cloud-api/auth/verify-email">
+    Complete email verification
+  </Card>
+  <Card title="Developer Keys" icon="key" href="/cloud-api/auth/list-developer-keys">
     Manage developer API keys
   </Card>
-  <Card title="Registration Flow" icon="diagram-project" href="/starter-kit/auth/registration-login">
-    Starter Kit implementation
+  <Card title="Cloud Admin Registration" icon="browser" href="/cloud-admin/getting-started">
+    Register via web interface
+  </Card>
+  <Card title="Starter Kit Auth" icon="code" href="/starter-kit/auth/registration-login">
+    Implement registration in your app
+  </Card>
+  <Card title="Quick Start" icon="bolt" href="/cloud-api/quickstart">
+    Complete registration tutorial
   </Card>
 </CardGroup>

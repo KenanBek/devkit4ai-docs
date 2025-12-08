@@ -1,0 +1,669 @@
+---
+title: "Cloud API Quick Start"
+description: "Get started with Cloud API in 5 minutes"
+icon: "bolt"
+---
+
+Learn how to authenticate and make your first API calls to Dev Kit for AI Cloud API. This guide walks you through registration, authentication, and common operations with real code examples.
+
+## Prerequisites
+
+Before you begin, you'll need:
+
+- A terminal or command-line interface
+- `curl` installed (or any HTTP client like Postman, Insomnia)
+- A text editor for storing credentials
+
+<Note>
+This guide uses `curl` for examples, but you can use any HTTP client. All examples use the VibeCoding.ad API server (`api.vibecoding.ad`).
+</Note>
+
+## Step 1: Register as Developer
+
+First, create your developer account. You'll need an **operator key** to register as a developer.
+
+<Info>
+For testing purposes, you can request a demo operator key by contacting support@devkit4ai.com. In production, platform operators create developer accounts.
+</Info>
+
+```bash
+curl -X POST https://api.vibecoding.ad/api/v1/auth/register \
+  -H "Content-Type: application/json" \
+  -H "X-User-Role: developer" \
+  -H "X-Operator-Key: YOUR_OPERATOR_KEY" \
+  -d '{
+    "email": "you@example.com",
+    "password": "SecurePass123"
+  }'
+```
+
+### Response
+
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "email": "you@example.com",
+  "role": "developer",
+  "is_active": true,
+  "created_at": "2025-12-08T10:30:00Z",
+  "provisioning": {
+    "project_id": "660e8400-e29b-41d4-a716-446655440001",
+    "developer_key": "ak_abc123XYZ-_789def456ghi012jkl345",
+    "api_key": "pk_xyz789ABC-_123def456ghi012jkl345"
+  }
+}
+```
+
+<Warning>
+**Save these credentials immediately!** The provisioning data is shown only once:
+- `developer_key`: Use for developer-level API calls
+- `project_id`: Your default project UUID
+- `api_key`: Your default project's API key
+</Warning>
+
+## Step 2: Login and Get JWT Token
+
+Use your email and password to obtain a JWT access token:
+
+```bash
+curl -X POST https://api.vibecoding.ad/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "you@example.com",
+    "password": "SecurePass123"
+  }'
+```
+
+### Response
+
+```json
+{
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1NTBlODQwMC1lMjliLTQxZDQtYTcxNi00NDY2NTU0NDAwMDAiLCJleHAiOjE3MDIwMzY4MDB9.abc123...",
+  "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1NTBlODQwMC1lMjliLTQxZDQtYTcxNi00NDY2NTU0NDAwMDAiLCJleHAiOjE3MDI2NDI4MDB9.xyz789...",
+  "token_type": "bearer"
+}
+```
+
+**Store your access token** - you'll need it for authenticated requests. Access tokens expire after 30 minutes.
+
+(((REPLACE_THIS_WITH_IMAGE: cloud-api-quickstart-authentication-flow.png: Diagram showing registration, login, and token lifecycle with expiration times)))
+
+## Step 3: Verify Your Identity
+
+Confirm your authentication by fetching your user profile:
+
+```bash
+curl -X GET https://api.vibecoding.ad/api/v1/auth/me \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+```
+
+### Response
+
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "email": "you@example.com",
+  "role": "developer",
+  "is_active": true,
+  "created_at": "2025-12-08T10:30:00Z"
+}
+```
+
+## Step 4: Create Your First Project
+
+Now create a new project for your application:
+
+```bash
+curl -X POST https://api.vibecoding.ad/api/v1/projects/ \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -H "X-User-Role: developer" \
+  -H "X-Developer-Key: ak_abc123XYZ-_789def456ghi012jkl345" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "My First AI App",
+    "description": "AI-powered image generation platform"
+  }'
+```
+
+### Response
+
+```json
+{
+  "id": "770e8400-e29b-41d4-a716-446655440002",
+  "name": "My First AI App",
+  "description": "AI-powered image generation platform",
+  "owner_id": "550e8400-e29b-41d4-a716-446655440000",
+  "is_active": true,
+  "created_at": "2025-12-08T11:00:00Z",
+  "updated_at": null
+}
+```
+
+Save the project `id` - you'll use it to create project-specific API keys.
+
+## Step 5: Generate Project API Key
+
+Create an API key for your project to authenticate end user requests:
+
+```bash
+curl -X POST https://api.vibecoding.ad/api/v1/projects/770e8400-e29b-41d4-a716-446655440002/api-keys \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -H "X-User-Role: developer" \
+  -H "X-Developer-Key: ak_abc123XYZ-_789def456ghi012jkl345" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Production API Key"
+  }'
+```
+
+### Response
+
+```json
+{
+  "id": "880e8400-e29b-41d4-a716-446655440003",
+  "key": "pk_prod123XYZ-_789def456ghi012jkl345",
+  "key_prefix": "pk_prod1",
+  "name": "Production API Key",
+  "project_id": "770e8400-e29b-41d4-a716-446655440002",
+  "is_active": true,
+  "last_used_at": null,
+  "created_at": "2025-12-08T11:05:00Z"
+}
+```
+
+<Warning>
+**Save the full key immediately!** The complete key value is shown only once. You'll use this key in your Starter Kit application to authenticate end user requests.
+</Warning>
+
+## Step 6: Make Your First AI Generation Request
+
+Now test the AI generation endpoint:
+
+```bash
+curl -X POST https://api.vibecoding.ad/api/v1/generation/generate-v2 \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -H "X-User-Role: end_user" \
+  -H "X-Developer-Key: ak_abc123XYZ-_789def456ghi012jkl345" \
+  -H "X-Project-ID: 770e8400-e29b-41d4-a716-446655440002" \
+  -H "X-API-Key: pk_prod123XYZ-_789def456ghi012jkl345" \
+  -F "example_images=@/path/to/image1.jpg" \
+  -F "example_images=@/path/to/image2.jpg" \
+  -F 'instructions={"prompt": "Generate a futuristic cityscape with neon lights"}'
+```
+
+### Response
+
+```json
+{
+  "id": "990e8400-e29b-41d4-a716-446655440004",
+  "status": "pending",
+  "message": "Generation request submitted successfully"
+}
+```
+
+## Step 7: Check Generation Status
+
+Poll the status endpoint to check when your generation completes:
+
+```bash
+curl -X GET https://api.vibecoding.ad/api/v1/generation/generations-v2/990e8400-e29b-41d4-a716-446655440004/status \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -H "X-User-Role: end_user" \
+  -H "X-Developer-Key: ak_abc123XYZ-_789def456ghi012jkl345" \
+  -H "X-Project-ID: 770e8400-e29b-41d4-a716-446655440002" \
+  -H "X-API-Key: pk_prod123XYZ-_789def456ghi012jkl345"
+```
+
+### Response (Completed)
+
+```json
+{
+  "id": "990e8400-e29b-41d4-a716-446655440004",
+  "status": "completed",
+  "instructions": "{\"prompt\": \"Generate a futuristic cityscape with neon lights\"}",
+  "result_image_url": "https://storage.example.com/generations/990e8400.jpg",
+  "is_public": false,
+  "created_at": "2025-12-08T11:10:00Z",
+  "updated_at": "2025-12-08T11:12:00Z"
+}
+```
+
+(((REPLACE_THIS_WITH_IMAGE: cloud-api-quickstart-generation-status-polling.png: Diagram showing status progression from pending → processing → completed with example response for each status)))
+
+## Common Error Patterns
+
+Understanding common errors helps you debug issues quickly.
+
+### Authentication Errors
+
+#### Missing or Invalid JWT Token
+
+```http
+HTTP/1.1 401 Unauthorized
+Content-Type: application/json
+
+{
+  "detail": "Could not validate credentials"
+}
+```
+
+**Solution:** Ensure your JWT token is valid and not expired. Use the [Refresh Token](/cloud-api/auth/refresh) endpoint to obtain a new access token.
+
+#### Missing Role Header
+
+```http
+HTTP/1.1 403 Forbidden
+Content-Type: application/json
+
+{
+  "detail": "X-User-Role header is required"
+}
+```
+
+**Solution:** Add the `X-User-Role` header with appropriate value (`platform_operator`, `developer`, or `end_user`).
+
+#### Invalid Developer Key
+
+```http
+HTTP/1.1 403 Forbidden
+Content-Type: application/json
+
+{
+  "detail": "Invalid or revoked developer key"
+}
+```
+
+**Solution:** Verify your developer key is active via [List Developer Keys](/cloud-api/auth/list-developer-keys). Generate a new key if needed.
+
+### Validation Errors
+
+#### Invalid Email Format
+
+```http
+HTTP/1.1 422 Unprocessable Entity
+Content-Type: application/json
+
+{
+  "detail": [
+    {
+      "loc": ["body", "email"],
+      "msg": "value is not a valid email address",
+      "type": "value_error.email"
+    }
+  ]
+}
+```
+
+**Solution:** Ensure email follows standard format: `user@domain.com`.
+
+#### Weak Password
+
+```http
+HTTP/1.1 422 Unprocessable Entity
+Content-Type: application/json
+
+{
+  "detail": [
+    {
+      "loc": ["body", "password"],
+      "msg": "Password must be at least 8 characters with uppercase, lowercase, and digit",
+      "type": "value_error.password"
+    }
+  ]
+}
+```
+
+**Solution:** Use passwords with minimum 8 characters including uppercase, lowercase, and at least one digit.
+
+### Rate Limiting
+
+#### Too Many Requests
+
+```http
+HTTP/1.1 429 Too Many Requests
+Content-Type: application/json
+
+{
+  "detail": "Rate limit exceeded. Try again in 3600 seconds.",
+  "retry_after": 3600
+}
+```
+
+**Solution:** Implement exponential backoff. Wait for the duration specified in `retry_after` before retrying.
+
+### Resource Errors
+
+#### Project Not Found
+
+```http
+HTTP/1.1 404 Not Found
+Content-Type: application/json
+
+{
+  "detail": "Project not found"
+}
+```
+
+**Solution:** Verify the project ID exists and belongs to your developer account via [List Projects](/cloud-api/projects/list).
+
+#### Insufficient Permissions
+
+```http
+HTTP/1.1 403 Forbidden
+Content-Type: application/json
+
+{
+  "detail": "You do not have permission to access this resource"
+}
+```
+
+**Solution:** Ensure you're using the correct role headers and the resource belongs to your account.
+
+## Troubleshooting Guide
+
+### JWT Token Expired
+
+**Symptom:** Receiving `401 Unauthorized` after some time.
+
+**Cause:** Access tokens expire after 30 minutes.
+
+**Solution:**
+```bash
+# Use refresh token to get new access token
+curl -X POST https://api.vibecoding.ad/api/v1/auth/refresh \
+  -H "Content-Type: application/json" \
+  -d '{
+    "refresh_token": "YOUR_REFRESH_TOKEN"
+  }'
+```
+
+### Headers Not Working
+
+**Symptom:** `403 Forbidden` despite including headers.
+
+**Checklist:**
+- ✅ Header names are exact (case-sensitive): `X-User-Role`, `X-Developer-Key`, `X-Project-ID`, `X-API-Key`
+- ✅ Role value matches your user type exactly: `developer`, `end_user`, `platform_operator`
+- ✅ Keys are not expired or revoked
+- ✅ Project ID is a valid UUID format
+- ✅ All required headers for your role are present
+
+### Generation Stuck in Pending
+
+**Symptom:** Generation status remains `pending` for a long time.
+
+**Normal Duration:** Generations typically complete within 2-5 minutes.
+
+**Troubleshooting:**
+1. Wait at least 5 minutes before investigating
+2. Check [Cloud Admin console](/cloud-admin/console/statistics) for system status
+3. Verify example images were uploaded correctly (JPEG, PNG, or WebP; max 10MB each)
+4. Contact support if status remains pending after 10 minutes
+
+### Project API Key Not Working
+
+**Symptom:** End user requests fail with `403 Forbidden`.
+
+**Required Headers for End User Requests:**
+```bash
+Authorization: Bearer <JWT_ACCESS_TOKEN>
+X-User-Role: end_user
+X-Developer-Key: <YOUR_DEVELOPER_KEY>
+X-Project-ID: <PROJECT_UUID>
+X-API-Key: <PROJECT_API_KEY>
+```
+
+**Verification:**
+```bash
+# List project API keys to verify it's active
+curl -X GET https://api.vibecoding.ad/api/v1/projects/YOUR_PROJECT_ID/api-keys \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -H "X-User-Role: developer" \
+  -H "X-Developer-Key: YOUR_DEVELOPER_KEY"
+```
+
+## Best Practices
+
+### Secure Credential Storage
+
+<Warning>
+**Never hardcode API keys in your code or commit them to version control.**
+</Warning>
+
+✅ **Do:**
+- Store credentials in environment variables
+- Use secrets managers (AWS Secrets Manager, HashiCorp Vault)
+- Rotate keys every 90 days
+- Use different keys for each environment (dev, staging, production)
+
+❌ **Don't:**
+- Hardcode keys in source code
+- Share keys via email or chat
+- Use the same key across multiple environments
+- Store keys in public repositories
+
+### Error Handling
+
+Implement robust error handling for production applications:
+
+```javascript
+async function makeApiCall(url, options) {
+  try {
+    const response = await fetch(url, options);
+    
+    // Handle rate limiting
+    if (response.status === 429) {
+      const retryAfter = response.headers.get('Retry-After') || 60;
+      console.log(`Rate limited. Retrying after ${retryAfter} seconds`);
+      await sleep(retryAfter * 1000);
+      return makeApiCall(url, options); // Retry
+    }
+    
+    // Handle authentication errors
+    if (response.status === 401) {
+      await refreshAccessToken();
+      return makeApiCall(url, options); // Retry with new token
+    }
+    
+    // Handle other errors
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || 'API request failed');
+    }
+    
+    return response.json();
+  } catch (error) {
+    console.error('API call failed:', error);
+    throw error;
+  }
+}
+```
+
+### Token Refresh Strategy
+
+Implement automatic token refresh before expiration:
+
+```javascript
+let accessToken = 'your_access_token';
+let refreshToken = 'your_refresh_token';
+let tokenExpiry = Date.now() + (30 * 60 * 1000); // 30 minutes
+
+async function getAccessToken() {
+  // Refresh if token expires in less than 5 minutes
+  if (Date.now() > tokenExpiry - (5 * 60 * 1000)) {
+    const response = await fetch('https://api.vibecoding.ad/api/v1/auth/refresh', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refresh_token: refreshToken })
+    });
+    
+    const data = await response.json();
+    accessToken = data.access_token;
+    tokenExpiry = Date.now() + (30 * 60 * 1000);
+  }
+  
+  return accessToken;
+}
+```
+
+### Polling Strategy
+
+When polling for generation status, use exponential backoff:
+
+```javascript
+async function waitForGeneration(generationId, maxAttempts = 20) {
+  let attempt = 0;
+  let delay = 5000; // Start with 5 seconds
+  
+  while (attempt < maxAttempts) {
+    const status = await checkGenerationStatus(generationId);
+    
+    if (status === 'completed' || status === 'failed') {
+      return status;
+    }
+    
+    // Exponential backoff with max 30 seconds
+    await sleep(Math.min(delay, 30000));
+    delay *= 1.5;
+    attempt++;
+  }
+  
+  throw new Error('Generation timeout after ' + maxAttempts + ' attempts');
+}
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Clone Starter Kit" icon="download" href="/starter-kit/installation">
+    Get the open-source template for your application
+  </Card>
+  <Card title="Cloud Admin Console" icon="browser" href="/cloud-admin/getting-started">
+    Manage projects and keys via web interface
+  </Card>
+  <Card title="Authentication Guide" icon="shield" href="/starter-kit/auth/registration-login">
+    Implement user authentication in your app
+  </Card>
+  <Card title="API Reference" icon="book" href="/cloud-api/introduction">
+    Complete API endpoint documentation
+  </Card>
+</CardGroup>
+
+## Example Application
+
+Here's a complete Node.js example putting it all together:
+
+```javascript
+// quickstart-example.js
+const API_BASE = 'https://api.vibecoding.ad';
+
+let credentials = {
+  accessToken: null,
+  refreshToken: null,
+  developerKey: null,
+  projectId: null,
+  projectApiKey: null
+};
+
+// Step 1: Register
+async function register(email, password, operatorKey) {
+  const response = await fetch(`${API_BASE}/api/v1/auth/register`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-User-Role': 'developer',
+      'X-Operator-Key': operatorKey
+    },
+    body: JSON.stringify({ email, password })
+  });
+  
+  const data = await response.json();
+  console.log('✓ Registered:', data.email);
+  
+  // Save provisioning credentials
+  credentials.developerKey = data.provisioning.developer_key;
+  credentials.projectId = data.provisioning.project_id;
+  credentials.projectApiKey = data.provisioning.api_key;
+  
+  return data;
+}
+
+// Step 2: Login
+async function login(email, password) {
+  const response = await fetch(`${API_BASE}/api/v1/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password })
+  });
+  
+  const data = await response.json();
+  console.log('✓ Logged in');
+  
+  credentials.accessToken = data.access_token;
+  credentials.refreshToken = data.refresh_token;
+  
+  return data;
+}
+
+// Step 3: Create Project
+async function createProject(name, description) {
+  const response = await fetch(`${API_BASE}/api/v1/projects/`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${credentials.accessToken}`,
+      'X-User-Role': 'developer',
+      'X-Developer-Key': credentials.developerKey,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ name, description })
+  });
+  
+  const data = await response.json();
+  console.log('✓ Created project:', data.name);
+  
+  return data;
+}
+
+// Run the example
+async function main() {
+  try {
+    // Replace with your actual values
+    const OPERATOR_KEY = 'your_operator_key_here';
+    const EMAIL = 'you@example.com';
+    const PASSWORD = 'SecurePass123';
+    
+    await register(EMAIL, PASSWORD, OPERATOR_KEY);
+    await login(EMAIL, PASSWORD);
+    await createProject('My First AI App', 'AI-powered platform');
+    
+    console.log('\n✓ Quick start completed!');
+    console.log('Your credentials:');
+    console.log('Developer Key:', credentials.developerKey);
+    console.log('Project ID:', credentials.projectId);
+    console.log('Project API Key:', credentials.projectApiKey);
+    
+  } catch (error) {
+    console.error('❌ Error:', error.message);
+  }
+}
+
+main();
+```
+
+Save this as `quickstart-example.js` and run:
+
+```bash
+node quickstart-example.js
+```
+
+## Summary
+
+You've learned how to:
+
+✅ Register as a developer and obtain credentials  
+✅ Authenticate with JWT tokens  
+✅ Create projects and generate API keys  
+✅ Make AI generation requests  
+✅ Handle common errors and implement best practices
+
+**Ready to build?** Clone the [Starter Kit](https://github.com/VibeCodingStarter/starter-kit) and start creating your AI-powered application!

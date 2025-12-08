@@ -149,7 +149,8 @@
           {
             "group": "API documentation",
             "pages": [
-              "cloud-api/introduction"
+              "cloud-api/introduction",
+              "cloud-api/quickstart"
             ]
           },
           {
@@ -170,7 +171,10 @@
               "cloud-api/auth/me",
               "cloud-api/auth/refresh",
               "cloud-api/auth/verify-email",
-              "cloud-api/auth/request-verification"
+              "cloud-api/auth/request-verification",
+              "cloud-api/auth/list-developer-keys",
+              "cloud-api/auth/create-developer-key",
+              "cloud-api/auth/revoke-developer-key"
             ]
           },
           {

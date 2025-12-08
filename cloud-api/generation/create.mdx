@@ -4,30 +4,416 @@ icon: "wand-magic-sparkles"
 openapi: "POST /api/v1/generation/generate-v2"
 ---
 
-Create a new AI generation request with files and prompt. Requires authentication.
+Create a new AI-powered image generation request. Upload 1-5 example images and provide instructions to generate new images based on your examples. Uses Replicate AI's Stability AI SDXL model for high-quality results.
 
-### Headers
+## Authentication
+
+Requires valid JWT token with `end_user` role and project-scoped headers.
+
+## Headers
 
 <ParamField header="Authorization" type="string" required>
-  Bearer token for authentication
+  Bearer JWT access token obtained from login
 </ParamField>
 
-### Body
-
-<ParamField body="prompt" type="string" required>
-  The prompt for AI generation
+<ParamField header="X-User-Role" type="string" required>
+  Must be set to `end_user`
 </ParamField>
 
-<ParamField body="files" type="array" required>
-  Array of files to process (multipart form data)
+<ParamField header="X-Developer-Key" type="string" required>
+  Developer key associated with the project
 </ParamField>
 
-### Response
+<ParamField header="X-Project-ID" type="string" required>
+  Project UUID for project-scoped access
+</ParamField>
+
+<ParamField header="X-API-Key" type="string" required>
+  Project API key for authentication
+</ParamField>
+
+<ParamField header="Content-Type" type="string" required>
+  Must be `multipart/form-data` for file uploads
+</ParamField>
+
+## Request Body (Multipart Form Data)
+
+<ParamField body="example_images" type="file[]" required>
+  Array of 1-5 example images to guide generation. Supported formats: JPEG, PNG, WebP. Maximum 10MB per image.
+</ParamField>
+
+<ParamField body="instructions" type="json string" required>
+  JSON-encoded string containing generation instructions. Must be between 1-1000 characters when serialized.
+  
+  Example: `{"prompt": "Generate a futuristic cityscape with neon lights"}`
+</ParamField>
+
+## Response
 
 <ResponseField name="id" type="string">
-  Unique generation request identifier
+  Unique UUID identifier for the generation request
 </ResponseField>
 
 <ResponseField name="status" type="string">
-  Current status of the generation request
+  Initial status: always `pending` for new requests
 </ResponseField>
+
+<ResponseField name="message" type="string">
+  Confirmation message: "Generation request submitted successfully"
+</ResponseField>
+
+## Example Request
+
+```bash
+curl -X POST https://api.vibecoding.ad/api/v1/generation/generate-v2 \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
+  -H "X-User-Role: end_user" \
+  -H "X-Developer-Key: ak_abc123XYZ-_789def456ghi012jkl345" \
+  -H "X-Project-ID: 550e8400-e29b-41d4-a716-446655440000" \
+  -H "X-API-Key: pk_xyz789ABC-_123def456ghi012jkl345" \
+  -F "example_images=@/path/to/image1.jpg" \
+  -F "example_images=@/path/to/image2.jpg" \
+  -F "example_images=@/path/to/image3.jpg" \
+  -F 'instructions={"prompt": "Generate a futuristic cityscape with neon lights and flying cars", "style": "cyberpunk"}'
+```
+
+## Example Response
+
+```json
+{
+  "id": "990e8400-e29b-41d4-a716-446655440004",
+  "status": "pending",
+  "message": "Generation request submitted successfully"
+}
+```
+
+## Generation Status Lifecycle
+
+After submission, the generation progresses through multiple states:
+
+1. **pending** - Request queued for processing
+2. **processing** - AI model actively generating image
+3. **completed** - Generation successful, image available
+4. **failed** - Generation failed due to error
+
+Check status using the [Get Generation Status](/cloud-api/generation/status) endpoint.
+
+(((REPLACE_THIS_WITH_IMAGE: cloud-api-generation-lifecycle-diagram.png: Flowchart showing generation states from pending through processing to completed or failed with example durations)))
+
+## Image Requirements
+
+### File Formats
+
+- **Supported**: JPEG (`.jpg`, `.jpeg`), PNG (`.png`), WebP (`.webp`)
+- **Unsupported**: GIF, TIFF, BMP, SVG
+
+### File Size
+
+- **Maximum per image**: 10MB
+- **Total request size**: 50MB (5 images × 10MB each)
+
+### Image Count
+
+- **Minimum**: 1 example image required
+- **Maximum**: 5 example images allowed
+- **Recommended**: 3-5 images for best results
+
+### Image Quality
+
+For best generation results:
+- Use high-resolution images (1024x1024 or higher)
+- Ensure images are well-lit and in focus
+- Provide diverse examples showing different angles/styles
+- Avoid heavily compressed or low-quality images
+
+## Instructions Format
+
+The `instructions` field must be a **JSON-encoded string** with the following constraints:
+
+**Structure:**
+```json
+{
+  "prompt": "Your generation prompt here",
+  "style": "Optional style modifier",
+  "additional_params": "Any additional instructions"
+}
+```
+
+**Constraints:**
+- Must be valid JSON
+- Serialized length: 1-1000 characters
+- Must contain at least a `prompt` key
+- Other keys are optional and passed to AI model
+
+**Example Valid Instructions:**
+
+```json
+{"prompt": "Generate a sunset over mountains"}
+```
+
+```json
+{
+  "prompt": "Create a modern minimalist interior design",
+  "style": "scandinavian",
+  "mood": "calm and serene"
+}
+```
+
+```json
+{
+  "prompt": "Generate a fantasy landscape with magical elements",
+  "style": "concept art",
+  "details": "include floating islands and glowing crystals"
+}
+```
+
+## Processing Time
+
+Typical generation times:
+
+- **Fast**: 1-2 minutes (simple generations)
+- **Average**: 2-5 minutes (standard complexity)
+- **Slow**: 5-10 minutes (complex or high-detail generations)
+
+<Note>
+Poll the [Generation Status](/cloud-api/generation/status) endpoint every 10-15 seconds to check for completion. Avoid polling more frequently to minimize API usage.
+</Note>
+
+## Use Cases
+
+### Portfolio Website
+
+Generate custom images for your portfolio projects:
+
+```typescript
+async function generatePortfolioImage(
+  examples: File[],
+  prompt: string,
+  authHeaders: HeadersInit
+): Promise<string> {
+  const formData = new FormData();
+  
+  // Add example images
+  examples.forEach(file => {
+    formData.append('example_images', file);
+  });
+  
+  // Add instructions
+  formData.append('instructions', JSON.stringify({
+    prompt,
+    style: 'professional photography'
+  }));
+  
+  const response = await fetch(
+    'https://api.vibecoding.ad/api/v1/generation/generate-v2',
+    {
+      method: 'POST',
+      headers: authHeaders, // Include all required auth headers
+      body: formData
+    }
+  );
+  
+  const data = await response.json();
+  return data.id; // Return generation ID for status polling
+}
+```
+
+### E-Commerce Product Variations
+
+Create product variations for online stores:
+
+```typescript
+async function generateProductVariations(
+  productImages: File[],
+  variations: string[]
+): Promise<string[]> {
+  const generationIds: string[] = [];
+  
+  for (const variation of variations) {
+    const formData = new FormData();
+    
+    productImages.forEach(img => formData.append('example_images', img));
+    formData.append('instructions', JSON.stringify({
+      prompt: `Generate ${variation} variation of the product`,
+      style: 'product photography',
+      background: 'white'
+    }));
+    
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: authHeaders,
+      body: formData
+    });
+    
+    const data = await response.json();
+    generationIds.push(data.id);
+  }
+  
+  return generationIds;
+}
+```
+
+### Content Creation Platform
+
+Build a content creation tool with AI generation:
+
+```typescript
+interface GenerationRequest {
+  images: File[];
+  prompt: string;
+  style?: string;
+  mood?: string;
+}
+
+async function createContent(request: GenerationRequest) {
+  const formData = new FormData();
+  
+  request.images.forEach(img => {
+    formData.append('example_images', img);
+  });
+  
+  const instructions = {
+    prompt: request.prompt,
+    ...(request.style && { style: request.style }),
+    ...(request.mood && { mood: request.mood })
+  };
+  
+  formData.append('instructions', JSON.stringify(instructions));
+  
+  // Submit generation
+  const response = await fetch(apiUrl, {
+    method: 'POST',
+    headers: authHeaders,
+    body: formData
+  });
+  
+  const { id } = await response.json();
+  
+  // Poll for completion
+  return await pollGenerationStatus(id);
+}
+```
+
+## Error Responses
+
+### Missing Example Images (422)
+
+```json
+{
+  "detail": [
+    {
+      "loc": ["body", "example_images"],
+      "msg": "field required",
+      "type": "value_error.missing"
+    }
+  ]
+}
+```
+
+### Too Many Images (422)
+
+```json
+{
+  "detail": "Maximum 5 example images allowed"
+}
+```
+
+### File Too Large (413)
+
+```json
+{
+  "detail": "File size exceeds maximum allowed size of 10MB"
+}
+```
+
+### Invalid File Format (422)
+
+```json
+{
+  "detail": "Invalid file format. Supported formats: JPEG, PNG, WebP"
+}
+```
+
+### Invalid Instructions (422)
+
+```json
+{
+  "detail": [
+    {
+      "loc": ["body", "instructions"],
+      "msg": "Invalid JSON format",
+      "type": "value_error.json"
+    }
+  ]
+}
+```
+
+### Instructions Too Long (422)
+
+```json
+{
+  "detail": "Instructions must be between 1 and 1000 characters"
+}
+```
+
+### Unauthorized (401)
+
+```json
+{
+  "detail": "Could not validate credentials"
+}
+```
+
+### Insufficient Permissions (403)
+
+```json
+{
+  "detail": "Insufficient permissions for this operation"
+}
+```
+
+### Rate Limit Exceeded (429)
+
+```json
+{
+  "detail": "AI generation rate limit exceeded. Try again later.",
+  "retry_after": 3600
+}
+```
+
+## Rate Limits
+
+AI generation endpoints have stricter rate limits due to computational cost:
+
+| Tier | Generations per Month | Concurrent Requests |
+|------|----------------------|---------------------|
+| Free Starter | 100 | 1 |
+| Cloud Starter | 1,000 | 3 |
+| Cloud Premium | Unlimited | 10 |
+
+<Warning>
+Exceeding rate limits will result in `429 Too Many Requests` responses. Monitor your usage via [Cloud Admin console](/cloud-admin/console/statistics).
+</Warning>
+
+## Related Pages
+
+<CardGroup cols={2}>
+  <Card title="Get Generation Status" icon="circle-info" href="/cloud-api/generation/status">
+    Check generation progress and results
+  </Card>
+  <Card title="List Generations" icon="list" href="/cloud-api/generation/list">
+    View all your generation requests
+  </Card>
+  <Card title="Toggle Public" icon="eye" href="/cloud-api/generation/toggle-public">
+    Make generations public or private
+  </Card>
+  <Card title="Delete Generation" icon="trash" href="/cloud-api/generation/delete">
+    Remove generation requests
+  </Card>
+  <Card title="AI Generation Guide" icon="book" href="/starter-kit/features/ai-generation">
+    Implement in Starter Kit
+  </Card>
+  <Card title="Quick Start" icon="bolt" href="/cloud-api/quickstart">
+    Complete generation tutorial
+  </Card>
+</CardGroup>

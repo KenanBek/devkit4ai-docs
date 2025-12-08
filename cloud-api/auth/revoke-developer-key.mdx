@@ -1,0 +1,388 @@
+---
+title: "Revoke Developer Key"
+icon: "ban"
+openapi: "DELETE /api/v1/auth/developer-keys/{key_id}"
+---
+
+Revoke an active developer key to immediately prevent its use for API authentication. This action is permanent and cannot be undone - revoked keys cannot be reactivated.
+
+<Warning>
+You cannot revoke the developer key you're currently using for authentication. Use a different active key to revoke others. Always ensure you have at least one active key before revoking.
+</Warning>
+
+## Authentication
+
+Requires valid JWT token with `developer` role and an active developer key (different from the one being revoked).
+
+## Headers
+
+<ParamField header="Authorization" type="string" required>
+  Bearer JWT access token obtained from login
+</ParamField>
+
+<ParamField header="X-User-Role" type="string" required>
+  Must be set to `developer`
+</ParamField>
+
+<ParamField header="X-Developer-Key" type="string" required>
+  Active developer key for authentication (must be different from the key being revoked)
+</ParamField>
+
+## Path Parameters
+
+<ParamField path="key_id" type="string" required>
+  UUID of the developer key to revoke. Obtain this from the [List Developer Keys](/cloud-api/auth/list-developer-keys) endpoint.
+</ParamField>
+
+## Response
+
+Returns `204 No Content` on successful revocation. No response body is returned.
+
+## Example Request
+
+```bash
+curl -X DELETE https://api.vibecoding.ad/api/v1/auth/developer-keys/550e8400-e29b-41d4-a716-446655440000 \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
+  -H "X-User-Role: developer" \
+  -H "X-Developer-Key: ak_different_active_key_here_123"
+```
+
+## Example Response
+
+```
+HTTP/1.1 204 No Content
+```
+
+No response body is returned for successful revocations.
+
+## Use Cases
+
+### Revoke Compromised Keys
+
+Immediately deactivate keys that may have been exposed:
+
+```typescript
+async function revokeCompromisedKey(
+  keyId: string,
+  jwtToken: string,
+  safeKey: string
+): Promise<void> {
+  const response = await fetch(
+    `https://api.vibecoding.ad/api/v1/auth/developer-keys/${keyId}`,
+    {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${jwtToken}`,
+        'X-User-Role': 'developer',
+        'X-Developer-Key': safeKey
+      }
+    }
+  );
+  
+  if (!response.ok) {
+    throw new Error(`Failed to revoke key: ${response.status}`);
+  }
+  
+  console.log(`Key ${keyId} has been revoked`);
+  
+  // Alert security team
+  await notifySecurityTeam({
+    action: 'key_revoked',
+    keyId,
+    reason: 'compromised',
+    timestamp: new Date().toISOString()
+  });
+}
+```
+
+### Clean Up Unused Keys
+
+Remove keys that haven't been used recently:
+
+```typescript
+interface DeveloperKey {
+  id: string;
+  name: string;
+  last_used_at: string | null;
+  created_at: string;
+}
+
+async function cleanupUnusedKeys(
+  keys: DeveloperKey[],
+  jwtToken: string,
+  activeKey: string,
+  maxIdleDays: number = 90
+): Promise<void> {
+  const cutoffDate = new Date();
+  cutoffDate.setDate(cutoffDate.getDate() - maxIdleDays);
+  
+  const unusedKeys = keys.filter(key => {
+    // Skip the key we're using for authentication
+    if (key.id === getActiveKeyId(activeKey)) return false;
+    
+    // Never used or not used in maxIdleDays
+    if (!key.last_used_at) return true;
+    return new Date(key.last_used_at) < cutoffDate;
+  });
+  
+  for (const key of unusedKeys) {
+    console.log(`Revoking unused key: ${key.name} (${key.id})`);
+    
+    await fetch(
+      `https://api.vibecoding.ad/api/v1/auth/developer-keys/${key.id}`,
+      {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${jwtToken}`,
+          'X-User-Role': 'developer',
+          'X-Developer-Key': activeKey
+        }
+      }
+    );
+    
+    console.log(`✓ Revoked: ${key.name}`);
+  }
+  
+  console.log(`Cleaned up ${unusedKeys.length} unused keys`);
+}
+```
+
+### Offboard Team Members
+
+Revoke keys when team members leave:
+
+```typescript
+async function offboardTeamMember(
+  memberName: string,
+  jwtToken: string,
+  adminKey: string
+): Promise<void> {
+  // Step 1: List all keys
+  const listResponse = await fetch(
+    'https://api.vibecoding.ad/api/v1/auth/developer-keys',
+    {
+      headers: {
+        'Authorization': `Bearer ${jwtToken}`,
+        'X-User-Role': 'developer',
+        'X-Developer-Key': adminKey
+      }
+    }
+  );
+  
+  const keys = await listResponse.json();
+  
+  // Step 2: Find keys belonging to team member
+  const memberKeys = keys.filter((key: DeveloperKey) =>
+    key.name.includes(memberName)
+  );
+  
+  if (memberKeys.length === 0) {
+    console.log(`No keys found for ${memberName}`);
+    return;
+  }
+  
+  // Step 3: Revoke all member keys
+  for (const key of memberKeys) {
+    await fetch(
+      `https://api.vibecoding.ad/api/v1/auth/developer-keys/${key.id}`,
+      {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${jwtToken}`,
+          'X-User-Role': 'developer',
+          'X-Developer-Key': adminKey
+        }
+      }
+    );
+    
+    console.log(`Revoked key: ${key.name} (${key.key_prefix})`);
+  }
+  
+  console.log(`Offboarded ${memberName}: ${memberKeys.length} keys revoked`);
+}
+```
+
+### Key Rotation with Graceful Cutover
+
+Revoke old keys after new ones are deployed:
+
+```typescript
+async function completeKeyRotation(
+  oldKeyId: string,
+  newKeyPrefix: string,
+  jwtToken: string,
+  newKey: string,
+  gracePeriodMinutes: number = 30
+): Promise<void> {
+  console.log(`Starting ${gracePeriodMinutes}-minute grace period...`);
+  console.log('Deploy new key to all services during this time.');
+  
+  // Wait for grace period to allow services to pick up new key
+  await new Promise(resolve =>
+    setTimeout(resolve, gracePeriodMinutes * 60 * 1000)
+  );
+  
+  // Verify new key is working
+  const testResponse = await fetch(
+    'https://api.vibecoding.ad/api/v1/auth/developer-keys',
+    {
+      headers: {
+        'Authorization': `Bearer ${jwtToken}`,
+        'X-User-Role': 'developer',
+        'X-Developer-Key': newKey
+      }
+    }
+  );
+  
+  if (!testResponse.ok) {
+    throw new Error('New key verification failed! Aborting revocation.');
+  }
+  
+  // Revoke old key using new key
+  const revokeResponse = await fetch(
+    `https://api.vibecoding.ad/api/v1/auth/developer-keys/${oldKeyId}`,
+    {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${jwtToken}`,
+        'X-User-Role': 'developer',
+        'X-Developer-Key': newKey
+      }
+    }
+  );
+  
+  if (revokeResponse.ok) {
+    console.log(`✓ Old key revoked successfully`);
+    console.log(`✓ Rotation complete: now using ${newKeyPrefix}`);
+  }
+}
+```
+
+## Security Considerations
+
+<Note>
+Revocation takes effect immediately. Any in-flight API requests using the revoked key will fail with a 403 Forbidden error.
+</Note>
+
+### When to Revoke Keys
+
+1. **Compromised Keys**: Immediately revoke if a key is exposed in code repositories, logs, or insecure channels
+
+2. **Employee Offboarding**: Revoke all keys assigned to departing team members on their last day
+
+3. **Rotation Schedule**: Revoke old keys after rotating to new ones (90-day rotation recommended)
+
+4. **Unused Keys**: Revoke keys that haven't been used in 90+ days
+
+5. **Environment Decommission**: Revoke keys when shutting down environments (e.g., old staging environments)
+
+6. **Security Incidents**: Revoke all keys during security incident response
+
+### Best Practices
+
+1. **Maintain Backup Key**: Always keep at least 2 active keys to avoid locking yourself out
+
+2. **Document Revocations**: Log all key revocations with reasons and timestamps
+
+3. **Verify Before Revoking**: Ensure services using the key have been migrated to new keys
+
+4. **Immediate Action**: Don't delay revocation of compromised keys
+
+5. **Communicate Changes**: Notify team members before revoking shared environment keys
+
+## Error Responses
+
+### Key Already Revoked (400)
+
+```json
+{
+  "detail": "Developer key is already revoked or inactive"
+}
+```
+
+The key has already been revoked or was never active.
+
+### Unauthorized (401)
+
+```json
+{
+  "detail": "Could not validate credentials"
+}
+```
+
+Invalid or missing JWT token.
+
+### Forbidden (403)
+
+```json
+{
+  "detail": "Key does not belong to the authenticated developer"
+}
+```
+
+Attempting to revoke a key that belongs to a different developer account, or using an invalid/revoked developer key for authentication.
+
+### Cannot Revoke Active Key (403)
+
+```json
+{
+  "detail": "Cannot revoke the developer key currently being used for authentication"
+}
+```
+
+Attempting to revoke the same key being used in the `X-Developer-Key` header.
+
+### Key Not Found (404)
+
+```json
+{
+  "detail": "Developer key not found"
+}
+```
+
+The specified `key_id` does not exist or was deleted.
+
+### Invalid UUID Format (422)
+
+```json
+{
+  "detail": [
+    {
+      "loc": ["path", "key_id"],
+      "msg": "value is not a valid uuid",
+      "type": "type_error.uuid"
+    }
+  ]
+}
+```
+
+The `key_id` parameter is not a valid UUID format.
+
+## Revocation Effects
+
+After revocation, the key:
+
+- ✅ Immediately stops authenticating API requests
+- ✅ Disappears from the [List Developer Keys](/cloud-api/auth/list-developer-keys) endpoint
+- ✅ Returns 403 Forbidden when used in API requests
+- ✅ Cannot be reactivated or restored
+- ✅ Frees up one slot toward the 10-key limit
+
+(((REPLACE_THIS_WITH_IMAGE: developer-key-revoked-confirmation.png: Success message after revoking developer key with key prefix shown and warning that it cannot be undone)))
+
+## Related Pages
+
+<CardGroup cols={2}>
+  <Card title="List Developer Keys" icon="list" href="/cloud-api/auth/list-developer-keys">
+    View all active keys to find key IDs
+  </Card>
+  <Card title="Create Developer Key" icon="plus" href="/cloud-api/auth/create-developer-key">
+    Generate replacement keys after revocation
+  </Card>
+  <Card title="Revoke via Cloud Admin" icon="browser" href="/cloud-admin/api-keys/revoking-rotating">
+    Revoke keys using web interface
+  </Card>
+  <Card title="Security Practices" icon="shield-halved" href="/cloud-admin/api-keys/security-practices">
+    Key rotation and incident response
+  </Card>
+</CardGroup>

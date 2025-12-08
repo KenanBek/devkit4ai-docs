@@ -1,0 +1,364 @@
+---
+title: "Create Developer Key"
+icon: "plus"
+openapi: "POST /api/v1/auth/developer-keys"
+---
+
+Create a new developer key for API authentication with developer-level permissions. Each developer account can maintain up to 10 active keys for different applications, environments, or team members.
+
+<Warning>
+The full key value is returned **only once** in the creation response. Store it securely - it cannot be retrieved later. If you lose the key, you must create a new one and revoke the old key.
+</Warning>
+
+## Authentication
+
+Requires valid JWT token with `developer` role and an existing active developer key.
+
+## Headers
+
+<ParamField header="Authorization" type="string" required>
+  Bearer JWT access token obtained from login
+</ParamField>
+
+<ParamField header="X-User-Role" type="string" required>
+  Must be set to `developer`
+</ParamField>
+
+<ParamField header="X-Developer-Key" type="string" required>
+  Existing active developer key for authentication (format: `ak_` + 32 characters)
+</ParamField>
+
+<ParamField header="Content-Type" type="string" required>
+  Must be set to `application/json`
+</ParamField>
+
+## Request Body
+
+<ParamField body="name" type="string">
+  Optional descriptive name for the key (max 100 characters). Examples: "Production API", "Staging Environment", "CI/CD Pipeline", "Team Member - John"
+</ParamField>
+
+## Response
+
+<ResponseField name="id" type="string">
+  Unique identifier (UUID) for the newly created developer key
+</ResponseField>
+
+<ResponseField name="name" type="string">
+  Descriptive name for the key (empty string if not provided)
+</ResponseField>
+
+<ResponseField name="key" type="string">
+  **Full developer key - shown only once!** Format: `ak_` + 32 URL-safe characters (alphanumeric, hyphen, underscore)
+</ResponseField>
+
+<ResponseField name="key_prefix" type="string">
+  First 8 characters of the key for identification (e.g., `ak_abc12`)
+</ResponseField>
+
+<ResponseField name="is_active" type="boolean">
+  Key status - always `true` for newly created keys
+</ResponseField>
+
+<ResponseField name="created_at" type="string">
+  ISO 8601 timestamp when the key was created
+</ResponseField>
+
+## Example Request
+
+```bash
+curl -X POST https://api.vibecoding.ad/api/v1/auth/developer-keys \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
+  -H "X-User-Role: developer" \
+  -H "X-Developer-Key: ak_existing_key_here_12345678901" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Production API"
+  }'
+```
+
+### Request Without Name
+
+```bash
+curl -X POST https://api.vibecoding.ad/api/v1/auth/developer-keys \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
+  -H "X-User-Role: developer" \
+  -H "X-Developer-Key: ak_existing_key_here_12345678901" \
+  -H "Content-Type: application/json" \
+  -d '{}'
+```
+
+## Example Response
+
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "name": "Production API",
+  "key": "ak_abc123XYZ-_789def456ghi012jkl345",
+  "key_prefix": "ak_abc12",
+  "is_active": true,
+  "created_at": "2025-12-08T10:30:00Z"
+}
+```
+
+(((REPLACE_THIS_WITH_IMAGE: developer-key-created-success.png: Success message showing newly created developer key with copy button and security warning to store it securely)))
+
+## Developer Key Format
+
+**Prefix:** `ak_` (API Key - provides developer-level access)
+
+**Structure:** `ak_` + 32 URL-safe characters (a-z, A-Z, 0-9, hyphen, underscore)
+
+**Example:** `ak_abc123XYZ-_789def456ghi012jkl345`
+
+**Total Length:** 35 characters (3-char prefix + 32-char random key)
+
+### Security Properties
+
+- **Cryptographically Random**: Generated using secure random number generator
+- **SHA-256 Hashing**: Keys are hashed with SHA-256 before database storage
+- **Prefix Identification**: Only first 8 characters (`key_prefix`) stored for UI display
+- **One-Time Display**: Full key returned only in creation response
+- **Revocable**: Can be deactivated immediately via DELETE endpoint
+
+## Key Limits
+
+<Warning>
+Each developer account has a maximum limit of **10 active developer keys**. If you reach this limit, you must revoke unused keys before creating new ones.
+</Warning>
+
+### Error When Limit Reached
+
+```json
+{
+  "detail": "Maximum number of developer keys (10) reached. Please revoke unused keys."
+}
+```
+
+## Use Cases
+
+### Environment-Specific Keys
+
+Create separate keys for each deployment environment:
+
+```typescript
+interface KeyConfig {
+  name: string;
+  environment: 'production' | 'staging' | 'development';
+}
+
+async function createEnvironmentKey(
+  config: KeyConfig,
+  jwtToken: string,
+  existingKey: string
+): Promise<string> {
+  const response = await fetch(
+    'https://api.vibecoding.ad/api/v1/auth/developer-keys',
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${jwtToken}`,
+        'X-User-Role': 'developer',
+        'X-Developer-Key': existingKey,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        name: `${config.environment.toUpperCase()} - ${config.name}`
+      })
+    }
+  );
+  
+  const data = await response.json();
+  
+  // Store securely in environment-specific config
+  console.log(`Created ${config.environment} key: ${data.key_prefix}`);
+  console.log(`IMPORTANT: Save this key securely: ${data.key}`);
+  
+  return data.key;
+}
+
+// Usage
+await createEnvironmentKey(
+  { name: 'API Server', environment: 'production' },
+  jwtToken,
+  existingKey
+);
+```
+
+### Team Member Keys
+
+Create individual keys for team members:
+
+```typescript
+async function provisionTeamMemberKey(
+  memberName: string,
+  jwtToken: string,
+  adminKey: string
+) {
+  const response = await fetch(
+    'https://api.vibecoding.ad/api/v1/auth/developer-keys',
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${jwtToken}`,
+        'X-User-Role': 'developer',
+        'X-Developer-Key': adminKey,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        name: `Team Member - ${memberName}`
+      })
+    }
+  );
+  
+  const data = await response.json();
+  
+  // Send key securely to team member (encrypted email, password manager, etc.)
+  return {
+    key: data.key,
+    keyId: data.id,
+    createdAt: data.created_at
+  };
+}
+```
+
+### Key Rotation Workflow
+
+Implement automated key rotation:
+
+```typescript
+async function rotateKey(
+  oldKeyId: string,
+  keyName: string,
+  jwtToken: string,
+  currentKey: string
+): Promise<string> {
+  // Step 1: Create new key
+  const createResponse = await fetch(
+    'https://api.vibecoding.ad/api/v1/auth/developer-keys',
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${jwtToken}`,
+        'X-User-Role': 'developer',
+        'X-Developer-Key': currentKey,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ name: `${keyName} (Rotated)` })
+    }
+  );
+  
+  const newKey = await createResponse.json();
+  
+  // Step 2: Update application configuration with new key
+  await updateApplicationConfig(newKey.key);
+  
+  // Step 3: Verify new key works
+  await testKeyAuthentication(newKey.key);
+  
+  // Step 4: Revoke old key
+  await fetch(
+    `https://api.vibecoding.ad/api/v1/auth/developer-keys/${oldKeyId}`,
+    {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${jwtToken}`,
+        'X-User-Role': 'developer',
+        'X-Developer-Key': newKey.key // Use new key to revoke old one
+      }
+    }
+  );
+  
+  console.log(`Key rotation complete: ${oldKeyId} → ${newKey.id}`);
+  return newKey.key;
+}
+```
+
+## Security Best Practices
+
+<Note>
+**Immediate Storage Required**: Copy and securely store the full key immediately after creation. The API will never display the full key again.
+</Note>
+
+### Recommended Practices
+
+1. **Secure Storage**: Store keys in environment variables, secrets managers (AWS Secrets Manager, HashiCorp Vault), or password managers - never in code repositories
+
+2. **Descriptive Naming**: Use clear names indicating purpose and environment (e.g., "Production API v2", "Staging - Mobile App")
+
+3. **Regular Rotation**: Rotate keys every 90 days or when team members leave
+
+4. **Principle of Least Privilege**: Create separate keys for different applications/services rather than sharing one key
+
+5. **Immediate Revocation**: Revoke keys immediately if compromised or no longer needed
+
+6. **Audit Trail**: Document key creation, distribution, and revocation in your security logs
+
+### What NOT to Do
+
+❌ Store keys in code repositories or version control  
+❌ Share keys via insecure channels (email, chat, SMS)  
+❌ Use the same key across all environments  
+❌ Keep inactive or unused keys active  
+❌ Share keys between team members without tracking
+
+## Error Responses
+
+### Maximum Keys Reached (400)
+
+```json
+{
+  "detail": "Maximum number of developer keys (10) reached. Please revoke unused keys."
+}
+```
+
+### Unauthorized (401)
+
+```json
+{
+  "detail": "Could not validate credentials"
+}
+```
+
+Invalid or missing JWT token.
+
+### Forbidden (403)
+
+```json
+{
+  "detail": "Insufficient permissions"
+}
+```
+
+User role is not `developer` or developer key is invalid/revoked.
+
+### Invalid Request Body (422)
+
+```json
+{
+  "detail": [
+    {
+      "loc": ["body", "name"],
+      "msg": "ensure this value has at most 100 characters",
+      "type": "value_error.any_str.max_length"
+    }
+  ]
+}
+```
+
+## Related Pages
+
+<CardGroup cols={2}>
+  <Card title="List Developer Keys" icon="list" href="/cloud-api/auth/list-developer-keys">
+    View all active developer keys
+  </Card>
+  <Card title="Revoke Developer Key" icon="ban" href="/cloud-api/auth/revoke-developer-key">
+    Deactivate keys immediately
+  </Card>
+  <Card title="Cloud Admin UI Guide" icon="browser" href="/cloud-admin/api-keys/creating-developer-keys">
+    Create keys via web interface
+  </Card>
+  <Card title="Security Practices" icon="shield-halved" href="/cloud-admin/api-keys/security-practices">
+    Key management best practices
+  </Card>
+</CardGroup>

@@ -6,28 +6,182 @@ icon: "cloud"
 
 ## Welcome to Cloud API
 
-Cloud API provides a comprehensive set of endpoints for building AI-powered web applications. Our API enables you to manage user authentication, projects, API keys, AI-powered image generation, and more.
+Cloud API provides a comprehensive REST API for building AI-powered web applications. Our platform enables developers to implement user authentication, project management, API key administration, and AI image generation capabilities with minimal setup.
 
 ## Base URLs
 
-The API is available on multiple servers. You can select your preferred server in the API playground:
+The API is available on two production servers with identical functionality:
 
 - **Dev Kit for AI**: `https://api.devkit4ai.com`
 - **Vibe Coding Platform**: `https://api.vibecoding.ad`
 
-At the moment, they both offer the same functionality.
+<Note>
+Both servers are production-ready and offer the same features. Choose based on your preferred domain or use one as primary and the other as backup.
+</Note>
 
-## Authentication
+## Authentication & Authorization
 
-Most API endpoints require authentication using Bearer tokens. Include your access token in the Authorization header:
+Cloud API uses a **role-based access control (RBAC)** system with three distinct user roles. Authentication is handled via JWT tokens combined with role-specific headers.
+
+### User Roles
+
+<ParamField body="platform_operator" type="role">
+  **Platform Operators** manage the entire Dev Kit for AI platform. They have full access to all resources and can create developer accounts. Operators are created directly in the backend database.
+</ParamField>
+
+<ParamField body="developer" type="role">
+  **Developers** build AI-powered applications using the Starter Kit. They can create projects, generate API keys, manage end users, and access the Cloud Admin console. Developers register via [Register Developer](/cloud-api/auth/register) endpoint with an operator key.
+</ParamField>
+
+<ParamField body="end_user" type="role">
+  **End Users** are users of applications built with the Starter Kit. They are scoped to specific projects and can access project-specific features. End users register via the Starter Kit's registration flow.
+</ParamField>
+
+### Authentication Methods
+
+#### JWT Bearer Tokens
+
+All authenticated requests require a JWT access token obtained from the [Login](/cloud-api/auth/login) endpoint:
 
 ```bash
-Authorization: Bearer YOUR_ACCESS_TOKEN
+curl -X GET https://api.vibecoding.ad/api/v1/auth/me \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 ```
 
-To obtain an access token, use the [Login](/cloud-api/auth/login) endpoint with your credentials. The token must be included in subsequent API requests.
+**Token Lifecycle:**
+- **Access Tokens**: Expire after 30 minutes
+- **Refresh Tokens**: Expire after 7 days
+- Use [Refresh Token](/cloud-api/auth/refresh) endpoint to obtain new access tokens
 
-For project-specific operations, you can also use API keys created through the [Project Management](/cloud-api/projects/create-api-key) endpoints.
+#### Role-Specific Headers
+
+Different operations require specific headers based on your role:
+
+**Platform Operators:**
+```bash
+X-User-Role: platform_operator
+X-Operator-Key: <your_operator_key>
+```
+
+**Developers:**
+```bash
+X-User-Role: developer
+X-Developer-Key: <your_developer_key>
+```
+
+**End Users (Project-Scoped):**
+```bash
+X-User-Role: end_user
+X-Developer-Key: <project_developer_key>
+X-Project-ID: <project_uuid>
+X-API-Key: <project_api_key>
+```
+
+<Warning>
+Always include the appropriate role header (`X-User-Role`) and authentication credentials for your user type. Missing or incorrect headers will result in `403 Forbidden` errors.
+</Warning>
+
+### API Keys
+
+#### Developer Keys
+
+Developer keys authenticate API requests with developer-level permissions. Format: `ak_` + 32 characters.
+
+**Management:**
+- [List Developer Keys](/cloud-api/auth/list-developer-keys)
+- [Create Developer Key](/cloud-api/auth/create-developer-key)
+- [Revoke Developer Key](/cloud-api/auth/revoke-developer-key)
+
+**Limits:** Maximum 10 active developer keys per account.
+
+#### Project API Keys
+
+Project-scoped keys authenticate end user operations within a specific project.
+
+**Management:**
+- [Create Project API Key](/cloud-api/projects/create-api-key)
+- [List Project API Keys](/cloud-api/projects/list-api-keys)
+- [Revoke Project API Key](/cloud-api/projects/revoke-api-key)
+
+(((REPLACE_THIS_WITH_IMAGE: cloud-api-authentication-flow.png: Diagram showing authentication flow from registration through login to API calls with JWT tokens and role headers)))
+
+## Rate Limits & Quotas
+
+Cloud API implements rate limiting to ensure fair usage and system stability. Limits vary by subscription tier and endpoint category.
+
+### Rate Limit Headers
+
+Every API response includes rate limit information:
+
+```http
+X-RateLimit-Limit: 1000
+X-RateLimit-Remaining: 995
+X-RateLimit-Reset: 1670425200
+```
+
+- `X-RateLimit-Limit`: Maximum requests per window
+- `X-RateLimit-Remaining`: Requests remaining in current window
+- `X-RateLimit-Reset`: Unix timestamp when limit resets
+
+### Subscription Tiers
+
+<CardGroup cols={3}>
+  <Card title="Free Starter" icon="gift">
+    **1,000 requests/day**
+    
+    - Basic AI generation (100/month)
+    - 1 project
+    - Community support
+  </Card>
+  
+  <Card title="Cloud Starter" icon="rocket">
+    **10,000 requests/day**
+    
+    - Advanced AI generation (1,000/month)
+    - 5 projects
+    - Email support
+    - Priority processing
+  </Card>
+  
+  <Card title="Cloud Premium" icon="crown">
+    **100,000 requests/day**
+    
+    - Unlimited AI generation
+    - Unlimited projects
+    - Priority support
+    - Dedicated infrastructure
+    - Source code access (on-demand)
+  </Card>
+</CardGroup>
+
+### Rate Limit by Endpoint Category
+
+| Category | Free Tier | Cloud Starter | Cloud Premium |
+|----------|-----------|---------------|---------------|
+| Authentication | 100/hour | 500/hour | 2,000/hour |
+| Project Management | 1,000/day | 10,000/day | Unlimited |
+| AI Generation | 100/month | 1,000/month | Unlimited |
+| Anonymous Generation | 10/day | N/A | N/A |
+
+### Rate Limit Exceeded Response
+
+```http
+HTTP/1.1 429 Too Many Requests
+Content-Type: application/json
+
+{
+  "detail": "Rate limit exceeded. Try again in 3600 seconds.",
+  "retry_after": 3600
+}
+```
+
+<Note>
+**Best Practice:** Implement exponential backoff when receiving 429 responses. Wait for the duration specified in `retry_after` or the `X-RateLimit-Reset` header.
+</Note>
+
+### Quota Management
+
+Monitor your usage via the [Cloud Admin console](/cloud-admin/console/statistics) or programmatically through the [Project Stats](/cloud-api/projects/project-stats) endpoint.
 
 ## API Categories
 
@@ -62,10 +216,104 @@ For project-specific operations, you can also use API keys created through the [
   </Card>
 </CardGroup>
 
-## Rate Limits
+## Getting Started
 
-API rate limits may apply depending on your subscription tier and authentication method. Anonymous generation requests may have additional restrictions compared to authenticated requests.
+<Steps>
+  <Step title="Register as Developer">
+    Create your developer account via [Cloud Admin](/cloud-admin/getting-started) or [Register endpoint](/cloud-api/auth/register).
+  </Step>
+  
+  <Step title="Obtain Developer Key">
+    After registration, you'll receive your developer key, project ID, and project API key.
+  </Step>
+  
+  <Step title="Clone Starter Kit">
+    Clone the [Starter Kit](https://github.com/VibeCodingStarter/starter-kit) repository to build your application.
+  </Step>
+  
+  <Step title="Configure Environment">
+    Set up your environment variables with your credentials. See [Environment Config](/starter-kit/environment-config).
+  </Step>
+  
+  <Step title="Make Your First API Call">
+    Follow the [Quick Start](/cloud-api/quickstart) guide for a hands-on tutorial.
+  </Step>
+</Steps>
 
-## Support
+## Response Format
 
-Need help? Reach out to our support team or visit our [documentation](/) for guides and tutorials.
+All API responses follow a consistent structure with proper HTTP status codes.
+
+### Success Response (2xx)
+
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "name": "My Project",
+  "is_active": true,
+  "created_at": "2025-12-08T10:30:00Z"
+}
+```
+
+### Error Response (4xx, 5xx)
+
+```json
+{
+  "detail": "Authentication credentials were not provided"
+}
+```
+
+### Validation Error (422)
+
+```json
+{
+  "detail": [
+    {
+      "loc": ["body", "email"],
+      "msg": "value is not a valid email address",
+      "type": "value_error.email"
+    }
+  ]
+}
+```
+
+## API Version
+
+**Current Version:** `1.5.0`
+
+The API version is included in all endpoint paths (e.g., `/api/v1/auth/login`). Breaking changes will increment the major version number.
+
+## OpenAPI Specification
+
+The complete API specification is available in OpenAPI 3.1.0 format. You can:
+
+- **View Interactive Docs**: Use the built-in API playground in each endpoint page
+- **Download Spec**: Available at `/cloud-api/openapi.json`
+- **Import to Tools**: Compatible with Postman, Insomnia, and other OpenAPI clients
+
+## Support & Resources
+
+<CardGroup cols={2}>
+  <Card title="Quick Start" icon="bolt" href="/cloud-api/quickstart">
+    Get started with hands-on examples
+  </Card>
+  <Card title="Starter Kit Guide" icon="book" href="/starter-kit/installation">
+    Build your first application
+  </Card>
+  <Card title="Cloud Admin Console" icon="browser" href="/cloud-admin/getting-started">
+    Manage projects via web interface
+  </Card>
+  <Card title="Platform Overview" icon="info-circle" href="/getting-started/platform-overview">
+    Understand the Dev Kit architecture
+  </Card>
+</CardGroup>
+
+**Need Help?**
+
+- 📧 Email: [support@devkit4ai.com](mailto:support@devkit4ai.com)
+- 📚 Documentation: [https://docs.devkit4ai.com](https://docs.devkit4ai.com)
+- 🐙 GitHub: [Starter Kit Repository](https://github.com/VibeCodingStarter/starter-kit)
+
+<Note>
+For production deployments, always use HTTPS endpoints and store API keys securely in environment variables or secrets managers.
+</Note>

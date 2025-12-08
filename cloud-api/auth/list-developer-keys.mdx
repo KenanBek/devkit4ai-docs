@@ -1,0 +1,221 @@
+---
+title: "List Developer Keys"
+icon: "list"
+openapi: "GET /api/v1/auth/developer-keys"
+---
+
+Retrieve all active developer keys for the authenticated developer account. This endpoint returns key metadata including usage timestamps and identification prefixes, but never returns the full key values.
+
+## Authentication
+
+Requires valid JWT token with `developer` role and an active developer key.
+
+## Headers
+
+<ParamField header="Authorization" type="string" required>
+  Bearer JWT access token obtained from login
+</ParamField>
+
+<ParamField header="X-User-Role" type="string" required>
+  Must be set to `developer`
+</ParamField>
+
+<ParamField header="X-Developer-Key" type="string" required>
+  Active developer key for authentication (format: `ak_` + 32 characters)
+</ParamField>
+
+## Response
+
+Returns an array of developer key objects without the full key values.
+
+<ResponseField name="[].id" type="string">
+  Unique identifier (UUID) for the developer key
+</ResponseField>
+
+<ResponseField name="[].name" type="string">
+  Descriptive name assigned to the key (e.g., "Production API", "Staging Environment")
+</ResponseField>
+
+<ResponseField name="[].key_prefix" type="string">
+  First 8 characters of the key for identification (e.g., `ak_abc12`)
+</ResponseField>
+
+<ResponseField name="[].is_active" type="boolean">
+  Key status - only active keys are returned by this endpoint
+</ResponseField>
+
+<ResponseField name="[].last_used_at" type="string" nullable>
+  ISO 8601 timestamp of the most recent API request using this key. Returns `null` if the key has never been used.
+</ResponseField>
+
+<ResponseField name="[].created_at" type="string">
+  ISO 8601 timestamp when the key was created
+</ResponseField>
+
+## Example Request
+
+```bash
+curl -X GET https://api.vibecoding.ad/api/v1/auth/developer-keys \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
+  -H "X-User-Role: developer" \
+  -H "X-Developer-Key: ak_abc123XYZ-_789def456ghi012jkl345"
+```
+
+## Example Response
+
+```json
+[
+  {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "name": "Production API",
+    "key_prefix": "ak_abc12",
+    "is_active": true,
+    "last_used_at": "2025-12-07T09:15:00Z",
+    "created_at": "2025-12-01T10:30:00Z"
+  },
+  {
+    "id": "660e8400-e29b-41d4-a716-446655440001",
+    "name": "Staging Environment",
+    "key_prefix": "ak_xyz78",
+    "is_active": true,
+    "last_used_at": null,
+    "created_at": "2025-12-05T14:20:00Z"
+  },
+  {
+    "id": "770e8400-e29b-41d4-a716-446655440002",
+    "name": "Development Key",
+    "key_prefix": "ak_dev99",
+    "is_active": true,
+    "last_used_at": "2025-12-08T14:30:00Z",
+    "created_at": "2025-11-15T08:00:00Z"
+  }
+]
+```
+
+## Use Cases
+
+### Key Management Dashboard
+
+Display all developer keys with usage statistics:
+
+```typescript
+async function fetchDeveloperKeys(
+  jwtToken: string,
+  developerKey: string
+): Promise<DeveloperKey[]> {
+  const response = await fetch(
+    'https://api.vibecoding.ad/api/v1/auth/developer-keys',
+    {
+      headers: {
+        'Authorization': `Bearer ${jwtToken}`,
+        'X-User-Role': 'developer',
+        'X-Developer-Key': developerKey
+      }
+    }
+  );
+  
+  if (!response.ok) {
+    throw new Error('Failed to fetch developer keys');
+  }
+  
+  return response.json();
+}
+```
+
+(((REPLACE_THIS_WITH_IMAGE: cloud-admin-developer-keys-list.png: Cloud Admin console showing list of developer keys with names, prefixes, last used timestamps, and action buttons)))
+
+### Identify Unused Keys
+
+Find keys that haven't been used recently for rotation:
+
+```typescript
+function getUnusedKeys(keys: DeveloperKey[], daysSinceUse: number = 90) {
+  const cutoffDate = new Date();
+  cutoffDate.setDate(cutoffDate.getDate() - daysSinceUse);
+  
+  return keys.filter(key => {
+    if (!key.last_used_at) return true; // Never used
+    return new Date(key.last_used_at) < cutoffDate;
+  });
+}
+```
+
+### Key Rotation Workflow
+
+Implement automated key rotation:
+
+```typescript
+async function rotateOldKeys(
+  jwtToken: string,
+  developerKey: string,
+  maxAgeDays: number = 90
+) {
+  // List all keys
+  const keys = await fetchDeveloperKeys(jwtToken, developerKey);
+  
+  // Find keys older than maxAgeDays
+  const oldKeys = keys.filter(key => {
+    const created = new Date(key.created_at);
+    const age = Date.now() - created.getTime();
+    return age > maxAgeDays * 24 * 60 * 60 * 1000;
+  });
+  
+  // Create new keys and revoke old ones
+  for (const oldKey of oldKeys) {
+    console.log(`Key ${oldKey.key_prefix} is ${Math.floor((Date.now() - new Date(oldKey.created_at).getTime()) / (24 * 60 * 60 * 1000))} days old`);
+    // Implementation continues with create and revoke...
+  }
+}
+```
+
+## Security Considerations
+
+<Note>
+The `last_used_at` timestamp is updated asynchronously and may have a delay of up to 1 minute. Use this for monitoring and auditing, not for real-time access control.
+</Note>
+
+### Best Practices
+
+1. **Regular Audits**: Review keys monthly to identify unused or unnecessary keys
+2. **Monitor Usage**: Track `last_used_at` to detect suspicious activity or compromised keys
+3. **Name Convention**: Use consistent naming (e.g., "Production", "Staging", "CI/CD Pipeline")
+4. **Limit Active Keys**: Keep only necessary keys active to minimize attack surface
+
+## Error Responses
+
+### Unauthorized (401)
+
+```json
+{
+  "detail": "Could not validate credentials"
+}
+```
+
+Missing or invalid JWT token.
+
+### Forbidden (403)
+
+```json
+{
+  "detail": "Insufficient permissions"
+}
+```
+
+User role is not `developer` or developer key is invalid.
+
+## Related Pages
+
+<CardGroup cols={2}>
+  <Card title="Create Developer Key" icon="plus" href="/cloud-api/auth/create-developer-key">
+    Generate new developer keys
+  </Card>
+  <Card title="Revoke Developer Key" icon="ban" href="/cloud-api/auth/revoke-developer-key">
+    Deactivate compromised or unused keys
+  </Card>
+  <Card title="Key Management Guide" icon="book" href="/cloud-admin/api-keys/creating-developer-keys">
+    Cloud Admin UI workflow
+  </Card>
+  <Card title="Security Best Practices" icon="shield" href="/cloud-admin/api-keys/security-practices">
+    Key rotation and security guidelines
+  </Card>
+</CardGroup>
