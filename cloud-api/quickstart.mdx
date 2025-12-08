@@ -4,12 +4,13 @@ description: "Get started with Cloud API in 5 minutes"
 icon: "bolt"
 ---
 
-Learn how to authenticate and make your first API calls to Dev Kit for AI Cloud API. This guide walks you through registration, authentication, and common operations with real code examples.
+Learn how to authenticate and make your first API calls to Dev Kit for AI Cloud API. This guide walks you through registration, authentication, and common operations with real code examples from a developer's perspective.
 
 ## Prerequisites
 
 Before you begin, you'll need:
 
+- A web browser to access Cloud Admin
 - A terminal or command-line interface
 - `curl` installed (or any HTTP client like Postman, Insomnia)
 - A text editor for storing credentials
@@ -20,16 +21,52 @@ This guide uses `curl` for examples, but you can use any HTTP client. All exampl
 
 ## Step 1: Register as Developer
 
-First, create your developer account. You'll need an **operator key** to register as a developer.
+Create your developer account via the Cloud Admin web interface. This is the easiest way to get started.
 
-<Info>
-For testing purposes, you can request a demo operator key by contacting support@devkit4ai.com. In production, platform operators create developer accounts.
-</Info>
+### Via Cloud Admin (Recommended)
+
+1. Visit [https://vibecoding.ad/register/developer](https://vibecoding.ad/register/developer) or [https://devkit4ai.com/register/developer](https://devkit4ai.com/register/developer)
+2. Fill in your email and password (minimum 8 characters with uppercase, lowercase, and digit)
+3. Click "Create Developer Account"
+4. You'll receive your provisioning credentials on the success page
+
+(((REPLACE_THIS_WITH_IMAGE: cloud-admin-developer-registration-form.png: Screenshot of Cloud Admin developer registration page with email, password, and create account button)))
+
+### Provisioning Credentials
+
+After successful registration, you'll receive three critical credentials:
+
+```json
+{
+  "project_id": "660e8400-e29b-41d4-a716-446655440001",
+  "developer_key": "ak_abc123XYZ-_789def456ghi012jkl345",
+  "api_key": "pk_xyz789ABC-_123def456ghi012jkl345"
+}
+```
+
+<Warning>
+**Save these credentials immediately!** They are shown only once:
+- `developer_key`: Authenticates your developer-level API calls
+- `project_id`: Your auto-created default project UUID
+- `api_key`: Your default project's API key for end user operations
+</Warning>
+
+**Store them securely:**
+
+```bash
+# Save to environment variables
+export DEVKIT4AI_DEVELOPER_KEY="ak_abc123XYZ-_789def456ghi012jkl345"
+export DEVKIT4AI_PROJECT_ID="660e8400-e29b-41d4-a716-446655440001"
+export DEVKIT4AI_PROJECT_KEY="pk_xyz789ABC-_123def456ghi012jkl345"
+```
+
+### Alternative: API Registration (Advanced)
+
+If you prefer programmatic registration, you can use the API directly with an operator key:
 
 ```bash
 curl -X POST https://api.vibecoding.ad/api/v1/auth/register \
   -H "Content-Type: application/json" \
-  -H "X-User-Role: developer" \
   -H "X-Operator-Key: YOUR_OPERATOR_KEY" \
   -d '{
     "email": "you@example.com",
@@ -37,33 +74,13 @@ curl -X POST https://api.vibecoding.ad/api/v1/auth/register \
   }'
 ```
 
-### Response
-
-```json
-{
-  "id": "550e8400-e29b-41d4-a716-446655440000",
-  "email": "you@example.com",
-  "role": "developer",
-  "is_active": true,
-  "created_at": "2025-12-08T10:30:00Z",
-  "provisioning": {
-    "project_id": "660e8400-e29b-41d4-a716-446655440001",
-    "developer_key": "ak_abc123XYZ-_789def456ghi012jkl345",
-    "api_key": "pk_xyz789ABC-_123def456ghi012jkl345"
-  }
-}
-```
-
-<Warning>
-**Save these credentials immediately!** The provisioning data is shown only once:
-- `developer_key`: Use for developer-level API calls
-- `project_id`: Your default project UUID
-- `api_key`: Your default project's API key
-</Warning>
+<Note>
+Operator keys are only available for platform operators. For most developers, Cloud Admin registration is the recommended approach.
+</Note>
 
 ## Step 2: Login and Get JWT Token
 
-Use your email and password to obtain a JWT access token:
+Use your email and password to obtain a JWT access token for API calls:
 
 ```bash
 curl -X POST https://api.vibecoding.ad/api/v1/auth/login \
@@ -86,7 +103,13 @@ curl -X POST https://api.vibecoding.ad/api/v1/auth/login \
 
 **Store your access token** - you'll need it for authenticated requests. Access tokens expire after 30 minutes.
 
-(((REPLACE_THIS_WITH_IMAGE: cloud-api-quickstart-authentication-flow.png: Diagram showing registration, login, and token lifecycle with expiration times)))
+**Save to environment:**
+
+```bash
+export DEVKIT4AI_JWT_TOKEN="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+```
+
+(((REPLACE_THIS_WITH_IMAGE: cloud-api-quickstart-authentication-flow.png: Diagram showing Cloud Admin registration through login to API usage with JWT tokens)))
 
 ## Step 3: Verify Your Identity
 
@@ -560,35 +583,12 @@ const API_BASE = 'https://api.vibecoding.ad';
 let credentials = {
   accessToken: null,
   refreshToken: null,
-  developerKey: null,
-  projectId: null,
-  projectApiKey: null
+  developerKey: null, // From Cloud Admin registration
+  projectId: null,    // From Cloud Admin registration
+  projectApiKey: null // From Cloud Admin registration
 };
 
-// Step 1: Register
-async function register(email, password, operatorKey) {
-  const response = await fetch(`${API_BASE}/api/v1/auth/register`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-User-Role': 'developer',
-      'X-Operator-Key': operatorKey
-    },
-    body: JSON.stringify({ email, password })
-  });
-  
-  const data = await response.json();
-  console.log('✓ Registered:', data.email);
-  
-  // Save provisioning credentials
-  credentials.developerKey = data.provisioning.developer_key;
-  credentials.projectId = data.provisioning.project_id;
-  credentials.projectApiKey = data.provisioning.api_key;
-  
-  return data;
-}
-
-// Step 2: Login
+// Step 1: Login (assuming you registered via Cloud Admin)
 async function login(email, password) {
   const response = await fetch(`${API_BASE}/api/v1/auth/login`, {
     method: 'POST',
@@ -605,7 +605,22 @@ async function login(email, password) {
   return data;
 }
 
-// Step 3: Create Project
+// Step 2: Verify Identity
+async function verifyIdentity() {
+  const response = await fetch(`${API_BASE}/api/v1/auth/me`, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${credentials.accessToken}`
+    }
+  });
+  
+  const data = await response.json();
+  console.log('✓ Verified identity:', data.email);
+  
+  return data;
+}
+
+// Step 3: Create Additional Project
 async function createProject(name, description) {
   const response = await fetch(`${API_BASE}/api/v1/projects/`, {
     method: 'POST',
@@ -624,23 +639,108 @@ async function createProject(name, description) {
   return data;
 }
 
+// Step 4: Generate Project API Key
+async function generateApiKey(projectId, keyName) {
+  const response = await fetch(`${API_BASE}/api/v1/projects/${projectId}/api-keys`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${credentials.accessToken}`,
+      'X-User-Role': 'developer',
+      'X-Developer-Key': credentials.developerKey,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ name: keyName })
+  });
+  
+  const data = await response.json();
+  console.log('✓ Generated API key:', data.key_prefix);
+  
+  return data;
+}
+
+// Step 5: Make AI Generation Request
+async function generateImage(projectId, projectApiKey, imagePaths, prompt) {
+  const formData = new FormData();
+  
+  // Add example images
+  for (const imagePath of imagePaths) {
+    const file = fs.readFileSync(imagePath);
+    formData.append('example_images', new Blob([file]), path.basename(imagePath));
+  }
+  
+  // Add instructions
+  formData.append('instructions', JSON.stringify({ prompt }));
+  
+  const response = await fetch(`${API_BASE}/api/v1/generation/generate-v2`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${credentials.accessToken}`,
+      'X-User-Role': 'end_user',
+      'X-Developer-Key': credentials.developerKey,
+      'X-Project-ID': projectId,
+      'X-API-Key': projectApiKey
+    },
+    body: formData
+  });
+  
+  const data = await response.json();
+  console.log('✓ Generation started:', data.id);
+  
+  return data;
+}
+
+// Step 6: Check Generation Status
+async function checkGenerationStatus(projectId, projectApiKey, generationId) {
+  const response = await fetch(
+    `${API_BASE}/api/v1/generation/generations-v2/${generationId}/status`,
+    {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${credentials.accessToken}`,
+        'X-User-Role': 'end_user',
+        'X-Developer-Key': credentials.developerKey,
+        'X-Project-ID': projectId,
+        'X-API-Key': projectApiKey
+      }
+    }
+  );
+  
+  const data = await response.json();
+  console.log('✓ Generation status:', data.status);
+  
+  return data;
+}
+
 // Run the example
 async function main() {
   try {
-    // Replace with your actual values
-    const OPERATOR_KEY = 'your_operator_key_here';
+    // Replace with your actual values from Cloud Admin registration
     const EMAIL = 'you@example.com';
     const PASSWORD = 'SecurePass123';
     
-    await register(EMAIL, PASSWORD, OPERATOR_KEY);
+    // These credentials are obtained from Cloud Admin after registration
+    credentials.developerKey = 'ak_abc123XYZ-_789def456ghi012jkl345';
+    credentials.projectId = '770e8400-e29b-41d4-a716-446655440002';
+    credentials.projectApiKey = 'pk_prod123XYZ-_789def456ghi012jkl345';
+    
+    // Login with your credentials
     await login(EMAIL, PASSWORD);
-    await createProject('My First AI App', 'AI-powered platform');
+    
+    // Verify your identity
+    await verifyIdentity();
+    
+    // Create an additional project (you already have one from registration)
+    const newProject = await createProject('My Second AI App', 'Another AI-powered platform');
+    
+    // Generate API key for the new project
+    const apiKey = await generateApiKey(newProject.id, 'Production Key');
     
     console.log('\n✓ Quick start completed!');
     console.log('Your credentials:');
     console.log('Developer Key:', credentials.developerKey);
-    console.log('Project ID:', credentials.projectId);
-    console.log('Project API Key:', credentials.projectApiKey);
+    console.log('First Project ID:', credentials.projectId);
+    console.log('New Project ID:', newProject.id);
+    console.log('New Project API Key:', apiKey.key);
     
   } catch (error) {
     console.error('❌ Error:', error.message);
@@ -649,6 +749,10 @@ async function main() {
 
 main();
 ```
+
+<Note>
+**Before running:** Register via [Cloud Admin](https://vibecoding.ad/register/developer) to obtain your initial credentials (developer key, project ID, and project API key). Replace the placeholder values in the code with your actual credentials.
+</Note>
 
 Save this as `quickstart-example.js` and run:
 
