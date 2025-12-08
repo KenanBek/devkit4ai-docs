@@ -1,5 +1,43 @@
 # Changelog
 
+### v1.8.0 [2025-12-08]
+
+#### Added
+- Added comprehensive Cloud API quickstart guide (`cloud-api/quickstart.mdx`) with developer-first approach covering registration through AI generation
+- Added three developer key management endpoint pages:
+  - `cloud-api/auth/list-developer-keys.mdx` - List all developer keys with filtering and usage tracking
+  - `cloud-api/auth/create-developer-key.mdx` - Create new developer keys with security best practices
+  - `cloud-api/auth/revoke-developer-key.mdx` - Revoke developer keys with proper cleanup workflows
+- Added complete error patterns section covering authentication, validation, rate limiting, and resource errors
+- Added troubleshooting guide with common issues and solutions for JWT tokens, headers, generation status, and API keys
+- Added best practices section for secure credential storage, error handling, token refresh, and polling strategies
+- Added full Node.js example application demonstrating complete API integration workflow
+- Added 3 SEO-optimized image placeholders for authentication flow, generation status polling, and registration form
+
+#### Changed
+- Completely rewrote Cloud API quickstart from operator-dependent flow to developer-first approach using Cloud Admin web registration
+- Expanded `cloud-api/introduction.mdx` from ~50 to ~300+ lines with authentication concepts, rate limits, quotas, and getting started guide
+- Enhanced `cloud-api/auth/register.mdx` with comprehensive cross-references (6 cards) and registration flow image placeholder
+- Enhanced `cloud-api/auth/login.mdx` with JWT flow diagram and 6 cross-reference cards to related documentation
+- Completely rewrote `cloud-api/generation/create.mdx` from ~20 to ~400+ lines with detailed examples, use cases, and error handling
+- Completely rewrote `cloud-api/projects/create.mdx` from ~20 to ~350+ lines with workflows and best practices
+- Updated `docs.json` navigation to include developer keys section and quickstart page under Cloud API
+- Fixed `cloud-api/generation/status.mdx` OpenAPI reference to use correct v2 endpoint URL
+- Updated developer key prefix from `dk_` to `ak_` across all documentation to match backend-api v1.5.0 changes
+- Enhanced quickstart with 7-step tutorial covering complete onboarding from Cloud Admin registration to AI generation
+
+#### Removed
+- Removed `cloud-api/auth/check-email.mdx` as the endpoint is no longer in OpenAPI specification
+
+#### Documentation Coverage
+- Documented backend-api v1.5.0 features: multiple developer keys, project-scoped end users, full_name field, email availability validation
+- Documented user-app v1.8.0 features: developer keys management UI, full_name display, enhanced clipboard functionality, project-scoped registration
+- Addressed all 32 Cloud API endpoints from OpenAPI spec v1.5.0 with comprehensive documentation
+- Added 30+ cross-reference CardGroup sections across key endpoint pages
+- Standardized documentation format with examples, security notes, use cases, and error handling across all pages
+
+### Skipping versions v1.4.0-v1.7.0 to match the devkit4ai versions
+
 ### v1.3.0 [2025-11-27]
 
 #### Added
