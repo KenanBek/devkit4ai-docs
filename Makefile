@@ -1,3 +1,7 @@
+# Ensure npm/npx/node commands have access to nvm
+SHELL := /bin/bash
+.SHELLFLAGS := -c 'export NVM_DIR="$$HOME/.nvm"; [ -s "$$NVM_DIR/nvm.sh" ] && . "$$NVM_DIR/nvm.sh"; set -e; exec "$$@"' --
+
 .PHONY: help
 help: ## 📋 Show this help message
 	@echo 'Usage: make [target]'
