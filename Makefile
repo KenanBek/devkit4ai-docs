@@ -66,3 +66,9 @@ dev: check-mint ## 📚 Start documentation site in development mode
 check-broken-links: check-mint ## 🔗 Check for broken links in the documentation site
 	@echo "Checking for broken links in the documentation site..."
 	@mint broken-links
+
+.PHONY: verify
+verify: check-mint ## ✅ Verify the documentation setup
+	@echo "🔍 Verifying documentation setup..."
+	@mint broken-links
+	@echo "✅ Documentation setup verified successfully"
