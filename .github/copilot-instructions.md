@@ -188,6 +188,46 @@ Use these components to highlight different types of information:
 - Add descriptive `alt` text to all images
 - Use `caption` attribute for image captions
 
+### Mermaid Diagrams
+
+Use Mermaid diagrams wherever suitable to visualize:
+
+- **Workflows and processes** - User journeys, authentication flows, deployment pipelines
+- **Architecture** - Component relationships, system interactions, data flows
+- **Sequences** - API request/response flows, multi-step operations
+- **Relationships** - User types, role hierarchies, project structures
+
+Mermaid diagrams are preferred over static images when possible because they:
+- Are version-controlled as code
+- Render consistently across themes
+- Are easier to update and maintain
+- Don't require external image assets
+
+Example usage:
+
+```mermaid
+flowchart TB
+    A[User] --> B[Starter Kit]
+    B --> C[Cloud API]
+```
+
+### Placeholder Images
+
+For screenshots and advanced diagrams that Mermaid cannot handle, use placeholder syntax:
+
+```
+(((REPLACE_THIS_WITH_IMAGE: FILE_NAME.png: IMAGE_DESCRIPTION)))
+```
+
+- **FILE_NAME**: SEO-friendly filename (e.g., `console-dashboard-stats-overview.png`)
+- **IMAGE_DESCRIPTION**: Brief description of what the image should show
+
+Use placeholder images for:
+- UI screenshots showing specific features
+- Complex diagrams requiring custom styling
+- Product screenshots for marketing pages
+- Annotated interface walkthroughs
+
 ## Code Quality Standards
 
 ### MDX Code Examples
