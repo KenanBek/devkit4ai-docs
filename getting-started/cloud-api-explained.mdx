@@ -5,7 +5,13 @@ description: "Understand the hosted backend API that powers authentication, proj
 icon: "server"
 ---
 
-The Cloud API is a production-ready backend service hosted at **[api.vibecoding.ad](https://api.vibecoding.ad)** that provides all the server-side functionality for your AI applications.
+The Cloud API is a production-ready backend service that provides all the server-side functionality for your AI applications.
+
+**Production Servers:**
+- **[api.devkit4ai.com](https://api.devkit4ai.com)** — Primary production server
+- **[api.vibecoding.ad](https://api.vibecoding.ad)** — Alternative production server
+
+Both servers provide identical functionality. Your [Starter Kit](/getting-started/starter-kit-explained) connects to one of these servers based on your environment configuration.
 
 ## What It Provides
 
@@ -72,6 +78,21 @@ All API requests from your Starter Kit include these authentication headers:
 - **X-API-Key:** Your project's API key
 - **Authorization:** JWT token for authenticated user requests
 
+### Role-Based Access
+
+Different [user types](/getting-started/user-types) have different access levels to API endpoints:
+
+| Endpoint Group | Operator | Developer | End User |
+|----------------|----------|-----------|----------|
+| Health Check | ✅ | ✅ | ✅ |
+| Authentication | ✅ | ✅ | ✅ |
+| Project Management | ✅ | ✅ Own projects | ❌ |
+| AI Generation | ✅ | ✅ | ✅ Project-scoped |
+
+<Tip>
+Learn more about each user type and their capabilities in the [User Types](/getting-started/user-types) guide.
+</Tip>
+
 ## API Endpoints
 
 The Cloud API is organized into logical groups:
@@ -79,38 +100,38 @@ The Cloud API is organized into logical groups:
 ### Health Check Endpoints
 
 - `GET /health` - Quick health status
-- `GET /api/v1/health` - Comprehensive health check
-- `GET /api/v1/health/database` - Database connectivity
-- `GET /api/v1/health/storage` - File storage status
-- `GET /api/v1/health/redis` - Cache status (if configured)
+- [`GET /api/v1/health`](/cloud-api/health/check) - Comprehensive health check
+- [`GET /api/v1/health/database`](/cloud-api/health/database) - Database connectivity
+- [`GET /api/v1/health/storage`](/cloud-api/health/storage) - File storage status
+- [`GET /api/v1/health/redis`](/cloud-api/health/redis) - Cache status (if configured)
 
 ### Authentication Endpoints
 
-- `POST /api/v1/auth/register` - Create new user
-- `POST /api/v1/auth/login` - Authenticate user
-- `GET /api/v1/auth/me` - Get current user info
-- `POST /api/v1/auth/refresh` - Refresh access token
-- `POST /api/v1/auth/verify-email` - Verify email address
-- `POST /api/v1/auth/request-verification` - Request verification email
+- [`POST /api/v1/auth/register`](/cloud-api/auth/register) - Create new user
+- [`POST /api/v1/auth/login`](/cloud-api/auth/login) - Authenticate user
+- [`GET /api/v1/auth/me`](/cloud-api/auth/me) - Get current user info
+- [`POST /api/v1/auth/refresh`](/cloud-api/auth/refresh) - Refresh access token
+- [`POST /api/v1/auth/verify-email`](/cloud-api/auth/verify-email) - Verify email address
+- [`POST /api/v1/auth/request-verification`](/cloud-api/auth/request-verification) - Request verification email
 
 ### Project Endpoints
 
-- `GET /api/v1/projects` - List user's projects
-- `POST /api/v1/projects` - Create new project
-- `GET /api/v1/projects/{id}` - Get project details
-- `DELETE /api/v1/projects/{id}` - Delete project
-- `POST /api/v1/projects/{id}/api-keys` - Generate API key
-- `GET /api/v1/projects/{id}/api-keys` - List project keys
-- `DELETE /api/v1/projects/{id}/api-keys/{key_id}` - Revoke key
+- [`GET /api/v1/projects`](/cloud-api/projects/list) - List user's projects
+- [`POST /api/v1/projects`](/cloud-api/projects/create) - Create new project
+- [`GET /api/v1/projects/{id}`](/cloud-api/projects/get) - Get project details
+- [`DELETE /api/v1/projects/{id}`](/cloud-api/projects/delete) - Delete project
+- [`POST /api/v1/projects/{id}/api-keys`](/cloud-api/projects/create-api-key) - Generate API key
+- [`GET /api/v1/projects/{id}/api-keys`](/cloud-api/projects/list-api-keys) - List project keys
+- [`DELETE /api/v1/projects/{id}/api-keys/{key_id}`](/cloud-api/projects/revoke-api-key) - Revoke key
 
 ### Generation Endpoints
 
-- `POST /api/v1/generation/generate-v2` - Create AI generation
-- `GET /api/v1/generation/{id}` - Check generation status
-- `GET /api/v1/generation` - List user's generations
-- `PATCH /api/v1/generation/{id}/toggle-public` - Toggle visibility
-- `DELETE /api/v1/generation/{id}` - Delete generation
-- `GET /api/v1/generation/public` - List public generations
+- [`POST /api/v1/generation/generate-v2`](/cloud-api/generation/create) - Create AI generation
+- [`GET /api/v1/generation/{id}/status`](/cloud-api/generation/status) - Check generation status
+- [`GET /api/v1/generation`](/cloud-api/generation/list) - List user's generations
+- [`PATCH /api/v1/generation/{id}/public`](/cloud-api/generation/toggle-public) - Toggle visibility
+- [`DELETE /api/v1/generation/{id}`](/cloud-api/generation/delete) - Delete generation
+- [`GET /api/v1/generation/public`](/cloud-api/generation/public-list) - List public generations
 
 ## Integration with Starter Kit
 

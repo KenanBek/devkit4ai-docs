@@ -25,6 +25,7 @@
             "group": "Core Concepts",
             "pages": [
               "getting-started/platform-overview",
+              "getting-started/user-types",
               "getting-started/starter-kit-explained",
               "getting-started/cloud-admin-explained",
               "getting-started/cloud-api-explained"
