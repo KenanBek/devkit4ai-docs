@@ -30,6 +30,13 @@
               "getting-started/cloud-admin-explained",
               "getting-started/cloud-api-explained"
             ]
+          },
+          {
+            "group": "Features",
+            "pages": [
+              "getting-started/features/payment-setup",
+              "getting-started/features/subscription-billing"
+            ]
           }
         ]
       },
@@ -61,7 +68,8 @@
               "starter-kit/features/user-dashboard",
               "starter-kit/features/profile-management",
               "starter-kit/features/project-settings",
-              "starter-kit/features/legal-pages"
+              "starter-kit/features/legal-pages",
+              "starter-kit/features/payments"
             ]
           },
           {

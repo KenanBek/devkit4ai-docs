@@ -147,6 +147,115 @@ Actions in the Danger Zone are irreversible. Proceed with caution.
 The Deactivate and Delete buttons are currently disabled while the feature is in development. This functionality will be enabled in a future release.
 </Note>
 
+### Payments Tab
+
+Configure and monitor payment processing for your project.
+
+(((REPLACE_THIS_WITH_IMAGE: project-payments-tab-overview.png: Screenshot of Payments tab showing Stripe configuration status, mode toggle, and payment statistics)))
+
+**Stripe Configuration Status:**
+
+The Payments tab displays the current state of Stripe integration for your project:
+
+- **Configured (Test Mode)**: Stripe test credentials are set up and ready for testing
+- **Configured (Live Mode)**: Production credentials are active
+- **Not Configured**: No Stripe credentials have been added yet
+
+<Note>
+Stripe credentials are stored per-project with separate test and live mode configurations. This allows you to test thoroughly before going live without affecting production settings.
+</Note>
+
+**Mode Toggle:**
+
+Switch between Test and Live modes to manage different credential sets:
+
+```mermaid
+flowchart LR
+    subgraph "Test Mode"
+        TK[Test API Keys]
+        TW[Test Webhook Secret]
+        TD[Test Data]
+    end
+    
+    subgraph "Live Mode"
+        LK[Live API Keys]
+        LW[Live Webhook Secret]
+        LD[Real Transactions]
+    end
+    
+    Toggle[Mode Toggle] --> |"Test"| TK
+    Toggle --> |"Live"| LK
+```
+
+- Test mode uses Stripe test API keys for development
+- Live mode uses production API keys for real transactions
+- Each mode has its own webhook secret for secure event processing
+
+**Payment Statistics Cards:**
+
+| Metric | Description |
+|--------|-------------|
+| Active Subscriptions | Number of currently active subscriptions in selected mode |
+| Total Transactions | Count of all payment transactions processed |
+| Revenue (MTD) | Month-to-date revenue (live mode only) |
+| Failed Payments | Transactions that failed or were declined |
+
+**Subscriptions List:**
+
+View all subscriptions for your project with filtering options:
+
+- **Status Filter**: active, trialing, past_due, cancelled, all
+- **Search**: Filter by user email
+- **Pagination**: Navigate large subscription lists
+
+| Column | Description |
+|--------|-------------|
+| User | Email of the subscribed user |
+| Plan | Subscription price/plan name |
+| Status | Current subscription status with color badge |
+| Started | Subscription creation date |
+| Renews/Ends | Next billing date or cancellation date |
+| Actions | View details, cancel subscription |
+
+**Transaction History:**
+
+Track all payment transactions with detailed information:
+
+| Column | Description |
+|--------|-------------|
+| Date | Transaction timestamp |
+| User | Customer email address |
+| Amount | Transaction amount with currency |
+| Type | Payment, refund, or failed |
+| Status | succeeded, pending, failed, refunded |
+| Invoice | Link to Stripe invoice (if available) |
+
+**Quick Actions:**
+
+- **Configure Stripe**: Open Stripe configuration dialog
+- **View Webhook URLs**: Copy webhook URLs for Stripe dashboard
+- **Test Payment**: Create a test checkout session (test mode only)
+- **Open Stripe Dashboard**: Link to Stripe's project dashboard
+
+<Tip>
+Use the "Test Payment" action to verify your integration is working correctly before switching to live mode.
+</Tip>
+
+**Configuring Stripe Credentials:**
+
+1. Click "Configure Stripe" button
+2. Select mode (Test or Live)
+3. Enter your Stripe API keys from [Stripe Dashboard](https://dashboard.stripe.com/apikeys)
+4. Enter your webhook signing secret
+5. Click "Validate & Save" to verify credentials
+6. Copy the webhook URL and add it to your Stripe dashboard
+
+<Warning>
+Never share your Stripe secret keys. They are encrypted before storage and never displayed after initial entry.
+</Warning>
+
+For complete setup instructions, see the [Payment Setup & Configuration](/getting-started/features/payment-setup) guide.
+
 ## Project Statistics
 
 The Overview tab displays real-time statistics fetched from the Cloud API:

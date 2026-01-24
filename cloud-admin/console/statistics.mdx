@@ -39,6 +39,41 @@ Shows the total number of end users who have registered through your project app
 - **Updates**: Real-time on every page load
 - **Calculation**: Count of all users associated with your projects
 
+### Subscriptions Count
+
+Displays the total number of active subscriptions across all your projects. This helps you track monetization and subscriber growth.
+
+- **Icon**: Credit card icon
+- **Data Source**: Fetched from `/api/v1/payments/stats` endpoint
+- **Updates**: Real-time on every page load
+- **Calculation**: Sum of active subscriptions from all projects with configured payment processing
+
+<Note>
+Subscriptions count only appears for projects that have Stripe payment processing configured. See [Payment Setup](/getting-started/features/payment-setup) to enable payments for your projects.
+</Note>
+
+### Transactions Count
+
+Shows the total number of payment transactions processed across all your projects. This includes successful payments, refunds, and failed transactions.
+
+- **Icon**: Receipt icon
+- **Data Source**: Fetched from `/api/v1/payments/stats` endpoint
+- **Updates**: Real-time on every page load
+- **Calculation**: Count of all payment transactions (succeeded, failed, refunded) from all projects
+
+**Transaction Breakdown:**
+
+The dashboard provides a high-level view, but you can drill down into transaction details:
+
+| Transaction Type | Description |
+|-----------------|-------------|
+| Succeeded | Successful payment transactions |
+| Failed | Declined or error transactions |
+| Refunded | Transactions that have been refunded |
+| Pending | Transactions awaiting completion |
+
+For detailed transaction history, navigate to individual project Payments tabs or use the [Payment Transactions API](/cloud-api/payments/list-transactions).
+
 ### Status Indicator
 
 Displays the operational status of your account and projects.

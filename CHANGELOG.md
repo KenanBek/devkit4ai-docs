@@ -1,5 +1,25 @@
 # Changelog
 
+### v1.10.0 [2026-01-25]
+
+#### Added
+- Added new "Features" section under Getting Started tab with comprehensive payment documentation
+- Added `getting-started/features/payment-setup.mdx` covering Stripe configuration, test/live modes, webhook URLs, credential validation, and Stripe CLI testing
+- Added `getting-started/features/subscription-billing.mdx` documenting 10 subscription use cases, lifecycle management, webhook events, and payment history
+- Added `starter-kit/features/payments.mdx` with end-user billing integration guide and TypeScript code examples
+- Added Payments Tab documentation section to `cloud-admin/projects/project-details.mdx` covering mode toggle, stats, and subscription management
+- Added Subscriptions Count and Transactions Count statistics to `cloud-admin/console/statistics.mdx`
+- Added extensive Mermaid diagrams for payment flows, subscription lifecycle, webhook processing, and credential storage
+
+#### Changed
+- Completely rewrote `tutorials/integrations/stripe-payments.mdx` from placeholder to comprehensive 10-step tutorial with TypeScript examples, test cards, and troubleshooting
+- Updated `docs.json` navigation to include Features group under Getting Started and payments page under Starter Kit Features & Capabilities
+
+#### Documentation Coverage
+- Documented backend-api v1.6.0-v1.6.1 payment features: Stripe integration, subscription management, webhooks, checkout sessions, customer portal
+- Documented user-app v1.9.0 payment UI features: payment configuration, subscription management, billing components
+- Cross-referenced with 19 Cloud API payment endpoint pages added in v1.9.0
+
 ### v1.9.0 [2026-01-24]
 
 #### Added
