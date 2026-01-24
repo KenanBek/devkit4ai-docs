@@ -1,0 +1,212 @@
+---
+title: "Get My Payment History"
+description: "Get the current user's Stripe payment history for the project"
+icon: "receipt"
+openapi: "GET /api/v1/payments/stripe/my-payments"
+---
+
+Retrieve a paginated list of payment transactions for the authenticated user within their project. Useful for displaying billing history and invoice records.
+
+## Authentication
+
+<Note>
+This endpoint requires end user authentication via HTTP Bearer Token with project scope.
+</Note>
+
+## Query Parameters
+
+<ParamField query="test_mode" type="boolean" default="true">
+  Use test mode data. Set to `false` for production payments.
+</ParamField>
+
+<ParamField query="page" type="integer" default="1">
+  Page number for pagination (minimum: 1)
+</ParamField>
+
+<ParamField query="page_size" type="integer" default="50">
+  Number of payments per page (1-100)
+</ParamField>
+
+## Response
+
+<ResponseField name="payments" type="array">
+  List of payment records
+  <Expandable title="Payment object">
+    <ResponseField name="id" type="string (UUID)">
+      Internal payment record ID
+    </ResponseField>
+    <ResponseField name="project_id" type="string (UUID)">
+      Project the payment belongs to
+    </ResponseField>
+    <ResponseField name="subscription_id" type="string (UUID)">
+      Related subscription (if recurring)
+    </ResponseField>
+    <ResponseField name="user_id" type="string (UUID)">
+      User who made the payment
+    </ResponseField>
+    <ResponseField name="is_test_mode" type="boolean">
+      Whether this is a test mode payment
+    </ResponseField>
+    <ResponseField name="payment_intent_id" type="string">
+      Stripe Payment Intent ID
+    </ResponseField>
+    <ResponseField name="status" type="string">
+      Payment status: `succeeded`, `pending`, `failed`
+    </ResponseField>
+    <ResponseField name="amount_cents" type="integer">
+      Payment amount in cents
+    </ResponseField>
+    <ResponseField name="currency" type="string">
+      Three-letter currency code (e.g., `usd`)
+    </ResponseField>
+    <ResponseField name="description" type="string">
+      Payment description
+    </ResponseField>
+    <ResponseField name="refunded_amount_cents" type="integer">
+      Amount refunded in cents (default: 0)
+    </ResponseField>
+    <ResponseField name="created_at" type="datetime">
+      When payment was created
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="total" type="integer">
+  Total number of payments
+</ResponseField>
+
+<ResponseField name="page" type="integer">
+  Current page number
+</ResponseField>
+
+<ResponseField name="page_size" type="integer">
+  Number of items per page
+</ResponseField>
+
+## Example Request
+
+```bash
+curl -X GET "https://api.devkit4ai.com/api/v1/payments/stripe/my-payments?test_mode=true&page=1&page_size=10" \
+  -H "Authorization: Bearer {end_user_jwt}"
+```
+
+## Example Response
+
+```json
+{
+  "payments": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "project_id": "660e8400-e29b-41d4-a716-446655440000",
+      "subscription_id": "770e8400-e29b-41d4-a716-446655440000",
+      "user_id": "880e8400-e29b-41d4-a716-446655440000",
+      "is_test_mode": true,
+      "payment_intent_id": "pi_1ABC123def456",
+      "status": "succeeded",
+      "amount_cents": 2999,
+      "currency": "usd",
+      "description": "Pro Plan - Monthly",
+      "refunded_amount_cents": 0,
+      "created_at": "2026-01-15T10:30:00Z"
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440001",
+      "project_id": "660e8400-e29b-41d4-a716-446655440000",
+      "subscription_id": "770e8400-e29b-41d4-a716-446655440000",
+      "user_id": "880e8400-e29b-41d4-a716-446655440000",
+      "is_test_mode": true,
+      "payment_intent_id": "pi_1DEF456ghi789",
+      "status": "succeeded",
+      "amount_cents": 2999,
+      "currency": "usd",
+      "description": "Pro Plan - Monthly",
+      "refunded_amount_cents": 0,
+      "created_at": "2025-12-15T10:30:00Z"
+    }
+  ],
+  "total": 2,
+  "page": 1,
+  "page_size": 10
+}
+```
+
+## Formatting Amounts
+
+Amounts are stored in cents. Convert to display format:
+
+```typescript
+function formatAmount(cents: number, currency: string): string {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: currency.toUpperCase()
+  }).format(cents / 100);
+}
+
+// formatAmount(2999, 'usd') → "$29.99"
+```
+
+## Integration Example
+
+```typescript
+// Billing history component
+function BillingHistory() {
+  const [payments, setPayments] = useState([]);
+  const [page, setPage] = useState(1);
+  
+  useEffect(() => {
+    fetch(`/api/my-payments?page=${page}`)
+      .then(res => res.json())
+      .then(data => setPayments(data.payments));
+  }, [page]);
+
+  return (
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Description</th>
+          <th>Amount</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {payments.map(payment => (
+          <tr key={payment.id}>
+            <td>{formatDate(payment.created_at)}</td>
+            <td>{payment.description}</td>
+            <td>{formatAmount(payment.amount_cents, payment.currency)}</td>
+            <td><Badge>{payment.status}</Badge></td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+```
+
+## Payment Statuses
+
+| Status | Description |
+|--------|-------------|
+| `succeeded` | Payment completed successfully |
+| `pending` | Payment processing in progress |
+| `failed` | Payment attempt failed |
+
+## Error Responses
+
+| Status | Description |
+|--------|-------------|
+| `401` | Unauthorized - Invalid or missing authentication |
+| `404` | Project not found or Stripe not configured |
+| `422` | Validation error - Invalid pagination parameters |
+
+## Related Pages
+
+<CardGroup cols={2}>
+  <Card title="Get My Subscription" icon="user" href="/cloud-api/payments/stripe/get-my-subscription">
+    View subscription status
+  </Card>
+  <Card title="Customer Portal" icon="user-gear" href="/cloud-api/payments/stripe/create-customer-portal">
+    Access invoices in Stripe
+  </Card>
+</CardGroup>

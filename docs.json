@@ -207,6 +207,50 @@
               "cloud-api/generation/create-anonymous",
               "cloud-api/generation/anonymous-status"
             ]
+          },
+          {
+            "group": "Payments",
+            "pages": [
+              "cloud-api/payments/introduction",
+              "cloud-api/payments/list-subscriptions",
+              "cloud-api/payments/list-transactions",
+              "cloud-api/payments/list-projects-config",
+              "cloud-api/payments/get-stats"
+            ]
+          },
+          {
+            "group": "Stripe Configuration",
+            "pages": [
+              "cloud-api/payments/stripe/get-config",
+              "cloud-api/payments/stripe/update-config",
+              "cloud-api/payments/stripe/delete-config",
+              "cloud-api/payments/stripe/get-webhook-urls",
+              "cloud-api/payments/stripe/validate-credentials",
+              "cloud-api/payments/stripe/list-project-subscriptions",
+              "cloud-api/payments/stripe/list-project-payments"
+            ]
+          },
+          {
+            "group": "Stripe Checkout",
+            "pages": [
+              "cloud-api/payments/stripe/create-checkout-session"
+            ]
+          },
+          {
+            "group": "Stripe Webhooks",
+            "pages": [
+              "cloud-api/payments/stripe/stripe-webhook"
+            ]
+          },
+          {
+            "group": "Stripe Subscriptions",
+            "pages": [
+              "cloud-api/payments/stripe/get-my-subscription",
+              "cloud-api/payments/stripe/get-my-payments",
+              "cloud-api/payments/stripe/create-customer-portal",
+              "cloud-api/payments/stripe/cancel-subscription",
+              "cloud-api/payments/stripe/update-subscription"
+            ]
           }
         ]
       },

@@ -1,0 +1,163 @@
+---
+title: "List All Transactions"
+description: "List all payment transactions across developer's projects with optional filtering"
+icon: "receipt"
+openapi: "GET /api/v1/payments/transactions"
+---
+
+Retrieve all payment transactions (successful and failed) across all projects owned by the authenticated developer. Supports filtering by project, test mode, and payment status.
+
+## Authentication
+
+<Note>
+This endpoint requires developer authentication via OAuth2 Bearer Token.
+</Note>
+
+## Query Parameters
+
+<ParamField query="project_id" type="string (UUID)">
+  Filter transactions by specific project ID
+</ParamField>
+
+<ParamField query="test_mode" type="boolean">
+  Filter by test mode (`true`) or live mode (`false`). If omitted, returns both.
+</ParamField>
+
+<ParamField query="status" type="string">
+  Filter by payment status: `succeeded`, `pending`, `failed`, `canceled`, `refunded`
+</ParamField>
+
+<ParamField query="page" type="integer" default="1">
+  Page number for pagination (minimum: 1)
+</ParamField>
+
+<ParamField query="page_size" type="integer" default="50">
+  Number of results per page (1-100)
+</ParamField>
+
+## Response
+
+<ResponseField name="payments" type="array">
+  Array of payment transaction objects with project information
+  
+  <Expandable title="Payment Object">
+    <ResponseField name="id" type="string (UUID)">
+      Internal payment record ID
+    </ResponseField>
+    <ResponseField name="project_id" type="string (UUID)">
+      Project this payment belongs to
+    </ResponseField>
+    <ResponseField name="project_name" type="string">
+      Name of the project
+    </ResponseField>
+    <ResponseField name="provider" type="string">
+      Payment provider (always "stripe")
+    </ResponseField>
+    <ResponseField name="subscription_id" type="string (UUID)">
+      Related subscription ID (if applicable)
+    </ResponseField>
+    <ResponseField name="user_id" type="string (UUID)">
+      End user who made the payment
+    </ResponseField>
+    <ResponseField name="is_test_mode" type="boolean">
+      Whether this is a test mode payment
+    </ResponseField>
+    <ResponseField name="payment_intent_id" type="string">
+      Stripe payment intent ID (e.g., `pi_xxx`)
+    </ResponseField>
+    <ResponseField name="status" type="string">
+      Payment status
+    </ResponseField>
+    <ResponseField name="amount_cents" type="integer">
+      Payment amount in cents
+    </ResponseField>
+    <ResponseField name="currency" type="string">
+      Currency code (e.g., "usd")
+    </ResponseField>
+    <ResponseField name="description" type="string">
+      Payment description
+    </ResponseField>
+    <ResponseField name="refunded_amount_cents" type="integer">
+      Amount refunded in cents (0 if no refund)
+    </ResponseField>
+    <ResponseField name="created_at" type="string (datetime)">
+      When the payment was created
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="total" type="integer">
+  Total number of payments matching the filter
+</ResponseField>
+
+<ResponseField name="page" type="integer">
+  Current page number
+</ResponseField>
+
+<ResponseField name="page_size" type="integer">
+  Number of results per page
+</ResponseField>
+
+## Example Request
+
+```bash
+curl "https://api.devkit4ai.com/api/v1/payments/transactions?status=succeeded&page=1" \
+  -H "Authorization: Bearer {developer_jwt}"
+```
+
+## Example Response
+
+```json
+{
+  "payments": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "project_id": "660e8400-e29b-41d4-a716-446655440001",
+      "project_name": "My SaaS App",
+      "provider": "stripe",
+      "subscription_id": "770e8400-e29b-41d4-a716-446655440002",
+      "user_id": "880e8400-e29b-41d4-a716-446655440003",
+      "is_test_mode": true,
+      "payment_intent_id": "pi_1234567890",
+      "status": "succeeded",
+      "amount_cents": 2999,
+      "currency": "usd",
+      "description": "Pro Plan - Monthly",
+      "refunded_amount_cents": 0,
+      "created_at": "2026-01-15T10:30:00Z"
+    }
+  ],
+  "total": 1,
+  "page": 1,
+  "page_size": 50
+}
+```
+
+## Formatting Amounts
+
+Payment amounts are returned in cents. To display as currency:
+
+```javascript
+const formatAmount = (cents, currency) => {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: currency.toUpperCase()
+  }).format(cents / 100);
+};
+
+// formatAmount(2999, 'usd') => "$29.99"
+```
+
+## Related Pages
+
+<CardGroup cols={2}>
+  <Card title="List Subscriptions" icon="list" href="/cloud-api/payments/list-subscriptions">
+    View all subscriptions
+  </Card>
+  <Card title="Payment Statistics" icon="chart-bar" href="/cloud-api/payments/get-stats">
+    Aggregated payment metrics
+  </Card>
+  <Card title="Project Payments" icon="folder" href="/cloud-api/payments/stripe/list-project-payments">
+    View payments for a specific project
+  </Card>
+</CardGroup>

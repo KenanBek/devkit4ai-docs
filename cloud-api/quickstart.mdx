@@ -39,8 +39,8 @@ After successful registration, you'll receive three critical credentials:
 ```json
 {
   "project_id": "660e8400-e29b-41d4-a716-446655440001",
-  "developer_key": "ak_abc123XYZ-_789def456ghi012jkl345",
-  "api_key": "pk_xyz789ABC-_123def456ghi012jkl345"
+  "developer_key": "dk_abc123XYZ-_789def456ghi012jkl345",
+  "api_key": "ak_xyz789ABC123def456ghi012jkl34567"
 }
 ```
 
@@ -55,9 +55,9 @@ After successful registration, you'll receive three critical credentials:
 
 ```bash
 # Save to environment variables
-export DEVKIT4AI_DEVELOPER_KEY="ak_abc123XYZ-_789def456ghi012jkl345"
+export DEVKIT4AI_DEVELOPER_KEY="dk_abc123XYZ-_789def456ghi012jkl345"
 export DEVKIT4AI_PROJECT_ID="660e8400-e29b-41d4-a716-446655440001"
-export DEVKIT4AI_PROJECT_KEY="pk_xyz789ABC-_123def456ghi012jkl345"
+export DEVKIT4AI_PROJECT_KEY="ak_xyz789ABC123def456ghi012jkl34567"
 ```
 
 ### Alternative: API Registration (Advanced)
@@ -140,7 +140,7 @@ Now create a new project for your application:
 curl -X POST https://api.vibecoding.ad/api/v1/projects/ \
   -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
   -H "X-User-Role: developer" \
-  -H "X-Developer-Key: ak_abc123XYZ-_789def456ghi012jkl345" \
+  -H "X-Developer-Key: dk_abc123XYZ-_789def456ghi012jkl345" \
   -H "Content-Type: application/json" \
   -d '{
     "name": "My First AI App",
@@ -172,7 +172,7 @@ Create an API key for your project to authenticate end user requests:
 curl -X POST https://api.vibecoding.ad/api/v1/projects/770e8400-e29b-41d4-a716-446655440002/api-keys \
   -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
   -H "X-User-Role: developer" \
-  -H "X-Developer-Key: ak_abc123XYZ-_789def456ghi012jkl345" \
+  -H "X-Developer-Key: dk_abc123XYZ-_789def456ghi012jkl345" \
   -H "Content-Type: application/json" \
   -d '{
     "name": "Production API Key"
@@ -184,8 +184,8 @@ curl -X POST https://api.vibecoding.ad/api/v1/projects/770e8400-e29b-41d4-a716-4
 ```json
 {
   "id": "880e8400-e29b-41d4-a716-446655440003",
-  "key": "pk_prod123XYZ-_789def456ghi012jkl345",
-  "key_prefix": "pk_prod1",
+  "key": "ak_prod123XYZ789def456ghi012jkl3456",
+  "key_prefix": "ak_prod1",
   "name": "Production API Key",
   "project_id": "770e8400-e29b-41d4-a716-446655440002",
   "is_active": true,
@@ -206,9 +206,9 @@ Now test the AI generation endpoint:
 curl -X POST https://api.vibecoding.ad/api/v1/generation/generate-v2 \
   -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
   -H "X-User-Role: end_user" \
-  -H "X-Developer-Key: ak_abc123XYZ-_789def456ghi012jkl345" \
+  -H "X-Developer-Key: dk_abc123XYZ-_789def456ghi012jkl345" \
   -H "X-Project-ID: 770e8400-e29b-41d4-a716-446655440002" \
-  -H "X-API-Key: pk_prod123XYZ-_789def456ghi012jkl345" \
+  -H "X-API-Key: ak_prod123XYZ789def456ghi012jkl3456" \
   -F "example_images=@/path/to/image1.jpg" \
   -F "example_images=@/path/to/image2.jpg" \
   -F 'instructions={"prompt": "Generate a futuristic cityscape with neon lights"}'
@@ -232,9 +232,9 @@ Poll the status endpoint to check when your generation completes:
 curl -X GET https://api.vibecoding.ad/api/v1/generation/generations-v2/990e8400-e29b-41d4-a716-446655440004/status \
   -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
   -H "X-User-Role: end_user" \
-  -H "X-Developer-Key: ak_abc123XYZ-_789def456ghi012jkl345" \
+  -H "X-Developer-Key: dk_abc123XYZ-_789def456ghi012jkl345" \
   -H "X-Project-ID: 770e8400-e29b-41d4-a716-446655440002" \
-  -H "X-API-Key: pk_prod123XYZ-_789def456ghi012jkl345"
+  -H "X-API-Key: ak_prod123XYZ789def456ghi012jkl3456"
 ```
 
 ### Response (Completed)
@@ -719,9 +719,9 @@ async function main() {
     const PASSWORD = 'SecurePass123';
     
     // These credentials are obtained from Cloud Admin after registration
-    credentials.developerKey = 'ak_abc123XYZ-_789def456ghi012jkl345';
+    credentials.developerKey = 'dk_abc123XYZ-_789def456ghi012jkl345';
     credentials.projectId = '770e8400-e29b-41d4-a716-446655440002';
-    credentials.projectApiKey = 'pk_prod123XYZ-_789def456ghi012jkl345';
+    credentials.projectApiKey = 'ak_prod123XYZ789def456ghi012jkl3456';
     
     // Login with your credentials
     await login(EMAIL, PASSWORD);

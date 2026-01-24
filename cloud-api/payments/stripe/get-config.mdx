@@ -1,0 +1,157 @@
+---
+title: "Get Stripe Configuration"
+description: "Retrieve the Stripe payment configuration for a project"
+icon: "gear"
+openapi: "GET /api/v1/payments/stripe/projects/{project_id}/config"
+---
+
+Retrieve the current Stripe payment configuration for a specific project. Returns masked credential information for security - full credentials are never exposed through the API.
+
+## Authentication
+
+<Note>
+This endpoint requires developer authentication via OAuth2 Bearer Token. You must own the project.
+</Note>
+
+## Path Parameters
+
+<ParamField path="project_id" type="string (UUID)" required>
+  The unique identifier of the project
+</ParamField>
+
+## Response
+
+Returns the Stripe configuration with masked credentials, or `null` if no configuration exists.
+
+<ResponseField name="id" type="string (UUID)">
+  Configuration ID
+</ResponseField>
+
+<ResponseField name="project_id" type="string (UUID)">
+  Project ID
+</ResponseField>
+
+<ResponseField name="is_active" type="boolean">
+  Whether the configuration is active
+</ResponseField>
+
+<ResponseField name="has_test_credentials" type="boolean">
+  Whether test mode credentials are configured
+</ResponseField>
+
+<ResponseField name="has_live_credentials" type="boolean">
+  Whether live mode credentials are configured
+</ResponseField>
+
+<ResponseField name="test_secret_key_masked" type="string">
+  Masked test secret key (e.g., `sk_test_...xxxx`)
+</ResponseField>
+
+<ResponseField name="test_publishable_key_masked" type="string">
+  Masked test publishable key
+</ResponseField>
+
+<ResponseField name="test_webhook_secret_masked" type="string">
+  Masked test webhook secret
+</ResponseField>
+
+<ResponseField name="live_secret_key_masked" type="string">
+  Masked live secret key
+</ResponseField>
+
+<ResponseField name="live_publishable_key_masked" type="string">
+  Masked live publishable key
+</ResponseField>
+
+<ResponseField name="live_webhook_secret_masked" type="string">
+  Masked live webhook secret
+</ResponseField>
+
+<ResponseField name="test_configured_at" type="string (datetime)">
+  When test credentials were configured
+</ResponseField>
+
+<ResponseField name="live_configured_at" type="string (datetime)">
+  When live credentials were configured
+</ResponseField>
+
+<ResponseField name="created_at" type="string (datetime)">
+  When the configuration was created
+</ResponseField>
+
+<ResponseField name="updated_at" type="string (datetime)">
+  When the configuration was last updated
+</ResponseField>
+
+## Example Request
+
+```bash
+curl "https://api.devkit4ai.com/api/v1/payments/stripe/projects/550e8400-e29b-41d4-a716-446655440000/config" \
+  -H "Authorization: Bearer {developer_jwt}"
+```
+
+## Example Response
+
+```json
+{
+  "id": "770e8400-e29b-41d4-a716-446655440000",
+  "project_id": "550e8400-e29b-41d4-a716-446655440000",
+  "is_active": true,
+  "has_test_credentials": true,
+  "has_live_credentials": false,
+  "test_secret_key_masked": "sk_test_...aBcD",
+  "test_publishable_key_masked": "pk_test_...eFgH",
+  "test_webhook_secret_masked": "whsec_...iJkL",
+  "live_secret_key_masked": null,
+  "live_publishable_key_masked": null,
+  "live_webhook_secret_masked": null,
+  "test_configured_at": "2026-01-10T14:30:00Z",
+  "live_configured_at": null,
+  "created_at": "2026-01-10T14:30:00Z",
+  "updated_at": "2026-01-10T14:30:00Z"
+}
+```
+
+## No Configuration Response
+
+If no Stripe configuration exists for the project, the response is `null`:
+
+```json
+null
+```
+
+## Credential Masking
+
+Credentials are masked for security. Only the last 4 characters are visible:
+
+| Key Type | Format |
+|----------|--------|
+| Secret Key | `sk_test_...xxxx` or `sk_live_...xxxx` |
+| Publishable Key | `pk_test_...xxxx` or `pk_live_...xxxx` |
+| Webhook Secret | `whsec_...xxxx` |
+
+<Warning>
+Full credentials are never returned by the API. If you need to update credentials, use the [Update Stripe Config](/cloud-api/payments/stripe/update-config) endpoint.
+</Warning>
+
+## Error Responses
+
+| Status | Description |
+|--------|-------------|
+| `401` | Unauthorized - Invalid or missing authentication |
+| `403` | Forbidden - You don't own this project |
+| `404` | Project not found |
+
+## Related Pages
+
+<CardGroup cols={2}>
+  <Card title="Update Stripe Config" icon="pen" href="/cloud-api/payments/stripe/update-config">
+    Configure Stripe credentials
+  </Card>
+  <Card title="Delete Stripe Config" icon="trash" href="/cloud-api/payments/stripe/delete-config">
+    Remove Stripe configuration
+  </Card>
+  <Card title="Get Webhook URLs" icon="webhook" href="/cloud-api/payments/stripe/get-webhook-urls">
+    Get webhook endpoint URLs
+  </Card>
+</CardGroup>

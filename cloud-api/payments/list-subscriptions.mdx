@@ -1,0 +1,179 @@
+---
+title: "List All Subscriptions"
+description: "List all subscriptions across developer's projects with optional filtering"
+icon: "list"
+openapi: "GET /api/v1/payments/subscriptions"
+---
+
+Retrieve all Stripe subscriptions across all projects owned by the authenticated developer. Supports filtering by project, test mode, and subscription status.
+
+## Authentication
+
+<Note>
+This endpoint requires developer authentication via OAuth2 Bearer Token.
+</Note>
+
+## Query Parameters
+
+<ParamField query="project_id" type="string (UUID)">
+  Filter subscriptions by specific project ID
+</ParamField>
+
+<ParamField query="test_mode" type="boolean">
+  Filter by test mode (`true`) or live mode (`false`). If omitted, returns both.
+</ParamField>
+
+<ParamField query="status" type="string">
+  Filter by subscription status: `active`, `canceled`, `incomplete`, `incomplete_expired`, `past_due`, `trialing`, `unpaid`
+</ParamField>
+
+<ParamField query="page" type="integer" default="1">
+  Page number for pagination (minimum: 1)
+</ParamField>
+
+<ParamField query="page_size" type="integer" default="50">
+  Number of results per page (1-100)
+</ParamField>
+
+## Response
+
+<ResponseField name="subscriptions" type="array">
+  Array of subscription objects with project information
+  
+  <Expandable title="Subscription Object">
+    <ResponseField name="id" type="string (UUID)">
+      Internal subscription record ID
+    </ResponseField>
+    <ResponseField name="project_id" type="string (UUID)">
+      Project this subscription belongs to
+    </ResponseField>
+    <ResponseField name="project_name" type="string">
+      Name of the project
+    </ResponseField>
+    <ResponseField name="provider" type="string">
+      Payment provider (always "stripe")
+    </ResponseField>
+    <ResponseField name="user_id" type="string (UUID)">
+      End user who owns this subscription
+    </ResponseField>
+    <ResponseField name="is_test_mode" type="boolean">
+      Whether this is a test mode subscription
+    </ResponseField>
+    <ResponseField name="subscription_id" type="string">
+      Stripe subscription ID (e.g., `sub_xxx`)
+    </ResponseField>
+    <ResponseField name="customer_id" type="string">
+      Stripe customer ID (e.g., `cus_xxx`)
+    </ResponseField>
+    <ResponseField name="status" type="string">
+      Subscription status
+    </ResponseField>
+    <ResponseField name="plan_name" type="string">
+      Name of the subscribed plan
+    </ResponseField>
+    <ResponseField name="quantity" type="integer">
+      Subscription quantity
+    </ResponseField>
+    <ResponseField name="current_period_start" type="string (datetime)">
+      Start of current billing period
+    </ResponseField>
+    <ResponseField name="current_period_end" type="string (datetime)">
+      End of current billing period
+    </ResponseField>
+    <ResponseField name="cancel_at" type="string (datetime)">
+      Scheduled cancellation date
+    </ResponseField>
+    <ResponseField name="cancelled_at" type="string (datetime)">
+      When the subscription was cancelled
+    </ResponseField>
+    <ResponseField name="created_at" type="string (datetime)">
+      When the subscription record was created
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="total" type="integer">
+  Total number of subscriptions matching the filter
+</ResponseField>
+
+<ResponseField name="page" type="integer">
+  Current page number
+</ResponseField>
+
+<ResponseField name="page_size" type="integer">
+  Number of results per page
+</ResponseField>
+
+## Example Request
+
+```bash
+curl "https://api.devkit4ai.com/api/v1/payments/subscriptions?status=active&page=1&page_size=10" \
+  -H "Authorization: Bearer {developer_jwt}"
+```
+
+## Example Response
+
+```json
+{
+  "subscriptions": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "project_id": "660e8400-e29b-41d4-a716-446655440001",
+      "project_name": "My SaaS App",
+      "provider": "stripe",
+      "user_id": "770e8400-e29b-41d4-a716-446655440002",
+      "is_test_mode": true,
+      "subscription_id": "sub_1234567890",
+      "customer_id": "cus_1234567890",
+      "status": "active",
+      "plan_name": "Pro Plan",
+      "quantity": 1,
+      "current_period_start": "2026-01-01T00:00:00Z",
+      "current_period_end": "2026-02-01T00:00:00Z",
+      "cancel_at": null,
+      "cancelled_at": null,
+      "created_at": "2026-01-01T00:00:00Z"
+    }
+  ],
+  "total": 1,
+  "page": 1,
+  "page_size": 10
+}
+```
+
+## Use Cases
+
+### View All Active Subscriptions
+
+```bash
+curl "https://api.devkit4ai.com/api/v1/payments/subscriptions?status=active" \
+  -H "Authorization: Bearer {developer_jwt}"
+```
+
+### Filter by Specific Project
+
+```bash
+curl "https://api.devkit4ai.com/api/v1/payments/subscriptions?project_id=660e8400-e29b-41d4-a716-446655440001" \
+  -H "Authorization: Bearer {developer_jwt}"
+```
+
+### View Only Live Mode Subscriptions
+
+```bash
+curl "https://api.devkit4ai.com/api/v1/payments/subscriptions?test_mode=false" \
+  -H "Authorization: Bearer {developer_jwt}"
+```
+
+## Related Pages
+
+<CardGroup cols={2}>
+  <Card title="List Transactions" icon="receipt" href="/cloud-api/payments/list-transactions">
+    View payment transactions
+  </Card>
+  <Card title="Payment Statistics" icon="chart-bar" href="/cloud-api/payments/get-stats">
+    Aggregated payment metrics
+  </Card>
+  <Card title="Project Subscriptions" icon="folder" href="/cloud-api/payments/stripe/list-project-subscriptions">
+    View subscriptions for a specific project
+  </Card>
+</CardGroup>
