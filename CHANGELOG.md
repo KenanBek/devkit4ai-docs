@@ -1,5 +1,41 @@
 # Changelog
 
+### v1.9.0 [2026-01-24]
+
+#### Added
+- Added comprehensive Payments API documentation with 19 new pages covering all payment endpoints from OpenAPI v1.6.1
+- Added Payments overview page (`cloud-api/payments/introduction.mdx`) with architecture diagrams, API groups reference, and quick start guide
+- Added 4 aggregated payments endpoint pages:
+  - `cloud-api/payments/list-subscriptions.mdx` - List all subscriptions across projects
+  - `cloud-api/payments/list-transactions.mdx` - List all payment transactions across projects  
+  - `cloud-api/payments/list-projects-config.mdx` - List projects with payment configuration status
+  - `cloud-api/payments/get-stats.mdx` - Get aggregated payment statistics
+- Added 7 Stripe Configuration endpoint pages:
+  - `cloud-api/payments/stripe/get-config.mdx` - Get Stripe configuration for a project
+  - `cloud-api/payments/stripe/update-config.mdx` - Create or update Stripe configuration
+  - `cloud-api/payments/stripe/delete-config.mdx` - Deactivate Stripe configuration
+  - `cloud-api/payments/stripe/get-webhook-urls.mdx` - Get webhook URLs for Stripe dashboard
+  - `cloud-api/payments/stripe/validate-credentials.mdx` - Validate Stripe API credentials
+  - `cloud-api/payments/stripe/list-project-subscriptions.mdx` - List project subscriptions
+  - `cloud-api/payments/stripe/list-project-payments.mdx` - List project payment transactions
+- Added Stripe Checkout endpoint page (`cloud-api/payments/stripe/create-checkout-session.mdx`)
+- Added Stripe Webhooks endpoint page (`cloud-api/payments/stripe/stripe-webhook.mdx`)
+- Added 5 Stripe Subscriptions (end-user) endpoint pages:
+  - `cloud-api/payments/stripe/get-my-subscription.mdx` - Get current user's subscription
+  - `cloud-api/payments/stripe/get-my-payments.mdx` - Get user's payment history
+  - `cloud-api/payments/stripe/create-customer-portal.mdx` - Create Stripe customer portal session
+  - `cloud-api/payments/stripe/cancel-subscription.mdx` - Cancel subscription
+  - `cloud-api/payments/stripe/update-subscription.mdx` - Change subscription plan
+- Added mermaid diagrams for payment architecture, test/live mode flows, and webhook event handling
+
+#### Changed
+- Updated `docs.json` navigation to include 5 new payment groups under Cloud API tab: Payments, Stripe Configuration, Stripe Checkout, Stripe Webhooks, Stripe Subscriptions
+
+#### Documentation Coverage
+- Documented all 18 payment endpoints from OpenAPI specification v1.6.1
+- Organized endpoints by access pattern: developer-facing (aggregated, configuration) vs end-user-facing (subscriptions)
+- Added cross-references to Stripe integration tutorial, Cloud Admin payments, security best practices, and environment configuration
+
 ### v1.8.0 [2025-12-08]
 
 #### Added
