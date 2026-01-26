@@ -1,5 +1,22 @@
 # Changelog
 
+### v1.10.1 [2026-01-26]
+
+#### Changed
+- Updated `index.mdx` to replace "Built-in Components" card with "Payments via Stripe" feature highlight
+- Updated `quickstart.mdx` to include payment readiness in goals and add "Add Subscription Billing" to next steps
+- Updated `getting-started/platform-overview.mdx` to mention payments in Cloud Admin and Cloud API sections
+- Updated `getting-started/cloud-admin-explained.mdx` to add Payment Management section and payments in console navigation
+- Updated `getting-started/starter-kit-explained.mdx` to add Subscription Billing to pre-built features and Add Billing card
+- Updated `cloud-admin/getting-started.mdx` to include Configure Payments in next steps
+- Updated `cloud-admin/dashboard-overview.mdx` to add Subscriptions stat, Payments sidebar section, and Configure Payments quick action
+
+#### SEO & Cross-References
+- Added bidirectional cross-references between all payment documentation pages for improved discoverability
+- Updated next steps cards across 9 payment pages with 4-card layouts linking feature docs, Cloud Admin, and API reference
+- Improved internal linking for payment feature flow: setup → implementation → monitoring → API reference
+- Enhanced user journey paths from Getting Started through Cloud Admin to Starter Kit implementation
+
 ### v1.10.0 [2026-01-25]
 
 #### Added

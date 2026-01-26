@@ -21,7 +21,7 @@ The console is organized into clear sections for easy navigation:
 
 #### Statistics Cards
 
-Four key metrics displayed prominently:
+Key metrics displayed prominently:
 
 <CardGroup cols={2}>
   <Card title="Projects" icon="folder">
@@ -33,8 +33,8 @@ Four key metrics displayed prominently:
   <Card title="End Users" icon="users">
     Total users registered in your applications
   </Card>
-  <Card title="Status" icon="circle-check">
-    Overall workspace health indicator
+  <Card title="Subscriptions" icon="credit-card">
+    Active subscriptions across projects (when payments configured)
   </Card>
 </CardGroup>
 
@@ -44,8 +44,8 @@ Shortcut buttons for common tasks:
 
 - **Create Project:** Set up a new project
 - **Generate API Key:** Create authentication credentials
+- **Configure Payments:** Set up Stripe for subscription billing
 - **View Documentation:** Access guides and references
-- **Browse Examples:** See sample applications
 
 #### Getting Started Guide
 
@@ -73,6 +73,17 @@ The getting started guide hides once you've completed the initial setup, but you
 ## Sidebar Navigation
 
 Access all console features from the sidebar:
+
+### Payments
+
+Manage subscription billing:
+
+- **Settings:** Configure Stripe API keys and webhooks
+- **Subscriptions:** View and filter end-user subscriptions
+- **Transactions:** Browse payment transaction history
+- **Test mode:** Validate integration before going live
+
+See [Payment Management](/cloud-admin/payments/overview) for details.
 
 ### Projects
 
@@ -165,8 +176,8 @@ The console is fully responsive:
   <Card title="Create Projects" icon="folder-plus" href="/cloud-admin/projects/creating-projects">
     Set up your application projects
   </Card>
-  <Card title="Manage API Keys" icon="key" href="/cloud-admin/api-keys/creating-project-keys">
-    Generate and manage credentials
+  <Card title="Configure Payments" icon="credit-card" href="/cloud-admin/payments/overview">
+    Set up Stripe subscription billing
   </Card>
   <Card title="View Users" icon="users" href="/cloud-admin/users/viewing-end-users">
     Monitor your application users
