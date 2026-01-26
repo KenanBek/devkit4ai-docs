@@ -44,6 +44,15 @@ Before starting this tutorial:
 - Node.js 18+ and npm installed
 - Basic understanding of TypeScript and React
 
+<Info>
+Your Starter Kit requires these environment variables for payment integration:
+- `DEVKIT4AI_DEVELOPER_KEY` - Your developer key from Cloud Admin
+- `DEVKIT4AI_PROJECT_ID` - Your project UUID
+- `DEVKIT4AI_PROJECT_KEY` - Your project API key
+- `NEXT_PUBLIC_API_URL` - Cloud API URL (default: `https://api.devkit4ai.com`)
+- `NEXT_PUBLIC_APP_URL` - Your application URL for redirects
+</Info>
+
 ## Step 1: Create a Stripe Account
 
 <Steps>
@@ -198,20 +207,23 @@ Create the checkout action:
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
-export async function createCheckoutSession(priceId: string) {
-  const token = cookies().get("devkit4ai-token")?.value;
+export async function createCheckoutSession(priceId: string, testMode: boolean = true) {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("devkit4ai-token")?.value;
   
   if (!token) {
     redirect("/login?returnUrl=/pricing");
   }
 
   const response = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/v1/payments/stripe/checkout-session`,
+    `${process.env.NEXT_PUBLIC_API_URL}/api/v1/payments/stripe/checkout-session?test_mode=${testMode}`,
     {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
+        "Authorization": `Bearer ${token}`,
+        "X-User-Role": "end_user",
+        "X-Developer-Key": process.env.DEVKIT4AI_DEVELOPER_KEY!,
         "X-Project-ID": process.env.DEVKIT4AI_PROJECT_ID!,
         "X-API-Key": process.env.DEVKIT4AI_PROJECT_KEY!,
       },
@@ -233,6 +245,10 @@ export async function createCheckoutSession(priceId: string) {
 }
 ```
 
+<Note>
+The `testMode` parameter defaults to `true` for development. Set to `false` when processing live payments in production. This determines whether the API uses your test or live Stripe credentials.
+</Note>
+
 ### Subscribe Button Component
 
 ```tsx
@@ -246,15 +262,16 @@ import { createCheckoutSession } from "@/app/billing/actions";
 interface SubscribeButtonProps {
   priceId: string;
   planName: string;
+  testMode?: boolean;
 }
 
-export function SubscribeButton({ priceId, planName }: SubscribeButtonProps) {
+export function SubscribeButton({ priceId, planName, testMode = true }: SubscribeButtonProps) {
   const [loading, setLoading] = useState(false);
 
   async function handleSubscribe() {
     setLoading(true);
     try {
-      await createCheckoutSession(priceId);
+      await createCheckoutSession(priceId, testMode);
     } catch (error) {
       console.error("Checkout error:", error);
       setLoading(false);
@@ -436,21 +453,27 @@ import { cookies } from "next/headers";
 interface Subscription {
   id: string;
   status: string;
-  current_period_end: string;
-  cancel_at_period_end: boolean;
+  subscription_id: string;
   plan_name?: string;
+  current_period_start: string | null;
+  current_period_end: string | null;
+  cancel_at: string | null;
+  cancelled_at: string | null;
 }
 
-export async function getMySubscription(): Promise<Subscription | null> {
-  const token = cookies().get("devkit4ai-token")?.value;
+export async function getMySubscription(testMode: boolean = true): Promise<Subscription | null> {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("devkit4ai-token")?.value;
   
   if (!token) return null;
 
   const response = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/v1/payments/stripe/my-subscription`,
+    `${process.env.NEXT_PUBLIC_API_URL}/api/v1/payments/stripe/my-subscription?test_mode=${testMode}`,
     {
       headers: {
-        Authorization: `Bearer ${token}`,
+        "Authorization": `Bearer ${token}`,
+        "X-User-Role": "end_user",
+        "X-Developer-Key": process.env.DEVKIT4AI_DEVELOPER_KEY!,
         "X-Project-ID": process.env.DEVKIT4AI_PROJECT_ID!,
         "X-API-Key": process.env.DEVKIT4AI_PROJECT_KEY!,
       },
@@ -460,8 +483,8 @@ export async function getMySubscription(): Promise<Subscription | null> {
 
   if (!response.ok) return null;
 
-  const data = await response.json();
-  return data.subscription;
+  // Returns subscription object directly or null if no subscription exists
+  return await response.json();
 }
 ```
 
@@ -471,20 +494,26 @@ export async function getMySubscription(): Promise<Subscription | null> {
 // app/billing/actions.ts
 "use server";
 
-export async function openCustomerPortal() {
-  const token = cookies().get("devkit4ai-token")?.value;
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+
+export async function openCustomerPortal(testMode: boolean = true) {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("devkit4ai-token")?.value;
   
   if (!token) {
     redirect("/login");
   }
 
   const response = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/v1/payments/stripe/customer-portal`,
+    `${process.env.NEXT_PUBLIC_API_URL}/api/v1/payments/stripe/customer-portal?test_mode=${testMode}`,
     {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
+        "Authorization": `Bearer ${token}`,
+        "X-User-Role": "end_user",
+        "X-Developer-Key": process.env.DEVKIT4AI_DEVELOPER_KEY!,
         "X-Project-ID": process.env.DEVKIT4AI_PROJECT_ID!,
         "X-API-Key": process.env.DEVKIT4AI_PROJECT_KEY!,
       },
@@ -534,6 +563,15 @@ Once you've thoroughly tested in test mode, switch to live payments:
   </Step>
   <Step title="Update Price IDs">
     Replace test Price IDs in your code with live Price IDs.
+  </Step>
+  <Step title="Update testMode Parameter">
+    Change `testMode` from `true` to `false` in your billing actions to use live Stripe credentials:
+    ```typescript
+    // Production usage
+    await createCheckoutSession(priceId, false);
+    await getMySubscription(false);
+    await openCustomerPortal(false);
+    ```
   </Step>
 </Steps>
 

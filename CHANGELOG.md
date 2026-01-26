@@ -11,6 +11,19 @@
 - Updated `cloud-admin/getting-started.mdx` to include Configure Payments in next steps
 - Updated `cloud-admin/dashboard-overview.mdx` to add Subscriptions stat, Payments sidebar section, and Configure Payments quick action
 
+#### Fixed
+- Fixed `tutorials/integrations/stripe-payments.mdx` code examples to match actual backend-api and starter-kit implementations:
+  - Added `test_mode` query parameter to all payment endpoint URLs (required by Cloud API)
+  - Updated function signatures to include `testMode: boolean = true` parameter
+  - Fixed async cookies() usage for Next.js 15 compatibility (`await cookies()` + `cookieStore.get()`)
+  - Added missing `X-User-Role` and `X-Developer-Key` headers to all fetch calls
+  - Updated Subscription interface to match actual API response fields (`subscription_id`, `cancel_at`, `cancelled_at`)
+  - Fixed `getMySubscription` to return subscription directly (not wrapped in `data.subscription`)
+  - Added required imports to `openCustomerPortal` function
+  - Updated SubscribeButton component to pass testMode parameter
+  - Added Info box listing required environment variables
+  - Added Step 11 for updating testMode parameter when going live
+
 #### SEO & Cross-References
 - Added bidirectional cross-references between all payment documentation pages for improved discoverability
 - Updated next steps cards across 9 payment pages with 4-card layouts linking feature docs, Cloud Admin, and API reference
