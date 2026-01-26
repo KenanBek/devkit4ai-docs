@@ -6,6 +6,41 @@ icon: "zap"
 
 The console home page renders a set of quick action cards defined in `user-app/app/console/quick-actions.tsx` (exported to the Starter Kit for parity).
 
-- Buttons link to project management, API keys, documentation, and support resources.
-- Disabled states mirror the current product roadmap, signaling features that are still under construction.
-- As new actions go live, this page will document their behavior so operators and developers know what to expect.
+## Available Quick Actions
+
+<CardGroup cols={2}>
+  <Card title="Create Project" icon="folder-plus" href="/cloud-admin/projects/creating-projects">
+    Start a new project with its own API keys and settings.
+  </Card>
+  
+  <Card title="Manage API Keys" icon="key" href="/cloud-admin/api-keys/creating-project-keys">
+    Generate or revoke API keys for your projects.
+  </Card>
+  
+  <Card title="Configure Payments" icon="credit-card" href="/cloud-admin/payments/stripe-configuration">
+    Set up Stripe integration to enable billing for your users.
+  </Card>
+  
+  <Card title="View Documentation" icon="book" href="/">
+    Access guides and API reference documentation.
+  </Card>
+</CardGroup>
+
+## Payment Configuration
+
+The **Configure Payments** action provides quick access to:
+
+- Set up Stripe API keys (test and live mode)
+- Configure webhook endpoints
+- Validate credentials before going live
+- View subscription and transaction data
+
+This is the fastest path to enabling monetization for your AI-powered applications. See [Payment Management Overview](/cloud-admin/payments/overview) for the complete guide.
+
+## Roadmap Actions
+
+Some quick actions may show as disabled, indicating features under development:
+
+- Disabled states mirror the current product roadmap
+- Features become active as they're released
+- Check the changelog for recent additions

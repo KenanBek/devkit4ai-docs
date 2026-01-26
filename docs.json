@@ -142,6 +142,16 @@
             ]
           },
           {
+            "group": "Payment Management",
+            "pages": [
+              "cloud-admin/payments/overview",
+              "cloud-admin/payments/stripe-configuration",
+              "cloud-admin/payments/subscriptions",
+              "cloud-admin/payments/transactions",
+              "cloud-admin/payments/testing-payments"
+            ]
+          },
+          {
             "group": "Console Features",
             "pages": [
               "cloud-admin/console/quick-actions",

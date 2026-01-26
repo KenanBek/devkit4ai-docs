@@ -10,10 +10,17 @@
 - Added Payments Tab documentation section to `cloud-admin/projects/project-details.mdx` covering mode toggle, stats, and subscription management
 - Added Subscriptions Count and Transactions Count statistics to `cloud-admin/console/statistics.mdx`
 - Added extensive Mermaid diagrams for payment flows, subscription lifecycle, webhook processing, and credential storage
+- Added new "Payment Management" group under Cloud Admin tab with 5 comprehensive pages:
+  - `cloud-admin/payments/overview.mdx` - Payment management overview with feature explanation, enablement guide, and billing capabilities
+  - `cloud-admin/payments/stripe-configuration.mdx` - Stripe settings page documentation with credential setup, validation, and security practices
+  - `cloud-admin/payments/subscriptions.mdx` - Subscription monitoring guide with status definitions, filtering, and health metrics
+  - `cloud-admin/payments/transactions.mdx` - Transaction history documentation with types, statuses, filtering, and reconciliation
+  - `cloud-admin/payments/testing-payments.mdx` - Complete testing workflow with test cards, Stripe CLI setup, and go-live checklist
 
 #### Changed
 - Completely rewrote `tutorials/integrations/stripe-payments.mdx` from placeholder to comprehensive 10-step tutorial with TypeScript examples, test cards, and troubleshooting
-- Updated `docs.json` navigation to include Features group under Getting Started and payments page under Starter Kit Features & Capabilities
+- Updated `docs.json` navigation to include Features group under Getting Started, payments page under Starter Kit Features & Capabilities, and Payment Management group under Cloud Admin
+- Enhanced `cloud-admin/console/quick-actions.mdx` with Configure Payments quick action and structured action cards
 
 #### Documentation Coverage
 - Documented backend-api v1.6.0-v1.6.1 payment features: Stripe integration, subscription management, webhooks, checkout sessions, customer portal
