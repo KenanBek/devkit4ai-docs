@@ -369,9 +369,9 @@
     "global": {
       "anchors": [
         {
-          "anchor": "Visit DevKit",
+          "anchor": "Visit Dev Kit",
           "href": "https://devkit4ai.com/",
-          "icon": "code"
+          "icon": "home"
         },
         {
           "anchor": "Visit VibeCoding.ad",
@@ -394,7 +394,7 @@
     ],
     "primary": {
       "type": "button",
-      "label": "Try DevKit",
+      "label": "Try Dev Kit",
       "href": "https://devkit4ai.com/register/developer"
     }
   },
