@@ -2,7 +2,7 @@
 
 The goal of this documentation is to onboard developers to the Dev Kit for AI platform.
 
-The official documentation is available at https://docs.devkit4ai.com.
+The official documentation is available at https://devkit4ai.com/docs
 
 The usual user journey looks like this:
 
