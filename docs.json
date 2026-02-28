@@ -377,6 +377,11 @@
           "anchor": "Visit VibeCoding.ad",
           "href": "https://vibecoding.ad/",
           "icon": "rocket"
+        },
+        {
+          "anchor": "Visit ClawCloud.sh",
+          "href": "https://www.clawcloud.sh/",
+          "icon": "cloud"
         }
       ]
     }
